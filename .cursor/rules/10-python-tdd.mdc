@@ -1,0 +1,15 @@
+---
+description: Python and TDD conventions for src/ and tests/
+globs: src/**/*.py,tests/**/*.py
+---
+
+- Target Python 3.12. Type-hint everything (`mypy --strict` must pass).
+- Lint/format with ruff per `pyproject.toml`. Keep functions small and pure
+  where possible — pure logic (parsing, categorization, dedup, scoring) gets
+  unit tests; I/O paths get integration tests against the test Docker stack.
+- TDD order: write the failing test first, then implement to green. Don't add
+  code without a test. New module ⇒ new test module mirroring the path.
+- CLIs use Click. Config/secrets come from env, never hard-coded.
+- External calls (DeepSeek/OpenAI-compatible, Neo4j, Postgres) are mocked in
+  unit tests (respx for HTTP); only e2e/integration tests hit real services.
+- Cross-platform: use `pathlib`, not string paths or shell-isms.

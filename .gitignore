@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+dist/
+build/
+*.egg-info/
+
+# Secrets / env - NEVER commit real values
+.env
+*.env
+!.env.example
+!infra/.env.example
+*.pem
+id_ed25519*
+id_rsa*
+
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+
+# Node / extension build
+node_modules/
+extension/build/
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/

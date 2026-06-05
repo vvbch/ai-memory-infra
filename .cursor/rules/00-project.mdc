@@ -1,0 +1,18 @@
+---
+description: Project-wide context and tenets for ai-memory-infra
+alwaysApply: true
+---
+
+Canonical context is in `AGENTS.md` at the repo root — treat it as authoritative
+and read it. This rule is a thin Cursor-specific pointer (tenet: portable, no
+editor lock-in). Do not duplicate AGENTS.md content into rules.
+
+Hard rules, always:
+- Everything is versioned — commit code, configs, scaffolding, decisions. Nothing
+  important lives only in a chat or one machine.
+- Cross-platform: Mac + Windows both work out of the box. Prefer Python over shell
+  for tooling. No symlinks. Note OS-specific commands when they differ.
+- TDD: write tests before implementation. 80%+ coverage on `src/`.
+- Secrets only in `.env` (gitignored) / CI secrets — never in code, commits, or logs.
+- No firm IP in this public repo. Verify external product/API facts before coding.
+- Chandra is senior; be concise, one clear next action, skip basics, flag scope creep.
