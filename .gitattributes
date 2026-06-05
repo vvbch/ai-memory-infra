@@ -1,0 +1,19 @@
+# Normalize line endings across Mac / Windows / Linux (tenet: cross-platform).
+# Stored as LF in the repo; checked out per-OS without polluting diffs.
+* text=auto eol=lf
+
+# Shell scripts MUST stay LF — CRLF breaks them on the Linux VPS.
+*.sh text eol=lf
+
+# Windows-only scripts stay CRLF (if any appear later).
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Binaries: never touch line endings.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
