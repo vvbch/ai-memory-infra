@@ -1,0 +1,38 @@
+#!/bin/sh
+# Tenet 11 / ADR 015 — pre-commit repo-integrity guard (FAST subset).
+#
+# Git runs hooks through its bundled POSIX sh (even on Windows), so this shim is
+# portable. It delegates to the PowerShell check (the Drive-sync risk is a
+# Windows concern). Installed by scripts/install-hooks.ps1 as a COPY, not a
+# symlink (tenet 3: symlinks are Windows-hostile). Hooks live in .git/, which is
+# not versioned, so re-run install-hooks after any re-clone.
+#
+# Fast subset = conflicted-copy + stale index.lock only (no fsck) so commits
+# stay quick. A non-zero exit BLOCKS the commit.
+
+repo="$(git rev-parse --show-toplevel)"
+script="$repo/scripts/check-repo-health.ps1"
+
+if [ ! -f "$script" ]; then
+  echo "pre-commit: $script not found; skipping repo-health check (Tenet 11)." >&2
+  exit 0
+fi
+
+if command -v powershell >/dev/null 2>&1; then
+  ps="powershell"
+elif command -v pwsh >/dev/null 2>&1; then
+  ps="pwsh"
+else
+  echo "pre-commit: PowerShell not found; skipping repo-health check (Tenet 11)." >&2
+  exit 0
+fi
+
+"$ps" -NoProfile -ExecutionPolicy Bypass -File "$script" -Fast -RepoList "$repo"
+status=$?
+if [ "$status" -ne 0 ]; then
+  echo "" >&2
+  echo "pre-commit BLOCKED: repo integrity check failed (Tenet 11 / ADR 015)." >&2
+  echo "Do NOT hand-repair. Re-clone from GitHub and re-apply work." >&2
+  echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+fi
+exit $status

@@ -16,30 +16,47 @@ exclude `.git/` from Mirror, so we **detect and recover** instead. Full rational
 `scripts/check-repo-health.ps1` (configurable repo list via env var — **not**
 hardcoded machine paths) runs, per repo:
 
-- `git fsck --full` — object/pack/ref corruption;
-- a scan for Drive **conflicted-copy** files inside `.git/`
-  (e.g. `* (… conflicted copy …) *`, `* (1).lock`);
-- a **stale `index.lock`** check (lock present with no live git process);
-- **ahead/behind vs remote** — surfaces un-pushed local-only work.
+- `git fsck --full --strict` — object/pack/ref corruption (HARD fail);
+- a scan for Drive **conflicted-copy** files inside `.git/` (name contains
+  `conflicted copy`) — the signature of a bad sync (HARD fail);
+- a **stale `index.lock`** check (present and older than `-StaleLockMinutes`,
+  default 5) (HARD fail);
+- **ahead/behind vs the upstream** — surfaces un-pushed local-only work (INFO).
 
-It **exits non-zero and writes a log file** on any failure. A **fast subset**
-(conflict-copy + `index.lock` only, no `fsck`) is used on the pre-commit path so
-commits stay quick.
+Repo list comes from the **`AI_MEMORY_REPOS`** env var or a `-RepoList` arg —
+**never** hardcoded paths. It **exits non-zero and writes a timestamped log** on
+any HARD problem. A **fast subset** (`-Fast`: conflicted-copy + `index.lock`
+only) runs on the pre-commit path so commits stay quick.
+
+**One-time setup — point it at your repos** (a User env var; survives reboots):
+```powershell
+setx AI_MEMORY_REPOS "C:\path\to\ai-memory-infra;C:\path\to\ai-memory-infra-private"
+```
+Open a new shell after `setx` (or pass `-RepoList "<path>","<path>"` each call).
 
 ### When it fires (three layers)
 
 1. **Soft (human/agent):** run it **at session start and before every commit**
-   (   AGENTS.md working-model line). Manual command (Windows PowerShell 5.1 — no
-   `pwsh` 7 on this box, so invoke via `powershell` with a bypassed policy):
+   (AGENTS.md working-model line). Windows PowerShell 5.1 (no `pwsh` 7 here):
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts\check-repo-health.ps1
    ```
-2. **Fast (pre-commit hook):** `make install-hooks` installs the fast subset as
-   `.git/hooks/pre-commit`. Re-run after any re-clone (hooks live in `.git/`,
-   which isn't versioned).
-3. **Scheduled (daily, unattended):** a register-task script wires the **full**
-   check into Windows Task Scheduler; failures land in a log the operator/agent
-   reviews.
+2. **Fast (pre-commit hook):** installs the fast subset as `.git/hooks/pre-commit`
+   (a **copy**, not a symlink — tenet 3). Re-run after any re-clone (hooks live in
+   `.git/`, which isn't versioned). Bypass a known-safe block with
+   `git commit --no-verify`:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\install-hooks.ps1
+   ```
+3. **Scheduled (daily, unattended):** registers the **full** check in Windows
+   Task Scheduler (per-user, S4U — runs even when locked); failures go to a log
+   under `%LOCALAPPDATA%\ai-memory-repo-health\logs` plus a non-zero
+   Last-Run-Result:
+   ```powershell
+   powershell -ExecutionPolicy Bypass -File scripts\register-repo-health-task.ps1
+   ```
+   On Unix/WSL the three are `make repo-health` / `make install-hooks` /
+   `make register-health-task`.
 
 ### On a RED check — re-clone, do NOT hand-repair
 

@@ -65,6 +65,28 @@ tf-plan: ## terraform plan
 tf-apply: ## terraform apply (uses your cloud creds — review the plan first)
 	$(TF) apply
 
+# ---- Repo integrity: Drive-sync guard (Tenet 11 / ADR 015) ---------------
+# Scripts live at the repo root (../scripts). On Unix/WSL PowerShell is `pwsh`;
+# on native Windows (no make) run the .ps1 directly — see docs/runbook.md.
+ROOT := ..
+PWSH := pwsh -NoProfile -ExecutionPolicy Bypass -File
+
+.PHONY: repo-health
+repo-health: ## Full Drive-sync integrity check (fsck + conflict + lock + ahead/behind)
+	$(PWSH) $(ROOT)/scripts/check-repo-health.ps1
+
+.PHONY: repo-health-fast
+repo-health-fast: ## Fast subset (conflicted-copy + stale index.lock only)
+	$(PWSH) $(ROOT)/scripts/check-repo-health.ps1 -Fast
+
+.PHONY: install-hooks
+install-hooks: ## Copy the pre-commit integrity hook into the repo(s) (re-run after re-clone)
+	$(PWSH) $(ROOT)/scripts/install-hooks.ps1
+
+.PHONY: register-health-task
+register-health-task: ## Register the daily Windows scheduled integrity check
+	$(PWSH) $(ROOT)/scripts/register-repo-health-task.ps1
+
 # ---- Secret helpers -------------------------------------------------------
 .PHONY: gen-jwt
 gen-jwt: ## Generate a JWT_SECRET

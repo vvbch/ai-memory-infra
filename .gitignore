@@ -36,3 +36,6 @@ extension/build/
 .DS_Store
 .idea/
 .vscode/
+
+# Repo-health check logs (Tenet 11 / ADR 015) - local only, never committed
+.repo-health-logs/
