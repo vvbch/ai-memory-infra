@@ -77,6 +77,12 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     truth; commit+push every session (never batch); run `check-repo-health` at
     session start + pre-commit + daily; on any red check **re-clone, don't
     repair**; never commit large firm artifacts (one-way door). See ADR 015.
+12. **Vendors are deliberated, documented, and reversible.** No external
+    dependency (registrar, cloud, DNS, SaaS, model API, paid tool) is adopted
+    *suddenly*. Before committing, weigh in an ADR: total cost **incl. exit cost**,
+    portability/lock-in, reliability & track record, company viability (financials/
+    longevity), and ecosystem/standards. Recommend a default but let the operator
+    decide; every adoption ships with a documented exit (`docs/decommission.md`).
 
 ## Architecture (summary)
 

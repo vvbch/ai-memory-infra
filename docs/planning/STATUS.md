@@ -16,6 +16,22 @@
 needs the DO backend creds + a `domain_name` (no default) + secrets (see blockers).
 Tenet 11 repo-health instrumentation is **built, committed, and verified** (below).
 
+## Done this session (2026-06-06, governance + exit path)
+
+- **Tenet 12 added — "Vendors are deliberated, documented, and reversible."** No
+  provider adopted *suddenly*; weigh cost (incl. **exit cost**), portability,
+  reliability, company viability, ecosystem in an ADR. (`docs/tenets.md` +
+  `AGENTS.md` summary + `.cursor/rules/00-project.mdc`; fixed the stale "skip
+  basics" line there → concierge mode.)
+- **Decommission / rollback / estate runbook modeled** (`docs/decommission.md`):
+  rollback a bad deploy · pause to stop the bill · full decommission closing all
+  3 billable accounts (DO / registrar / OpenAI) — written for a non-engineer
+  executor. Automated by **`scripts/teardown.py`** (cross-platform, confirmed
+  wrapper around `terraform destroy`; `make teardown` / `make tf-plan-destroy`).
+  Linked from `runbook.md` + `setup.md`.
+- **Domain purchase PAUSED.** Porkbun was picked too fast (no tenet-12 analysis);
+  reopened as a documented registrar + DNS-host decision — see blockers / Next action.
+
 ## Done this session (2026-06-06, validation pass)
 
 - **Terraform installed** via `winget install Hashicorp.Terraform` → **v1.15.5**
@@ -72,8 +88,13 @@ Tenet 11 repo-health instrumentation is **built, committed, and verified** (belo
   installed** → the local Compose stack and `make` targets can't run on this
   machine yet (install Docker Desktop via winget, or run the stack on the VPS).
   (git + PowerShell 5.1 work fine.)
-- **Domain name + registrar still TBD** — now the top *decision* blocking forward
-  progress; blocks `terraform plan/apply` (`domain_name` has no default) + Caddyfile.
+- **Domain + registrar + DNS-host — the top *decision*, now a tenet-12 vendor
+  call (not a snap pick).** DigitalOcean is *not* a registrar, so a registrar is
+  unavoidable regardless of name. Live choice: (A) keep DNS at DO [ADR 012, already
+  built/validated] + a custom-NS registrar (Porkbun/Namecheap), or (B) consolidate
+  name+DNS at **Cloudflare** (tier-1 vendor, but rewrites the TF DNS block + revisits
+  ADR 012). Name leaning `chandrav.dev` (`chandra.dev` taken). Blocks `plan/apply`
+  (`domain_name` no default) + Caddyfile. **Awaiting operator decision** + an ADR.
 - **Verify at deploy:** pinned Mem0 image bundles `psycopg`/`langchain-neo4j`
   (else patch Dockerfile); `mem0-dashboard` published tag exists (else build from
   repo); `gpt-5-mini` works as a per-component Mem0 LLM config on the pinned
@@ -99,10 +120,13 @@ Tenet 11 repo-health instrumentation is **built, committed, and verified** (belo
    remaining toolchain: install **Docker Desktop** (`winget install
    Docker.DockerDesktop`, needs a reboot) + `make` only if you want to run the
    Compose stack / `make` targets *locally*; otherwise the stack runs on the VPS.
-2. **[decision — now the gate] Pick the domain + registrar**, buy it, set it in
-   `terraform.tfvars`, and delegate NS to `ns1/ns2/ns3.digitalocean.com`.
+2. **[decision — the gate] Registrar + DNS-host vendor call (tenet 12).** Decide
+   option A (DO DNS + custom-NS registrar) vs B (Cloudflare name+DNS); write the
+   ADR; then buy the name (`chandrav.dev`), set `domain_name` in `terraform.tfvars`,
+   and (option A) delegate NS to `ns1/ns2/ns3.digitalocean.com`. If B, update ADR
+   012 + rewrite the `digitalocean_record` block to `cloudflare_record` + re-validate.
 3. **[gather secrets]** DO API token, DO Spaces key pair, SSH keypair, OpenAI API
-   key → `terraform.tfvars` + `infra/.env`.
+   key (+ Cloudflare API token if option B) → `terraform.tfvars` + `infra/.env`.
 4. Then `docs/setup.md` → "Phase 1 — deploy to the VPS": `tf-init` (two-step
    remote-state bootstrap per `backend.tf`) → `tf-plan` → **`tf-apply`** →
    registrar NS → `bootstrap.sh` on droplet → health-check

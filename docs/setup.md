@@ -186,3 +186,8 @@ Phase 8.
 API answers over HTTPS, dashboard + Neo4j Browser load behind basic auth, and a
 test `POST /memories` round-trips. Then update `STATUS.md`, commit, open the PR
 (CI runs), merge → CD deploys. That closes Phase 1; Phase 2 is backup/restore.
+
+> **Turning it off again.** Everything you stand up here can be cleanly torn down:
+> `docs/decommission.md` covers rollback, pause (stop the bill), and full
+> decommission (close every billable account) — `python scripts/teardown.py` does
+> the automated part.

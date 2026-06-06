@@ -15,4 +15,8 @@ Hard rules, always:
 - TDD: write tests before implementation. 80%+ coverage on `src/`.
 - Secrets only in `.env` (gitignored) / CI secrets — never in code, commits, or logs.
 - No firm IP in this public repo. Verify external product/API facts before coding.
-- Chandra is senior; be concise, one clear next action, skip basics, flag scope creep.
+- No vendor/provider adopted "suddenly": weigh cost (incl. exit), portability,
+  reliability, company viability, ecosystem — in an ADR (tenet 12).
+- Chandra is senior on architecture (be concise, one clear next action, flag scope
+  creep), but for hands-on ops/console/account work use concierge mode: one step at
+  a time, ELI5 → one layer deeper, pre-empt console upsells (see AGENTS.md).

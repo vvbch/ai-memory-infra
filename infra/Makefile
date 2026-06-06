@@ -65,6 +65,14 @@ tf-plan: ## terraform plan
 tf-apply: ## terraform apply (uses your cloud creds — review the plan first)
 	$(TF) apply
 
+.PHONY: tf-plan-destroy
+tf-plan-destroy: ## Preview a full teardown (read-only; destroys nothing)
+	$(TF) plan -destroy
+
+.PHONY: teardown
+teardown: ## Guided, confirmed teardown of all cloud infra (see docs/decommission.md)
+	python $(ROOT)/scripts/teardown.py
+
 # ---- Repo integrity: Drive-sync guard (Tenet 11 / ADR 015) ---------------
 # Scripts live at the repo root (../scripts). On Unix/WSL PowerShell is `pwsh`;
 # on native Windows (no make) run the .ps1 directly — see docs/runbook.md.

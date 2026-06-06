@@ -85,5 +85,15 @@ Instead:
 
 ---
 
-> _Remaining runbook sections (deploy recovery, backup/restore, model swap,
-> rollback) land with Phases 2+._
+## Teardown, rollback & decommission
+
+The exit path (tenet 12) lives in **`docs/decommission.md`**: rollback a bad
+deploy, pause to stop the monthly spend, or fully decommission and close every
+billable account — written so a non-engineer executor can follow it. The
+automated piece is `scripts/teardown.py` (`make teardown` / `make tf-plan-destroy`
+for a dry run), a confirmed wrapper around `terraform destroy`.
+
+---
+
+> _Remaining runbook sections (deploy recovery, backup/restore, model swap)
+> land with Phases 2+._

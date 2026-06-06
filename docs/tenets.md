@@ -120,3 +120,27 @@ exclude `.git` from a Mirror-mode sync, so we **mitigate** rather than avoid:
 Decision, risk, and this mitigation contract are recorded in **ADR 015**; the
 session-start / pre-commit / scheduled firing of the integrity check is the
 operational expression of this tenet.
+
+## 12. Vendors are deliberated, documented, and reversible
+No external dependency — registrar, cloud, DNS host, object store, SaaS, model/
+API provider, paid tool — gets adopted *suddenly*. Before committing to one, weigh
+and **write down (in an ADR, at the right verification tier — tenet 8)** these
+dimensions, not just the sticker price:
+
+1. **Total cost over time** — setup + recurring + cost-at-scale, **and the
+   exit/migration cost**. A cheap service with painful lock-in is not cheap.
+2. **Portability / lock-in** — can we export our data and config and leave on
+   *standard formats* (S3, DNS zone files, OpenAI-compatible APIs, plain SQL)?
+   Prefer open standards; name the exit path before entering (tenet 2).
+3. **Reliability & track record** — uptime/SLA, status-page and incident history,
+   support quality, how it behaves under failure.
+4. **Company viability** — ownership, reputation, and financial health/longevity:
+   will they plausibly still exist and be well-run in 5–10 years? Treat recent
+   acquisitions and price-hike histories as yellow flags.
+5. **Ecosystem & standards** — what else the vendor powers, how mainstream it is,
+   and whether it speaks portable protocols so we stay swappable.
+
+Recommend a default, but **surface the trade-off and let the operator decide** —
+this is a one-way-door check (tenet 6/7/9 all feed it). Every adoption ships with
+its **decommission/exit path** documented (`docs/decommission.md`), so anything we
+turn on, we (or an executor) can cleanly turn off.
