@@ -12,7 +12,8 @@ context across every LLM, on any device.
 - **Reach**: Chrome extension (desktop / ChromeOS) + Claude MCP connector
   (iOS, Claude Code) + Cursor/VS Code as MCP clients. Android extension
   coverage is best-effort only (see ADR 004). Native LLM UIs unchanged.
-- **Extraction**: DeepSeek V4 Flash (OpenAI-compatible, ~Rs.30/mo).
+- **Models**: OpenAI `gpt-4.1-nano` extraction + `text-embedding-3-small`
+  embeddings (single provider, swappable; ~Rs.50/mo). See ADR 013.
 
 ## Quick start
 

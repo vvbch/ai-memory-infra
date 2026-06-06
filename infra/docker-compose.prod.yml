@@ -1,1 +1,71 @@
-# prod overrides - Phase 1
+# Production overrides for the 4GB BLR1 droplet.
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Adds: memory/CPU limits sized for 4GB, log rotation, and Neo4j heap/pagecache
+# tuning. Restart policy is already `unless-stopped` in the base file.
+#
+# Note: Compose *concatenates* `ports` across overlay files, so the base file's
+# 127.0.0.1 dev mappings can't be removed here — but they bind to localhost only
+# and the firewall permits just 22/80/443, so nothing extra is exposed.
+
+services:
+  caddy:
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  mem0:
+    deploy:
+      resources:
+        limits:
+          memory: 768M
+          cpus: "1.0"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  postgres:
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  neo4j:
+    environment:
+      # Keep Neo4j inside its memory limit on a small box.
+      - NEO4J_server_memory_heap_initial__size=512m
+      - NEO4J_server_memory_heap_max__size=512m
+      - NEO4J_server_memory_pagecache_size=512m
+    deploy:
+      resources:
+        limits:
+          memory: 1536M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
+  mem0-dashboard:
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"

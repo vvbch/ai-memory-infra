@@ -1,1 +1,75 @@
-# reverse proxy - Phase 1
+# Caddy reverse proxy — the only service facing the internet (ADR 009).
+# Auto-provisions Let's Encrypt TLS for every subdomain. {$VAR} placeholders are
+# read from the environment (see .env / .env.example): DOMAIN, ACME_EMAIL,
+# BASIC_AUTH_USER, BASIC_AUTH_HASH (generate the hash with `caddy hash-password`).
+#
+# Mem0's API has its own JWT auth, so memory.{domain} is not basic-auth'd; the
+# admin UIs (dashboard, Neo4j Browser) sit behind basic auth as a second gate.
+#
+# Rate limiting needs a custom Caddy build (the caddy-ratelimit plugin via
+# xcaddy) — it's not in caddy:2-alpine. Tracked as a Phase 1 hardening follow-up.
+
+{
+	email {$ACME_EMAIL}
+	# Uncomment for cert-issuance debugging against the staging CA:
+	# acme_ca https://acme-staging-v02.api.letsencrypt.org/directory
+}
+
+# Reusable security headers.
+(security_headers) {
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload"
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+}
+
+# --- Mem0 REST API + MCP ---------------------------------------------------
+memory.{$DOMAIN} {
+	import security_headers
+	encode gzip
+
+	# CORS allowlist lives in the Mem0 app (DASHBOARD_URL) plus the Chrome
+	# extension origin. Add per-origin rules here if you need to widen it:
+	# @ext header Origin chrome-extension://<your-extension-id>
+	# header @ext Access-Control-Allow-Origin "{header.Origin}"
+
+	reverse_proxy mem0:8000
+}
+
+# --- Mem0 dashboard (admin UI) --------------------------------------------
+dash.{$DOMAIN} {
+	import security_headers
+	encode gzip
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+	reverse_proxy mem0-dashboard:3000
+}
+
+# --- Neo4j Browser ---------------------------------------------------------
+# The browser UI loads over HTTPS here; it then opens a separate Bolt
+# connection. For Phase 1, reach Bolt (7687) via SSH tunnel rather than
+# exposing it. A public Bolt endpoint (neo4j+s://) is a later hardening step.
+graph.{$DOMAIN} {
+	import security_headers
+	encode gzip
+	basic_auth {
+		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+	}
+	reverse_proxy neo4j:7474
+}
+
+# --- Grafana (Phase 8 — observability) ------------------------------------
+# DNS A record for monitor. is provisioned now; this route activates once
+# Prometheus + Grafana join the stack in Phase 8 (tenet 7).
+# monitor.{$DOMAIN} {
+# 	import security_headers
+# 	encode gzip
+# 	basic_auth {
+# 		{$BASIC_AUTH_USER} {$BASIC_AUTH_HASH}
+# 	}
+# 	reverse_proxy grafana:3000
+# }

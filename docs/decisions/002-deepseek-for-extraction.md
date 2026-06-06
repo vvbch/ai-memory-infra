@@ -1,6 +1,9 @@
 # ADR 002: DeepSeek V4 Flash for extraction
 
-**Status:** Accepted
+**Status:** Superseded by **ADR 013** (2026-06-05). A re-price showed
+`gpt-4.1-nano` ≈ DeepSeek on cost, so extraction consolidated onto a single
+OpenAI provider. DeepSeek remains a documented, swappable alternative; the
+cost analysis below is retained for the record.
 **Date:** 2026-06-04
 
 ### Context

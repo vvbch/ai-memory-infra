@@ -3,6 +3,10 @@
 > Canonical agent context for this repo. Editor-agnostic by design: read by
 > Cursor (`.cursor/rules` point here), VS Code / Copilot, and Claude Code
 > (`CLAUDE.md` points here). **Edit this file, not the pointers.**
+>
+> **▶ Resuming / "what's next?" → read `docs/planning/STATUS.md` first** (current
+> phase, last decisions, blockers, next action). Then `docs/setup.md` for the
+> live operational walkthrough, and `docs/interview_packet.md` for the narrative.
 
 ## What we're building
 
@@ -33,6 +37,17 @@ prefer one clear next action over option lists; flag scope creep.
    memory. Zero hard dependency.
 5. **No firm IP in this repo.** Public platform + LifeGraph POC only. Trading
    / social / RIA logic lives in separate private repos that plug in via REST.
+6. **Cost-conscious, not cost-blind.** Default to cheaper, justify every
+   recurring rupee, annotate `(~₹X/mo)`. Justified spend is OK in seed stage.
+7. **Fewer moving parts.** For a solo project, simplicity wins; add a
+   container/provider/dep only when its value exceeds lifetime maintenance.
+8. **Verify in the right tier.** Web/docs/repo for dated facts → deep research
+   for trade-offs → internal knowledge last. Repo source beats blogs.
+9. **One provider across pipeline stages** (extraction + embeddings) unless the
+   cost/capability gap is vast; keep it swappable, justify splits in an ADR.
+10. **Single source of truth; no instruction drift.** Restated facts/decisions
+    across docs must agree — a change in one triggers the others (Definition of
+    Done below). Does NOT govern Mem0 dynamic memory (dedup-reconciled, not synced).
 
 ## Architecture (summary)
 
@@ -42,7 +57,8 @@ Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
 Claude MCP connector (iOS, Claude Code) + Cursor/VS Code as MCP clients.
 Android extension coverage is best-effort only (Kiwi archived Jan 2025; see
 ADR 004) and iOS non-Claude LLMs are a known gap.
-Extraction via DeepSeek V4 Flash (OpenAI-compatible, `OPENAI_BASE_URL`).
+Models: single OpenAI provider — `gpt-4.1-nano` (extraction) +
+`text-embedding-3-small` (embeddings), swappable (ADR 013, supersedes ADR 002).
 Full diagram: `docs/architecture.md`.
 
 ## Ventures (metadata tags for memory categorization)
@@ -75,3 +91,24 @@ Full diagram: `docs/architecture.md`.
 - Tooling entrypoints are cross-platform: `scaffold.py`, not `scaffold.sh`.
 - Secrets only via `.env` (gitignored) and CI secrets. Never in code/commits/logs.
 - When a fact about an external product/API could be stale, verify before coding.
+
+## Documentation discipline / Definition of Done
+
+Tenet 10: restated facts must not drift. A change is **not done** until the docs
+it touches are updated *in the same PR*. Use this trigger table — change-type →
+docs to update:
+
+| When you change… | Update these |
+|---|---|
+| Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, `docs/interview_packet.md` (arch-at-a-glance + decision log) |
+| A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), `interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |
+| A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md`, `.cursor/rules` pointer if relevant |
+| Infra/IaC (terraform, compose, Caddy, `.env`) | `docs/runbook.md` / `docs/setup.md` if ops or commands change, `README.md` quick-start if commands change, `STATUS.md` |
+| A `src/` module or capability | tests first (TDD), `README.md`/`architecture.md` if user-facing, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |
+| Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |
+| Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
+| End of any working session | `docs/planning/STATUS.md` — overwrite: current phase, last decisions, open blockers, next action |
+
+**Done means:** code tests green (if code) · the trigger row's docs updated · an
+ADR exists for any major choice · `STATUS.md` refreshed · PR checklist ticked ·
+no drift between any two places that state the same fact.

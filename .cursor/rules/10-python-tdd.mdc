@@ -10,6 +10,6 @@ globs: src/**/*.py,tests/**/*.py
 - TDD order: write the failing test first, then implement to green. Don't add
   code without a test. New module ⇒ new test module mirroring the path.
 - CLIs use Click. Config/secrets come from env, never hard-coded.
-- External calls (DeepSeek/OpenAI-compatible, Neo4j, Postgres) are mocked in
-  unit tests (respx for HTTP); only e2e/integration tests hit real services.
+- External calls (OpenAI / OpenAI-compatible LLM + embeddings, Neo4j, Postgres)
+  are mocked in unit tests (respx for HTTP); only e2e/integration tests hit real services.
 - Cross-platform: use `pathlib`, not string paths or shell-isms.

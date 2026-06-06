@@ -1,1 +1,37 @@
-# tfvars template - Phase 1
+# Copy to terraform.tfvars (gitignored) and fill in. Never commit real values.
+#   cp terraform.tfvars.example terraform.tfvars
+
+# ---- Credentials (secrets) ----------------------------------------------
+do_token          = "dop_v1_REPLACE_ME"          # DO API token (API > Tokens)
+spaces_access_id  = "REPLACE_ME"                  # DO Spaces key (API > Spaces Keys)
+spaces_secret_key = "REPLACE_ME"
+
+# ---- Domain (DECISION 2 — name still TBD) -------------------------------
+# Register a cheap name at any registrar, then delegate its nameservers to
+# DigitalOcean (see `terraform output registrar_nameservers`). Replace the
+# placeholder below with the real domain once chosen.
+domain_name = "example.com" # TODO: replace with the registered domain (TBD)
+
+# Subdomains default to ["memory","dash","graph","monitor"] — `dash` is kept
+# because the OSS Mem0 server ships a dashboard container. Override if needed:
+# subdomains = ["memory", "dash", "graph", "monitor"]
+
+# ---- SSH -----------------------------------------------------------------
+# Paste the *public* key contents (one line). Generate with:
+#   ssh-keygen -t ed25519 -C "ai-memory-infra"
+ssh_public_key = "ssh-ed25519 AAAA...REPLACE_ME... ai-memory-infra"
+
+# Tighten SSH to your IP for production, e.g.:
+# ssh_allowed_cidrs = ["203.0.113.4/32"]
+
+# ---- Backups bucket ------------------------------------------------------
+# Must be globally unique across DO Spaces. blr1 has no Spaces, so sgp1 is the
+# nearest region.
+backup_bucket_name = "ai-memory-infra-backups" # TODO: make this unique to you
+# spaces_region    = "sgp1"
+
+# ---- Optional overrides (sane defaults in variables.tf) ------------------
+# region                 = "blr1"
+# droplet_size           = "s-2vcpu-4gb"  # 4GB plan (~₹2,000/mo)
+# droplet_image          = "ubuntu-24-04-x64"
+# enable_droplet_backups = false          # we back up at the app layer instead

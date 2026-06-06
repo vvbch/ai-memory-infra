@@ -1,0 +1,17 @@
+---
+description: Documentation Definition-of-Done — fires on docs/ and src/ changes
+globs: docs/**,src/**
+---
+
+You are changing files under `docs/` or `src/`. Honor the **Definition of Done**
+in `AGENTS.md` (canonical — don't duplicate it here, tenet 2/10):
+
+- A change isn't done until the docs in the DoD trigger table are updated in the
+  same PR. No instruction drift (tenet 10).
+- In particular, confirm the PR checklist item holds: **`interview_packet.md` /
+  `README.md` / `STATUS.md` updated per the Definition of Done.**
+- Major decision or reversal ⇒ add/supersede an ADR in `docs/decisions/` and add
+  a dated entry to the `interview_packet.md` decision log.
+- End of session ⇒ overwrite `docs/planning/STATUS.md` (phase, last decisions,
+  blockers, next action).
+- This governs authored artifacts only — NOT Mem0's dynamic memory store.
