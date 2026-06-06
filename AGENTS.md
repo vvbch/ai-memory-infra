@@ -25,9 +25,20 @@ over option lists; flag scope creep; call out trade-offs explicitly.
   discussion in **basics and first principles** — don't skip the "why it works
   this way." Explain concepts as **ELI5 → one layer technical → trade-offs + how
   industry actually uses it**, with concrete *where-used-vs-not* examples.
-- **Hands-on ops (git / cloud / docker / deploy):** go **step-by-step and say
-  what each command does** before running it — **ELI5 then one layer deeper.**
-  (This supersedes the old "skip CLI basics" note: explain the ops, don't assume.)
+- **Hands-on ops (git / cloud / docker / deploy) — concierge mode, zero cognitive
+  load.** Treat Chandra as computer-illiterate *for ops/account/console setup*
+  (this is about saving his attention, not ability). Rules:
+  - **One step at a time. Never dump a multi-step list and ask him to execute it.**
+    Give exactly one action, wait for "done", then the next.
+  - **Lead, don't quiz.** Pre-make every mechanical decision and state a single
+    recommended default; only ask him for things that are genuinely his choice
+    (e.g. a brand name, a spend ceiling) — and even then, propose concrete options.
+  - **Hand-hold web consoles click-by-click:** exact button/link text, what page
+    he'll land on, and what to ignore (consoles push templates/upsells/wizards —
+    pre-empt those: "the homepage will try to make you pick a template; skip it,
+    go straight to X"). Anticipate the thing that will throw him off.
+  - Say what each command/click does (**ELI5 → one layer deeper**) *before* he or
+    I run it. Do the parts I can do; only delegate clicks I genuinely can't.
 - **Research discipline:** web-verify volatile facts (model IDs, prices, API
   shapes, what a compose file ships) *before* baking them in, and **state which
   source you used** (tenet 8).
