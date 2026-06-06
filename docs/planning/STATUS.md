@@ -9,14 +9,28 @@
 ## Current phase
 
 **Phase 1 — Infrastructure as Code.** All Phase-1 infra files are written and
-look correct (`infra/terraform/*` — `main.tf`/`variables.tf`/`outputs.tf`/
-`backend.tf` + `terraform.tfvars.example`; `infra/docker-compose.yml` +
-`.prod.yml`; `infra/Caddyfile`; `infra/.env.example`; `scripts/bootstrap.sh`;
-`infra/Makefile`). **Not yet `terraform validate`'d or applied** — Terraform/
-Docker aren't installed on this machine yet (see blockers). Tenet 11 repo-health
-instrumentation is **built, committed, and verified** (see below).
+**now `terraform fmt`-clean + `terraform validate`-pass** (`infra/terraform/*` —
+`main.tf`/`variables.tf`/`outputs.tf`/`backend.tf` + `terraform.tfvars.example`;
+`infra/docker-compose.yml` + `.prod.yml`; `infra/Caddyfile`; `infra/.env.example`;
+`scripts/bootstrap.sh`; `infra/Makefile`). **Not yet `plan`'d or applied** — that
+needs the DO backend creds + a `domain_name` (no default) + secrets (see blockers).
+Tenet 11 repo-health instrumentation is **built, committed, and verified** (below).
 
-## Done this session (2026-06-06)
+## Done this session (2026-06-06, validation pass)
+
+- **Terraform installed** via `winget install Hashicorp.Terraform` → **v1.15.5**
+  (binary under `%LOCALAPPDATA%\Microsoft\WinGet\Packages\Hashicorp.Terraform_*`;
+  PATH updated, new shells pick it up — current shells need a restart).
+- **IaC validated:** `terraform -chdir=infra/terraform fmt -check -recursive` →
+  clean; `init -backend=false` installed **digitalocean/digitalocean v2.87.0** and
+  wrote `.terraform.lock.hcl`; `terraform validate` → **"Success! The configuration
+  is valid."** No changes to the `.tf` files were needed.
+- **Committed `infra/terraform/.terraform.lock.hcl`** (provider pin, tenet 1).
+- Session-start repo-health check (Tenet 11): both repos OK, 0 ahead / 0 behind.
+- **Still not installed:** Docker Desktop + `make` (not needed for `validate`;
+  needed for the local Compose stack + `make` targets).
+
+## Done earlier (2026-06-06)
 
 - **Tenet 11 repo-health instrumentation — built + live-verified, all 3 layers:**
   - `scripts/check-repo-health.ps1` (git fsck + `.git` conflicted-copy scan +
@@ -53,13 +67,13 @@ instrumentation is **built, committed, and verified** (see below).
 
 ## Open blockers / risks
 
-- **Local tooling missing — the gating blocker.** `terraform`, `docker`, and
-  `make` are **not installed** on this machine. So `terraform fmt/validate/plan/
-  apply`, the local Compose stack, and `make` targets can't run here yet. Install
-  Terraform + Docker Desktop (winget) — or validate via CI. (git + PowerShell 5.1
-  work fine; the shell backend that was flaky earlier has recovered.)
-- **Domain name + registrar still TBD** — the only *decision* blocking forward
-  progress; blocks Terraform DNS (`domain_name` has no default) + Caddyfile.
+- **Local tooling — partially unblocked.** `terraform` is now installed (v1.15.5)
+  and `fmt`/`init`/`validate` work here. **`docker` + `make` are still not
+  installed** → the local Compose stack and `make` targets can't run on this
+  machine yet (install Docker Desktop via winget, or run the stack on the VPS).
+  (git + PowerShell 5.1 work fine.)
+- **Domain name + registrar still TBD** — now the top *decision* blocking forward
+  progress; blocks `terraform plan/apply` (`domain_name` has no default) + Caddyfile.
 - **Verify at deploy:** pinned Mem0 image bundles `psycopg`/`langchain-neo4j`
   (else patch Dockerfile); `mem0-dashboard` published tag exists (else build from
   repo); `gpt-5-mini` works as a per-component Mem0 LLM config on the pinned
@@ -81,17 +95,15 @@ instrumentation is **built, committed, and verified** (see below).
 
 ## Next action
 
-1. **[operator] Unblock the toolchain:** install **Terraform** + **Docker
-   Desktop** (e.g. `winget install Hashicorp.Terraform`, `winget install
-   Docker.DockerDesktop`). Optional: `make`.
-2. **[operator] Pick the domain + registrar**, buy it, set it in
+1. ✅ **Terraform installed + IaC validated** (this session — see "Done"). Optional
+   remaining toolchain: install **Docker Desktop** (`winget install
+   Docker.DockerDesktop`, needs a reboot) + `make` only if you want to run the
+   Compose stack / `make` targets *locally*; otherwise the stack runs on the VPS.
+2. **[decision — now the gate] Pick the domain + registrar**, buy it, set it in
    `terraform.tfvars`, and delegate NS to `ns1/ns2/ns3.digitalocean.com`.
-3. **[this session] Validate the IaC:** `make tf-fmt` + `terraform validate`
-   (once Terraform is installed); fix anything that surfaces.
-4. Then `docs/setup.md` → "Phase 1 — deploy to the VPS" (operator-run): fill
-   `terraform.tfvars` + `infra/.env` → `make tf-init` → `tf-plan` → **`tf-apply`**
-   → registrar NS → `bootstrap.sh` on droplet → health-check
-   `https://memory.<domain>/docs`. Two-step remote-state bootstrap per `backend.tf`.
-
-Prereqs to gather: DO API token, DO Spaces key pair, SSH keypair, registered
-domain, OpenAI API key.
+3. **[gather secrets]** DO API token, DO Spaces key pair, SSH keypair, OpenAI API
+   key → `terraform.tfvars` + `infra/.env`.
+4. Then `docs/setup.md` → "Phase 1 — deploy to the VPS": `tf-init` (two-step
+   remote-state bootstrap per `backend.tf`) → `tf-plan` → **`tf-apply`** →
+   registrar NS → `bootstrap.sh` on droplet → health-check
+   `https://memory.<domain>/docs`.
