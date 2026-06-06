@@ -31,7 +31,7 @@ flowchart TB
     end
 
     subgraph Models["OpenAI — single provider, swappable behind OpenAI-compatible API (tenets 2, 7, 9)"]
-        LLM["gpt-4.1-nano<br/>fact extraction"]
+        LLM["gpt-5-mini<br/>fact extraction"]
         EMB["text-embedding-3-small<br/>embeddings (Mem0 default)<br/>→ future: Ollama on Alienware"]
     end
 
@@ -48,11 +48,14 @@ flowchart TB
     NEO --> BACKUP
 ```
 
-> **Why one provider?** Both stages run on OpenAI — `gpt-4.1-nano` (extraction)
-> and `text-embedding-3-small` (embeddings, Mem0's default). A 2026 re-price
-> showed `gpt-4.1-nano` (~₹35/mo) ≈ DeepSeek (~₹37/mo) — the old ₹30-vs-₹400 gap
-> was against `gpt-4o-mini`, not `nano` — so tenets 7 & 9 favour one provider:
-> one key, one bill, no per-component config. DeepSeek/Qwen stay documented,
+> **Why one provider?** Both stages run on OpenAI — `gpt-5-mini` (extraction,
+> Mem0's current default) and `text-embedding-3-small` (embeddings, Mem0's
+> default). A 2026 re-price collapsed the old ₹30-vs-₹400 cost gap (that was
+> against `gpt-4o-mini`), so by tenets 7 & 9 one provider wins: one key, one
+> bill, no per-component config. Extraction on `gpt-5-mini` is ~₹90/mo (~2–3×
+> the `gpt-4.1-nano` tier) — still trivial at ~50 interactions/day — and is
+> chosen for **structured-output reliability** (valid JSON + nuanced venture
+> categorization), not cost. DeepSeek/Qwen and `gpt-4.1-nano` stay documented,
 > swappable alternatives; steady state moves both stages to local Ollama on the
 > Alienware. See ADR 011 (embeddings) and ADR 013 (single-provider, supersedes ADR 002).
 
@@ -66,11 +69,11 @@ interactions/day; see ADR 002 for the extraction-cost model.
 |---|---|---|
 | Domain name | The project's address; one registered name, subdomains carved out of it | **(~₹85/mo)** (~₹1,000/yr) |
 | VPS — DigitalOcean 4GB droplet, BLR1 (Bangalore) | Runs the whole Docker Compose stack (Mem0 API, Postgres/pgvector, Neo4j, dashboard, Caddy, monitoring) | **(~₹2,000/mo)** |
-| OpenAI `gpt-4.1-nano` — extraction LLM | Pulls discrete facts out of conversations (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹35/mo)** |
+| OpenAI `gpt-5-mini` — extraction LLM | Pulls discrete facts out of conversations; chosen for structured-output reliability (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹90/mo)** |
 | OpenAI `text-embedding-3-small` — embeddings | Vectorizes facts + queries for pgvector similarity search (Mem0's default embedder) | **(~₹15/mo)** |
 | DO Spaces — backup object storage | Off-box destination for daily `pg_dump` + Neo4j dumps (Phase 2) | **(~₹400/mo)** |
 | GitHub — repo + Actions (CI/CD) | Source of truth, CI on PRs, CD to the VPS, weekly backup/eval jobs | **(₹0)** (free for public repo) |
-| | **Approx. total** | **~₹2,535/mo** |
+| | **Approx. total** | **~₹2,590/mo** |
 
 **Domain sub-components** — the single domain name decomposes into several
 pieces; all are ₹0 beyond the registration fee above (DigitalOcean DNS is free).

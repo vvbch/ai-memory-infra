@@ -32,4 +32,36 @@ Both are excellent but add another managed dependency. For a personal project, a
 - **Positive:** Quantitative proof that the system works. Cross-LLM cost-vs-quality comparison is a concrete, reproducible result interviewers can examine. Guardrail tests prove security isn't just claimed but verified.
 - **Negative:** Gold-standard datasets must be hand-labeled — initial effort of ~2 days. Datasets need periodic refresh as memories grow.
 
+### Note (2026-06-06) — RAG-quality mitigations are mostly native to Mem0; gate the rest on this eval
+
+A review of recommended RAG-quality mitigations (raised in a Gemini design
+critique) found that **most are already built into Mem0**, so we build nothing
+and instead *verify* them through this framework:
+
+- **Multi-signal retrieval = Mem0 hybrid search, on by default.** Mem0 v3's
+  search combines **vector similarity + BM25 keyword + entity-graph boosting**
+  automatically, no configuration. So "add hybrid/keyword retrieval" is already
+  satisfied; the retrieval eval (suite 1) measures whether it's good enough.
+  *(Source: `mem0ai/mem0` `skills/mem0/references/{architecture,features}.md`.)*
+- **Reranker = a config flag, left OFF by default.** Mem0 exposes a reranker
+  (`rerank=True` / a configurable `llm_reranker` or specialized provider); v3's
+  default is `rerank=False` (it was `True` in v2). It adds ~150–200 ms latency.
+  **Decision: leave it OFF and enable it only if this eval shows retrieval
+  precision@5 < 0.7** (the existing CI threshold). Don't pay the latency until
+  the numbers justify it.
+- **"Lost-in-the-middle" / long-context synthesis hallucination = misapplied
+  here.** That failure mode is about a *generator* LLM synthesizing a long answer
+  over many retrieved chunks. In this system the extraction model (`gpt-5-mini`,
+  ADR 013) only does **short-input fact extraction** (a snippet in, small JSON
+  out) — it never synthesizes long answers. Synthesis happens in the **native
+  LLMs** (Claude/ChatGPT/Gemini/DeepSeek), which own their own context handling.
+  So this mitigation doesn't apply to our pipeline; noting it here so it isn't
+  re-raised.
+
+**Net:** hybrid retrieval is free and already on; the reranker is a deferred,
+eval-gated toggle; the synthesis-hallucination concern is out of scope for the
+extraction stage. The portfolio narrative is "evaluated the critique, verified
+the platform already covers it natively, deferred the one optional knob behind a
+measured gate" — not "bolted on retrieval machinery we didn't need."
+
 ---

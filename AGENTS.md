@@ -17,8 +17,20 @@ device. Also a portfolio showcase: it must read as production-grade infra.
 ## Who
 
 **Chandra** — ex-Amazon SDE3 (3y) then SDM/EM (10y+), Bangalore. Direct,
-action-oriented, pushback-tolerant. Skip Docker/Git/CLI basics. Be concise;
-prefer one clear next action over option lists; flag scope creep.
+action-oriented, pushback-tolerant. Be concise; prefer one clear next action
+over option lists; flag scope creep; call out trade-offs explicitly.
+
+**How to teach / collaborate (apply every interaction):**
+- **Architecture / system design:** he's senior here, but still ground each
+  discussion in **basics and first principles** — don't skip the "why it works
+  this way." Explain concepts as **ELI5 → one layer technical → trade-offs + how
+  industry actually uses it**, with concrete *where-used-vs-not* examples.
+- **Hands-on ops (git / cloud / docker / deploy):** go **step-by-step and say
+  what each command does** before running it — **ELI5 then one layer deeper.**
+  (This supersedes the old "skip CLI basics" note: explain the ops, don't assume.)
+- **Research discipline:** web-verify volatile facts (model IDs, prices, API
+  shapes, what a compose file ships) *before* baking them in, and **state which
+  source you used** (tenet 8).
 
 ## Tenets (non-negotiable — see docs/tenets.md)
 
@@ -48,6 +60,12 @@ prefer one clear next action over option lists; flag scope creep.
 10. **Single source of truth; no instruction drift.** Restated facts/decisions
     across docs must agree — a change in one triggers the others (Definition of
     Done below). Does NOT govern Mem0 dynamic memory (dedup-reconciled, not synced).
+11. **Drive-synced repos: remote is truth, integrity is checked.** Both repos
+    (incl. `.git`) live under Google Drive Mirror — deliberate (off-machine
+    backup) but risky (Drive can corrupt `.git`). Mitigation contract: GitHub is
+    truth; commit+push every session (never batch); run `check-repo-health` at
+    session start + pre-commit + daily; on any red check **re-clone, don't
+    repair**; never commit large firm artifacts (one-way door). See ADR 015.
 
 ## Architecture (summary)
 
@@ -57,8 +75,9 @@ Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
 Claude MCP connector (iOS, Claude Code) + Cursor/VS Code as MCP clients.
 Android extension coverage is best-effort only (Kiwi archived Jan 2025; see
 ADR 004) and iOS non-Claude LLMs are a known gap.
-Models: single OpenAI provider — `gpt-4.1-nano` (extraction) +
-`text-embedding-3-small` (embeddings), swappable (ADR 013, supersedes ADR 002).
+Models: single OpenAI provider — `gpt-5-mini` (extraction, Mem0's current
+default) + `text-embedding-3-small` (embeddings), swappable (ADR 013, supersedes
+ADR 002).
 Full diagram: `docs/architecture.md`.
 
 ## Ventures (metadata tags for memory categorization)
@@ -91,6 +110,25 @@ Full diagram: `docs/architecture.md`.
 - Tooling entrypoints are cross-platform: `scaffold.py`, not `scaffold.sh`.
 - Secrets only via `.env` (gitignored) and CI secrets. Never in code/commits/logs.
 - When a fact about an external product/API could be stale, verify before coding.
+
+## Working model (sessions, tooling, governance)
+
+- **Everything runs in a single Cursor session (this one).** Planning,
+  decisions, fact-verification, doc upkeep, **and execution/build** all happen
+  here — there is no longer a separate CONTROL vs BUILD session. The earlier
+  Claude.ai control surface and the parallel build session are both **retired**.
+  One session owns the whole repo (public `docs/` + `infra/` + `src/` and the
+  private companion repo).
+- If a second Cursor session is ever opened in parallel, the rule still holds:
+  sessions share **files, not chat memory** — **re-read a file before acting**,
+  and never edit the same file from two sessions at once.
+- **The safeguard against agent error is the Definition-of-Done verification
+  gate below — not a second tool.** Trust comes from the DoD + tests + ADRs +
+  no-drift check, applied every change, not from which editor is open.
+- **Repo integrity (Tenet 11), third/soft layer:** run
+  `scripts/check-repo-health.*` **at session start and before every commit**.
+  (The hard layers are the git pre-commit hook + the daily scheduled run; this
+  line is the human/agent reminder so a missing hook never means a missing check.)
 
 ## Documentation discipline / Definition of Done
 

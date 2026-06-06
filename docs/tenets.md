@@ -90,3 +90,33 @@ enforced by the Definition of Done in `AGENTS.md`. Prefer a pointer over a copy
 (ADD / UPDATE / DELETE during extraction), not by manual single-source editing.
 This tenet governs **authored artifacts** (docs, configs, decisions), never the
 learned memory graph.
+
+## 11. Drive-synced repos: remote is truth, integrity is checked
+Both repos (including their `.git` internals) live inside a Google Drive
+"Mirror" folder. This is a deliberate operator choice — it gives a second,
+always-on off-machine copy and lets large gitignored firm artifacts ride the
+same Drive backup. It also carries a real, accepted **risk**: Drive syncing
+`.git` internals can corrupt the repo — conflicted-copy files inside `.git`,
+half-synced pack/ref files, or a stale `index.lock`. There is no reliable way to
+exclude `.git` from a Mirror-mode sync, so we **mitigate** rather than avoid:
+
+1. **GitHub is the source of truth, not the local working copy.** The Drive copy
+   is a convenience and a backup-of-last-resort, never the canonical record.
+2. **Commit and push every session — never batch.** The smaller the window of
+   un-pushed work, the smaller the blast radius if the local `.git` corrupts.
+3. **Integrity is checked, not assumed.** `scripts/check-repo-health.*` runs
+   `git fsck`, scans for Drive conflicted-copy files in `.git`, detects stale
+   `index.lock`, and reports ahead/behind vs the remote — at session start, on a
+   daily schedule, and as a fast pre-commit subset.
+4. **On any red check: do not hand-repair.** Re-clone from GitHub into a clean
+   path and re-apply uncommitted work. Repairing a Drive-corrupted `.git` in
+   place is a time sink with no guaranteed-clean end state.
+5. **Never commit large firm artifacts into git history** — that is a one-way
+   door (history rewrites are painful and break every clone). Large files stay
+   gitignored and Drive-backed, outside git.
+6. **Quit Drive while actively working in the repo** when practical, so a sync
+   pass can't race a `git` write.
+
+Decision, risk, and this mitigation contract are recorded in **ADR 015**; the
+session-start / pre-commit / scheduled firing of the integrity check is the
+operational expression of this tenet.

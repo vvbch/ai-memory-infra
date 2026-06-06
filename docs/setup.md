@@ -29,7 +29,7 @@ You need these before Step 1:
 4. **A registered domain** — buy a cheap name at any registrar. The name is still
    TBD on our side; you'll put it in `terraform.tfvars`.
 5. **An OpenAI API key** — platform.openai.com. Serves both extraction
-   (`gpt-4.1-nano`) and embeddings (`text-embedding-3-small`).
+   (`gpt-5-mini`) and embeddings (`text-embedding-3-small`).
 
 ---
 
