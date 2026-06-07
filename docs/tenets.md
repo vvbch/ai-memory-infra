@@ -208,3 +208,27 @@ Two rules carry the most weight:
 **Blameless:** the target is always the system, never the operator or the agent.
 Match COE depth to blast radius (tenets 13 & 8): a one-line note for the trivial, a
 full COE for anything with teeth.
+
+## 15. Fixed, capped cost beats variable — even at a mild premium
+Prefer a **predictable, fixed monthly cost** over usage-based / on-demand pricing,
+**even when on-demand pencils out mildly cheaper.** For a solo, self-funded project
+with a possible income change, a *known* bill that cannot surprise us is worth more
+than a few rupees of expected savings: it makes budgeting, pausing (tenet 12), and
+forecasting clean, and — most importantly — it **caps the blast radius** of a
+misconfiguration, a runaway loop, abuse, or an unexpected traffic spike. A cost
+spiral is a far worse outcome than a small known premium.
+
+Operating rules:
+- **Default to flat-rate resources** — a fixed-size droplet, a reserved/annual plan —
+  over autoscaling or per-request billing.
+- **Anything that *must* be usage-based** (e.g. an LLM API) gets a **hard spend cap +
+  billing alerts set at adoption** — never left uncapped.
+- **Set billing alerts on every paying account** (DigitalOcean, Cloudflare, OpenAI)
+  as a backstop, regardless of plan type.
+- **Diverge only when the on-demand saving is *large*** (mirroring tenet 9's "unless
+  the gap is vast"), the choice is **documented in an ADR**, and a hard cap/alert is
+  *still* in place.
+
+This sharpens tenet 6: tenet 6 says justify every rupee; tenet 15 says that between
+two otherwise-acceptable options, choose the one whose cost **can't surprise you** —
+predictability and a bounded worst case outrank marginal optimisation.

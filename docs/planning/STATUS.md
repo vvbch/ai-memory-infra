@@ -63,6 +63,18 @@ secrets (see blockers). Tenet 11 repo-health instrumentation is live (below).
   (not yet purchased). App URL: `memory.chandrav.dev`. DO remains compute-only.
   Rationale: tenet-12 tier-1 vendor profile (NET, ecosystem, at-cost registrar).
 
+## Last decisions (2026-06-07, session-resume)
+
+- **Tenet 15 added — fixed, capped cost beats variable, even at a mild premium.**
+  Predictability over marginal on-demand savings; hard spend caps + billing alerts on
+  any usage-based service. In `tenets.md` + `AGENTS.md`. **Applications to do:**
+  (a) set a **DigitalOcean billing alert** (billing now active); (b) set a **hard
+  monthly usage limit + alerts on OpenAI** when that key is created (step 3); DO
+  droplet/Spaces and the domain are already flat-rate (compliant).
+- **Credential custody codified as a DoD gate** (ADR 017 generalized): every
+  account/token/key lands in the Bitwarden `ai-memory-infra` individual-vault folder
+  as created; SSO logins get a note for the nominee.
+
 ## Last clarification (2026-06-07, session-resume)
 
 - **Bitwarden secrets must live in an individual-vault Folder, not a Families

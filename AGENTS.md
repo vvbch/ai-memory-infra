@@ -97,6 +97,12 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     5-whys to a systemic root cause · Prevent/Detect/Mitigate actions w/ owner+date).
     **Fix the control plane (rule/spec/mechanism) before the data plane (instance)**;
     capture the lesson in a tenet/ADR + `interview_packet.md`. Depth ∝ blast radius.
+15. **Fixed, capped cost beats variable — even at a mild premium.** Prefer
+    predictable flat-rate pricing over usage-based/on-demand, even when on-demand is
+    mildly cheaper: a known bill can't spiral. Default to flat-rate resources; put a
+    **hard spend cap + billing alerts** on anything that must be usage-based (LLM
+    APIs); set billing alerts on every paying account. Diverge only if the saving is
+    *vast*, documented in an ADR, and still capped. Sharpens tenet 6.
 
 ## Architecture (summary)
 
