@@ -20,9 +20,13 @@ rule — see ADR 017). It holds the *procedure*; the *credentials* live **outsid
 it, in a password manager. The two are meant to be combined: this runbook tells
 you **what to do**, the password manager gives you the **logins to do it with**.
 
-- **Password manager: Bitwarden** (vault entry group `ai-memory-infra`) — holds
-  the DigitalOcean login, Cloudflare login, OpenAI login, and the SSH private-key
-  passphrase. Chosen for a *managed nominee handoff* (ADR 017).
+- **Password manager: Bitwarden** — a **Folder named `ai-memory-infra` in
+  Chandra's individual vault** (NOT a Families/Organization Collection) holds the
+  DigitalOcean login, Cloudflare login, OpenAI login, and the SSH private-key
+  passphrase. Chosen for a *managed nominee handoff* (ADR 017). The individual-vault
+  placement is load-bearing: Emergency Access can only read the individual vault,
+  never org collections — so secrets in a Families Collection would be invisible to
+  the nominee on Takeover.
 - **The SSH private key file** — on the operator's main machine at
   `~/.ssh/id_ed25519` (Windows: `C:\Users\<user>\.ssh\id_ed25519`).
 

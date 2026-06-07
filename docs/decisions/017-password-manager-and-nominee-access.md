@@ -41,8 +41,15 @@ ecosystem. Facts below verified 2026-06-07 from each vendor's docs/pricing pages
 **Adopt Bitwarden (Premium) as the credential vault, with Bitwarden Emergency
 Access as the nominee handoff.**
 
-1. One vault entry group `ai-memory-infra` holds: DigitalOcean, Cloudflare, OpenAI
-   logins (+ 2FA where used) and the SSH private-key passphrase.
+1. One **individual-vault Folder** named `ai-memory-infra` holds: DigitalOcean,
+   Cloudflare, OpenAI logins (+ 2FA where used) and the SSH private-key passphrase.
+   **It must be an individual-vault Folder, NOT a Families/Organization
+   Collection:** Bitwarden Emergency Access (incl. Takeover) reaches only the
+   grantor's *individual* vault — it explicitly cannot read organization
+   collections, even ones the grantor owns (verified 2026-06-07,
+   [bitwarden.com/help/emergency-access](https://bitwarden.com/help/emergency-access/)).
+   Storing these in a Families Collection would silently defeat the nominee
+   handoff. (Families is still required — it's what unlocks Emergency Access.)
 2. Chandra runs **Bitwarden Families** ($47.88/yr, up to 6 users — *taken
    2026-06-07*) so he can *configure* emergency contacts **and** cover the family
    directly. Each member gets Premium features (so Emergency Access works); the

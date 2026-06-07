@@ -4,10 +4,10 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-07 (session wrap / context-exhausted handoff. This
-session: ADRs 016–018, tenets 13–14, COE practice + prioritized backlog, Bitwarden
-**Families** taken. **Next: finish Bitwarden vault + buy `chandrav.dev`, then
-secrets + deploy.**)
+**Last updated:** 2026-06-07 (session resume. Repo-health green; clarified that
+Bitwarden secrets go in an **individual-vault Folder, not a Families Collection**
+(Emergency Access can't read collections) — fixed ADR 017 + `decommission.md` §0.
+**Next: finish Bitwarden vault + buy `chandrav.dev`, then secrets + deploy.**)
 
 ## Current phase
 
@@ -63,6 +63,17 @@ secrets (see blockers). Tenet 11 repo-health instrumentation is live (below).
   (not yet purchased). App URL: `memory.chandrav.dev`. DO remains compute-only.
   Rationale: tenet-12 tier-1 vendor profile (NET, ecosystem, at-cost registrar).
 
+## Last clarification (2026-06-07, session-resume)
+
+- **Bitwarden secrets must live in an individual-vault Folder, not a Families
+  Collection (tenet-12 near-miss).** Verified Bitwarden Emergency Access — incl.
+  Takeover — reaches only the grantor's *individual* vault, never org/Families
+  collections ([bitwarden.com/help/emergency-access](https://bitwarden.com/help/emergency-access/)).
+  The docs said "vault group," which would have led to a Collection and silently
+  broken the nominee handoff. Clarified ADR 017 §Decision-1, `decommission.md` §0,
+  and the next-action below. Root cause = ambiguous "group" in the spec; Families
+  is still required (it's what unlocks Emergency Access).
+
 ## Security follow-up (operator)
 
 - ✅ **Cloudflare password rotated** 2026-06-07 (old one had been pasted in chat).
@@ -102,9 +113,11 @@ displaces the Phase-1 deploy (tenet 13).
 > **RESUME HERE — finish Bitwarden, buy the domain, then secrets, then deploy.**
 
 0. ✅ Cloudflare password rotated. ✅ Bitwarden account + **Families** plan taken.
-1. **[YOU] Finish Bitwarden setup:** create vault group `ai-memory-infra`; store the
-   **new Cloudflare login** there now (and DO/OpenAI/SSH secrets as you generate
-   them); add the nominee as a **Takeover** emergency contact (`decommission.md` §0).
+1. **[YOU] Finish Bitwarden setup:** create a **Folder `ai-memory-infra` in your
+   individual vault** (NOT a Families Collection — Emergency Access can't read
+   collections; see note below); store the **new Cloudflare login** there now (and
+   DO/OpenAI/SSH secrets as you generate them); add the nominee as a **Takeover**
+   emergency contact (`decommission.md` §0).
 2. **[YOU — one click path] Register `chandrav.dev` at Cloudflare** — `docs/setup.md`
    Step 0b (Domain Registration → Register Domains → checkout). Confirm Active under
    Websites.
