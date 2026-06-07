@@ -4,10 +4,11 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-07 (session resume. Repo-health green. Clarified Bitwarden
-secrets → **individual-vault Folder, not a Families Collection** (fixed ADR 017 +
-`decommission.md`). **Bitwarden setup done**; **`chandrav.dev` registered** (Active,
-**10-yr prepay**, personal+redaction). **Next: gather secrets, then deploy.**)
+**Last updated:** 2026-06-07 (session wrap, ~90 min. Bitwarden vault + nominee set up;
+`chandrav.dev` registered (10-yr prepay, redaction verified); **4 of 5 secrets
+gathered** (DO token, CF token, Spaces key, SSH key — all in Bitwarden). New this
+session: tenet 15, ADR 019 (compute provider), credential-custody DoD gate, BUILD-LOG
+mechanism. **Next: OpenAI billing+key (5th secret), then assemble tfvars/.env + deploy.**)
 
 ## Current phase
 
@@ -138,11 +139,19 @@ displaces the Phase-1 deploy (tenet 13).
    pass: add **wife** as a 2nd Takeover contact (8-yo can't — Bitwarden is 13+).
 2. ✅ **`chandrav.dev` registered** at Cloudflare 2026-06-07 — **Active**, expiry
    2036-06-07, auto-renew ON, **10-yr prepay** ($122.20, eyes-open; see
-   `financial-decisions.md`).    Personal registrant + WHOIS redaction (on by default). ✅ **Public WHOIS verified
-   redacted** 2026-06-07 (no name/email/phone/street — only State+Country show).
-3. **← NEXT: [gather secrets]** DO API token, DO Spaces key pair, Cloudflare API
-   token (Zone→DNS→Edit), SSH keypair, OpenAI API key → `terraform.tfvars` +
-   `infra/.env`. Store each in the Bitwarden `ai-memory-infra` folder as generated.
-4. **`docs/setup.md` Steps 1–7:** `tf-init` → `tf-plan` → **`tf-apply`** →
-   `bootstrap.sh` on droplet → health-check `https://memory.chandrav.dev/docs`.
+   `financial-decisions.md`). Personal registrant + WHOIS redaction (on by default).
+   ✅ **Public WHOIS verified redacted** (no name/email/phone/street — only State+Country).
+3. **[gather secrets] — 4 of 5 done**, all in the Bitwarden `ai-memory-infra` folder:
+   ✅ DO API token (`terraform-ai-memory`, Full Access) · ✅ Cloudflare API token
+   (`terraform-ai-memory-dns`, zone-scoped to chandrav.dev) · ✅ DO Spaces key
+   (`ai-memory-spaces`, Full access) · ✅ SSH keypair (`~/.ssh/id_ed25519`(.pub),
+   passphrase in Bitwarden). **← NEXT: OpenAI (the 5th).** Account exists, **no
+   billing yet**: (a) add card + **$10 prepaid credits, auto-recharge OFF** (tenet 15
+   hard cap); (b) set a usage-limit email alert; (c) create an API key → Bitwarden.
+4. **[assemble config]** Fill `infra/terraform/terraform.tfvars` (do_token,
+   cloudflare_api_token, spaces access id/secret, ssh_public_key from
+   `~/.ssh/id_ed25519.pub`, domain_name=`chandrav.dev`, backup_bucket_name) and
+   `infra/.env` (secrets + OPENAI_API_KEY + DOMAIN/ACME_EMAIL) — both **gitignored**,
+   values pulled from Bitwarden. Then `docs/setup.md` Steps 1–7: `tf-init` →
+   `tf-plan` → **`tf-apply`** → `bootstrap.sh` → health-check `memory.chandrav.dev/docs`.
    (Mind the income-change risk above when picking deploy timing.)

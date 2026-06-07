@@ -12,7 +12,8 @@
 ## 2026-06-07 — Accounts, domain & secrets for Phase-1 deploy
 
 **Focus:** stand up the external accounts, domain, and secrets needed before
-`terraform apply` (Phase 1). **Effort:** ~80 min (single collaborative session).
+`terraform apply` (Phase 1). **Effort:** ~90 min (single collaborative session);
+4 of 5 secret sets gathered (OpenAI key pending next session).
 
 **Milestones**
 - Credential vault + **time-delayed nominee handoff** set up (Bitwarden Emergency
