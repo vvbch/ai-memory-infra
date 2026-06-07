@@ -2,15 +2,14 @@
 #   cp terraform.tfvars.example terraform.tfvars
 
 # ---- Credentials (secrets) ----------------------------------------------
-do_token          = "dop_v1_REPLACE_ME"          # DO API token (API > Tokens)
-spaces_access_id  = "REPLACE_ME"                  # DO Spaces key (API > Spaces Keys)
-spaces_secret_key = "REPLACE_ME"
+do_token               = "dop_v1_REPLACE_ME"          # DO API token (API > Tokens)
+cloudflare_api_token   = "REPLACE_ME"                  # CF token: Zone → DNS → Edit (ADR 016)
+spaces_access_id       = "REPLACE_ME"                  # DO Spaces key (API > Spaces Keys)
+spaces_secret_key      = "REPLACE_ME"
 
-# ---- Domain (DECISION 2 — name still TBD) -------------------------------
-# Register a cheap name at any registrar, then delegate its nameservers to
-# DigitalOcean (see `terraform output registrar_nameservers`). Replace the
-# placeholder below with the real domain once chosen.
-domain_name = "example.com" # TODO: replace with the registered domain (TBD)
+# ---- Domain (ADR 016 — register at Cloudflare before apply) -------------
+# Buy the name at Cloudflare Registrar first (creates the zone automatically).
+domain_name = "chandrav.dev"
 
 # Subdomains default to ["memory","dash","graph","monitor"] — `dash` is kept
 # because the OSS Mem0 server ships a dashboard container. Override if needed:

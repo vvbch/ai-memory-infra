@@ -2,8 +2,8 @@
 """Guided, reversible teardown of the ai-memory-infra cloud footprint.
 
 This is the operational expression of the decommission/exit path required by
-tenet 12. It tears down everything Terraform created (droplet, firewall, DNS
-zone + records, Spaces backups bucket) with a read-the-receipt preview and an
+tenet 12. It tears down everything Terraform created (droplet, firewall,
+Cloudflare DNS records, Spaces backups bucket) with a read-the-receipt preview and an
 explicit typed confirmation, then prints the short list of things Terraform
 *cannot* undo (account billing, the domain registration, the separate state
 bucket) so an operator -- or a non-engineer executor following
@@ -84,9 +84,9 @@ MANUAL_CHECKLIST = """
     stays open. To fully stop: DO console -> Settings -> Billing, confirm $0 due,
     then close the account if you are decommissioning for good.
 
- 3. The DOMAIN registration (your registrar). Terraform only managed the DNS
-    *records*, never the name itself. To stop the yearly renewal: log in to your
-    registrar -> turn OFF auto-renew (it then lapses at expiry), or delete it.
+ 3. The DOMAIN registration (Cloudflare Registrar). Terraform only managed the
+    DNS *records*, never the name itself. To stop the yearly renewal: log in at
+    dash.cloudflare.com -> Domain Registration -> turn OFF auto-renew.
 
  4. OpenAI API key + billing. platform.openai.com -> API keys -> revoke the key;
     Billing -> remove the payment method / set a $0 limit.
@@ -123,8 +123,8 @@ def main() -> int:
         print("      and run `terraform -chdir=infra/terraform init` first.\n")
 
     print("=" * 80)
-    print(" ai-memory-infra TEARDOWN -- this destroys the droplet, firewall, DNS zone,")
-    print(" DNS records, and the Spaces backups bucket that Terraform created.")
+    print(" ai-memory-infra TEARDOWN -- this destroys the droplet, firewall,")
+    print(" Cloudflare DNS records, and the Spaces backups bucket that Terraform created.")
     print("=" * 80)
 
     # 1. Always show the receipt first.

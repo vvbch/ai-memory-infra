@@ -1,5 +1,5 @@
 # Phase 1 infrastructure: one 4GB droplet in Bangalore, a locked-down firewall
-# (22/80/443 only), the DNS zone + records at DigitalOcean, and a Spaces bucket
+# (22/80/443 only), DNS A records at Cloudflare (ADR 016), and a Spaces bucket
 # for backups. Everything here is reproducible — no console clicks (tenet 1).
 
 terraform {
@@ -10,6 +10,10 @@ terraform {
       source  = "digitalocean/digitalocean"
       version = "~> 2.0"
     }
+    cloudflare = {
+      source  = "cloudflare/cloudflare"
+      version = "~> 5.0"
+    }
   }
 }
 
@@ -17,6 +21,10 @@ provider "digitalocean" {
   token             = var.do_token
   spaces_access_id  = var.spaces_access_id
   spaces_secret_key = var.spaces_secret_key
+}
+
+provider "cloudflare" {
+  api_token = var.cloudflare_api_token
 }
 
 # ---- SSH key -------------------------------------------------------------
@@ -90,35 +98,38 @@ resource "digitalocean_firewall" "vps" {
   }
 }
 
-# ---- DNS zone + records (DECISION 2 / ADR 012) ---------------------------
-# The zone is authoritative at DigitalOcean. Delegate the registrar's
-# nameservers to ns1/ns2/ns3.digitalocean.com (one-time, manual at registrar),
-# then every record below is managed here.
+# ---- DNS records at Cloudflare (ADR 016) ---------------------------------
+# The zone must already exist — register the domain at Cloudflare Registrar
+# before apply. proxied=false so ACME reaches Caddy on the droplet directly.
 
-resource "digitalocean_domain" "primary" {
-  name = var.domain_name
+data "cloudflare_zone" "primary" {
+  filter = {
+    name = var.domain_name
+  }
 }
 
 # A record per subdomain (memory./dash./graph./monitor.) -> droplet IPv4.
-resource "digitalocean_record" "subdomain_a" {
+resource "cloudflare_dns_record" "subdomain_a" {
   for_each = toset(var.subdomains)
 
-  domain = digitalocean_domain.primary.id
-  type   = "A"
-  name   = each.value
-  value  = digitalocean_droplet.vps.ipv4_address
-  ttl    = 300
+  zone_id = data.cloudflare_zone.primary.id
+  name    = "${each.value}.${var.domain_name}"
+  type    = "A"
+  content = digitalocean_droplet.vps.ipv4_address
+  ttl     = 300
+  proxied = false
 }
 
-# Optional apex (@) -> droplet IPv4.
-resource "digitalocean_record" "apex_a" {
+# Optional apex -> droplet IPv4.
+resource "cloudflare_dns_record" "apex_a" {
   count = var.create_apex_record ? 1 : 0
 
-  domain = digitalocean_domain.primary.id
-  type   = "A"
-  name   = "@"
-  value  = digitalocean_droplet.vps.ipv4_address
-  ttl    = 300
+  zone_id = data.cloudflare_zone.primary.id
+  name    = var.domain_name
+  type    = "A"
+  content = digitalocean_droplet.vps.ipv4_address
+  ttl     = 300
+  proxied = false
 }
 
 # ---- Backups bucket (DO Spaces) ------------------------------------------

@@ -21,6 +21,16 @@ editor-specific files (`.cursor/rules/*`, `CLAUDE.md`) are thin pointers to it.
 Same principle for the platform: Docker Compose runs anywhere, no managed-service
 lock-in, LLM providers are swappable behind an OpenAI-compatible interface.
 
+**What "thin pointer" means (precise boundary — ADR 018).** An editor pointer file
+contains *only*: (a) the editor's required frontmatter/mechanics, and (b) an
+instruction to read `AGENTS.md`. It carries **zero canonical content** — no
+tenets, rules, conventions, or decisions — so it *cannot* drift (tenet 10). If you
+feel the urge to add a rule to a pointer file, that rule belongs in `AGENTS.md`
+instead. "Pointer" is a content stub, **not a filesystem symlink** (tenet 3 forbids
+symlinks — Windows-hostile). Read-reliability is solved at the mechanism
+(`alwaysApply: true` keeps "read AGENTS.md" in front of the agent), never by
+copying content.
+
 ## 3. Cross-platform out of the box
 Mac and Windows both work with no special setup. Prefer Python over shell for
 project tooling (one runtime, no bash/PowerShell dialect split). Containers
@@ -144,3 +154,57 @@ Recommend a default, but **surface the trade-off and let the operator decide** �
 this is a one-way-door check (tenet 6/7/9 all feed it). Every adoption ships with
 its **decommission/exit path** documented (`docs/decommission.md`), so anything we
 turn on, we (or an executor) can cleanly turn off.
+
+## 13. Stay on the critical path; diverge only deliberately
+Every working session has one current goal — the **"Next action" in
+`docs/planning/STATUS.md`**. Work serves that goal until it is done or the goal is
+*explicitly* re-scoped. The failure mode this guards against is not laziness, it's
+the opposite: enthusiasm leaking into **scope creep, gold-plating, premature
+depth, yak-shaving, and tangential-but-good ideas** that quietly displace the
+actual task. This is the *attention-and-effort* analog of tenet 7 (which governs
+*architecture* simplicity); tenet 13 governs **where the operator's and the
+agent's time go over a session.**
+
+Operating rules:
+- **Match depth to stakes (tenet 8).** Don't research a ₹1,000/yr decision like a
+  ₹10-lakh one. Ground choices in first principles, then stop at the layer the
+  decision actually needs — depth beyond that is a cost, not a virtue.
+- **Capture, don't chase.** A good idea that isn't this session's goal gets
+  **parked** ("Parked / deferred ideas" in `STATUS.md`), not followed and not
+  lost. Discipline must never cost a good idea.
+- **One goal in flight.** Finish or consciously re-scope before starting another.
+
+The agent's duty — **graduated, escalate only as far as needed:**
+1. **Caution** (default, cheap, frequent) — name the divergence and its cost:
+   "this is expanding from X to Y; that adds Z."
+2. **Advise** — recommend a path: *proceed / park / defer to a separate session*,
+   with a one-line reason, then continue.
+3. **Stop & redirect** (*rare*) — only for a real derailment: the session goal
+   would be abandoned, money/time spent with no decision reached, or a one-way
+   door approached unplanned. Pause new depth, restate the actual goal, and get a
+   conscious go/no-go before continuing.
+
+The operator can always overrule — a deliberate, **eyes-open** divergence is fine
+(that's exactly what "park vs proceed" makes explicit). What this tenet forbids is
+the *accidental* drift.
+
+## 14. Errors are mechanisms — run a COE, fix the control plane first
+When something goes wrong — a tenet/rule violated, a defect shipped, an incident,
+a security near-miss, or the agent not adhering to guidance — we treat it as a
+**mechanism to improve the system**, not a one-off to patch and forget (the Amazon
+"Correction of Errors" discipline). For anything beyond trivial we open a
+**structured COE** in `docs/coe/` (template + index there): *impact, timeline,
+**detection** (a human catch is itself a gap), 5-whys to a **systemic** root cause,
+and corrective actions split **Prevent / Detect / Mitigate** with owner + date.*
+Two rules carry the most weight:
+
+1. **Fix the control plane before the data plane.** Correct the rule / spec /
+   mechanism that *allowed* the defect before fixing the instance — or the instance
+   regenerates (ADR 018 is the worked example).
+2. **Capture the lesson where it compounds.** The systemic fix lands in a tenet or
+   ADR; the narrative lands in `interview_packet.md`; follow-ups are ranked in
+   `docs/planning/BACKLOG.md`.
+
+**Blameless:** the target is always the system, never the operator or the agent.
+Match COE depth to blast radius (tenets 13 & 8): a one-line note for the trivial, a
+full COE for anything with teeth.

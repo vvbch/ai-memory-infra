@@ -1,6 +1,6 @@
 # ADR 012: Register the domain, host the DNS zone at DigitalOcean
 
-**Status:** Accepted
+**Status:** Superseded by ADR 016
 **Date:** 2026-06-05
 **Deciders:** Chandra
 

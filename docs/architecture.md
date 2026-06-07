@@ -76,16 +76,14 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | | **Approx. total** | **~₹2,590/mo** |
 
 **Domain sub-components** — the single domain name decomposes into several
-pieces; all are ₹0 beyond the registration fee above (DigitalOcean DNS is free).
-DNS lives entirely at DigitalOcean so Terraform manages every record with one
-provider and one token (ADR 012, tenets 1 & 7).
+pieces; all are ₹0 beyond the registration fee above (Cloudflare DNS is free).
+DNS lives at Cloudflare; compute at DigitalOcean (ADR 016, supersedes ADR 012).
 
 | Sub-component | Role | Cost |
 |---|---|---|
-| Registrar | Where the name is bought and renewed; its only job is to hold the registration and delegate DNS to DigitalOcean | (in domain fee) |
-| DNS zone @ DigitalOcean | Authoritative DNS for the domain; the zone is created and owned by Terraform | **(₹0)** |
-| Nameserver delegation | Registrar's NS records point to `ns1/ns2/ns3.digitalocean.com` so DO answers all queries (one-time manual step at the registrar) | **(₹0)** |
-| DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.` (+ apex) → the droplet IP | **(₹0)** |
+| Cloudflare Registrar | Where `chandrav.dev` is bought and renewed at-cost | (in domain fee) |
+| DNS zone @ Cloudflare | Authoritative DNS; zone created at registration, A records managed by Terraform | **(₹0)** |
+| DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.` (+ apex) → the droplet IP; `proxied=false` for ACME | **(₹0)** |
 | Caddy + Let's Encrypt TLS | Auto-provisions and renews HTTPS certificates for every subdomain; only component facing the internet | **(₹0)** |
 
 Steady state (Dec 2026+, post-Alienware): embeddings and extraction move to

@@ -21,15 +21,37 @@ all provisioned by Terraform.
 You need these before Step 1:
 
 1. **DigitalOcean API token** — cloud.digitalocean.com → API → *Generate New
-   Token* (read+write). This is what Terraform uses to create the droplet/DNS.
-2. **DO Spaces keys** — API → *Spaces Keys* → generate. A separate access-id +
+   Token* (read+write). Provisions the droplet, firewall, and Spaces bucket.
+2. **Cloudflare API token** — dash.cloudflare.com → My Profile → *API Tokens* →
+   *Create Token* → use the **Edit zone DNS** template scoped to your domain
+   (ADR 016). Needed for Terraform to create A records.
+3. **DO Spaces keys** — API → *Spaces Keys* → generate. A separate access-id +
    secret pair (NOT the API token) for the backups bucket and remote state.
-3. **SSH keypair** — `ssh-keygen -t ed25519 -C "ai-memory-infra"`. Terraform
+4. **SSH keypair** — `ssh-keygen -t ed25519 -C "ai-memory-infra"`. Terraform
    uploads the *public* key; the private key is how you SSH in.
-4. **A registered domain** — buy a cheap name at any registrar. The name is still
-   TBD on our side; you'll put it in `terraform.tfvars`.
-5. **An OpenAI API key** — platform.openai.com. Serves both extraction
+5. **Domain registered at Cloudflare** — buy `chandrav.dev` (or your chosen name)
+   at Cloudflare Registrar *before* `terraform apply`. This creates the DNS zone
+   Terraform writes records into. See Step 0b below.
+6. **An OpenAI API key** — platform.openai.com. Serves both extraction
    (`gpt-5-mini`) and embeddings (`text-embedding-3-small`).
+
+---
+
+### Step 0b — register the domain at Cloudflare  **[YOU RUN, one-time]**
+
+> **ELI5:** Buy the web address at Cloudflare. That automatically creates the
+> "phone book" Terraform will fill in when the server exists.
+
+1. Log in at **dash.cloudflare.com** (create a free account if needed).
+2. Left sidebar → **Domain Registration** → **Register Domains**.
+3. Search **`chandrav.dev`** → add to cart → complete checkout (~$10–12/yr
+   at-cost). Cloudflare assigns its nameservers automatically — **no delegation
+   step** (unlike the old ADR 012 flow).
+4. Confirm the domain appears under **Websites** with status *Active*.
+
+> **Deeper:** Registrar lock applies for 60 days before you can transfer out
+> (tenet 12 exit cost). DNS propagation is usually minutes once Terraform creates
+> the A records in Step 3.
 
 ---
 
@@ -40,7 +62,7 @@ You need these before Step 1:
 
 ```powershell
 cd infra\terraform
-copy terraform.tfvars.example terraform.tfvars   # then edit: do_token, spaces keys, ssh_public_key, domain_name, backup_bucket_name
+copy terraform.tfvars.example terraform.tfvars   # then edit: do_token, cloudflare_api_token, spaces keys, ssh_public_key, domain_name, backup_bucket_name
 cd ..
 copy .env.example .env                            # then edit: secrets + OPENAI_API_KEY + DOMAIN/ACME_EMAIL
 ```
@@ -55,7 +77,8 @@ copy .env.example .env                            # then edit: secrets + OPENAI_
 
 ### Step 1 — initialize Terraform
 
-> **ELI5:** Download the DigitalOcean plugin Terraform needs. Safe, no changes.
+> **ELI5:** Download the plugins Terraform needs (DigitalOcean + Cloudflare).
+> Safe, no changes.
 
 ```powershell
 cd infra
@@ -64,8 +87,9 @@ make tf-fmt           # formatting check (optional but nice)
 ```
 
 > **Deeper:** `init` reads `main.tf`'s `required_providers` and pulls
-> `digitalocean/digitalocean ~> 2.0` into `.terraform/`. State is local for now
-> (`backend.tf` is commented until the Spaces bucket exists — see Step 6).
+> `digitalocean/digitalocean ~> 2.0` and `cloudflare/cloudflare ~> 5.0` into
+> `.terraform/`. State is local for now (`backend.tf` is commented until the
+> Spaces bucket exists — see Step 5).
 
 ---
 
@@ -78,17 +102,18 @@ make tf-fmt           # formatting check (optional but nice)
 make tf-plan          # or: terraform -chdir=terraform plan
 ```
 
-> **Deeper:** Expect ~9 resources to add: 1 ssh key, 1 droplet, 1 firewall, 1 DNS
-> domain (zone), 4 A records (memory/dash/graph/monitor) + 1 apex, 1 Spaces
-> bucket. Confirm region `blr1`, size `s-2vcpu-4gb`, and that `domain_name` is
-> your real domain. If the plan shows anything you didn't expect, stop.
+> **Deeper:** Expect ~9 resources to add: 1 ssh key, 1 droplet, 1 firewall,
+> 4 Cloudflare A records (memory/dash/graph/monitor) + 1 apex, 1 Spaces bucket,
+> plus a zone data read. Confirm region `blr1`, size `s-2vcpu-4gb`, and that
+> `domain_name` matches your Cloudflare-registered domain. If the plan shows
+> anything you didn't expect, stop.
 
 ---
 
 ### Step 3 — apply (creates real, billable infra)  **[YOU RUN]**
 
-> **ELI5:** This actually builds the droplet and DNS. It starts the ~₹2,000/mo
-> meter. Run it yourself; type `yes` when prompted.
+> **ELI5:** This actually builds the droplet and DNS records. It starts the
+> ~₹2,000/mo meter. Run it yourself; type `yes` when prompted.
 
 ```powershell
 make tf-apply         # or: terraform -chdir=terraform apply
@@ -106,25 +131,12 @@ make tf-apply         # or: terraform -chdir=terraform apply
 terraform -chdir=terraform output
 ```
 
-> You need two: `droplet_ipv4` (SSH target) and `registrar_nameservers`
-> (`ns1/ns2/ns3.digitalocean.com`).
+> You need `droplet_ipv4` (SSH target). DNS A records are created automatically
+> at Cloudflare — no nameserver step.
 
 ---
 
-### Step 5 — delegate DNS at your registrar  **[YOU RUN, manual]**
-
-> **ELI5:** Tell your registrar "DigitalOcean answers DNS for this domain now."
-> This is the one step that can't be automated.
-
-At your registrar, set the domain's **nameservers** to the three from Step 4.
-
-> **Deeper:** Propagation is usually minutes, sometimes up to a few hours. Check
-> with `nslookup -type=ns <domain>`. Caddy can't issue TLS certs until DNS
-> resolves to the droplet, so don't be surprised by cert errors before this lands.
-
----
-
-### Step 6 — (optional) move Terraform state to Spaces
+### Step 5 — (optional) move Terraform state to Spaces
 
 > **ELI5:** Right now your state file is on your laptop. This puts it in the cloud
 > bucket so it's not laptop-only.
@@ -143,7 +155,7 @@ terraform -chdir=terraform init -migrate-state
 
 ---
 
-### Step 7 — bootstrap the droplet  **[YOU RUN]**
+### Step 6 — bootstrap the droplet  **[YOU RUN]**
 
 > **ELI5:** SSH into the new server, get the code, paste your `.env`, run one
 > script that installs Docker and starts everything.
@@ -166,7 +178,7 @@ sudo bash ../scripts/bootstrap.sh
 
 ---
 
-### Step 8 — health check
+### Step 7 — health check
 
 ```bash
 curl -fsS https://memory.<domain>/docs >/dev/null && echo OK
@@ -177,7 +189,8 @@ Then in a browser: `https://dash.<domain>` (dashboard, basic-auth),
 Phase 8.
 
 > **Deeper:** First TLS handshake may take a few seconds while Caddy fetches
-> Let's Encrypt certs. If you get cert errors, re-check Step 5 propagation. Logs:
+> Let's Encrypt certs. If you get cert errors, confirm DNS resolves to the droplet
+> (`nslookup memory.<domain>`). Logs:
 > `docker compose -f docker-compose.yml -f docker-compose.prod.yml logs mem0 --tail 50`.
 
 ---

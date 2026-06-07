@@ -83,6 +83,20 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     portability/lock-in, reliability & track record, company viability (financials/
     longevity), and ecosystem/standards. Recommend a default but let the operator
     decide; every adoption ships with a documented exit (`docs/decommission.md`).
+13. **Stay on the critical path; diverge only deliberately.** Each session has one
+    goal (STATUS "Next action"); work serves it until done or explicitly re-scoped.
+    Guard against scope creep / gold-plating / premature depth / yak-shaving /
+    tangents. Match depth to stakes (tenet 8); **park** good-but-off-goal ideas in
+    `STATUS.md`, don't chase them (and never lose them). The agent escalates only as
+    needed: **caution → advise → (rarely) stop & redirect.** Eyes-open operator
+    overrides are fine; *accidental* drift is not.
+14. **Errors are mechanisms — run a COE, fix the control plane first.** Treat any
+    tenet/rule violation, defect, incident, or agent non-adherence as a chance to
+    improve the *system* (Amazon "Correction of Errors"). Beyond-trivial issues get
+    a structured, **blameless** COE in `docs/coe/` (impact · timeline · detection ·
+    5-whys to a systemic root cause · Prevent/Detect/Mitigate actions w/ owner+date).
+    **Fix the control plane (rule/spec/mechanism) before the data plane (instance)**;
+    capture the lesson in a tenet/ADR + `interview_packet.md`. Depth ∝ blast radius.
 
 ## Architecture (summary)
 
@@ -157,7 +171,8 @@ docs to update:
 |---|---|
 | Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, `docs/interview_packet.md` (arch-at-a-glance + decision log) |
 | A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), `interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |
-| A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md`, `.cursor/rules` pointer if relevant |
+| A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md` — **never** restate it in the editor pointer files (they stay pure pointers; see next row + ADR 018) |
+| An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`) | Keep it a **pure pointer** — frontmatter + "read `AGENTS.md`"; it carries **zero** tenets/rules/decisions (tenet 2, ADR 018). If you're adding substance here, it belongs in `AGENTS.md` instead |
 | Infra/IaC (terraform, compose, Caddy, `.env`) | `docs/runbook.md` / `docs/setup.md` if ops or commands change, `README.md` quick-start if commands change, `STATUS.md` |
 | A `src/` module or capability | tests first (TDD), `README.md`/`architecture.md` if user-facing, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |
 | Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |

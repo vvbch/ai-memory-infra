@@ -1,5 +1,4 @@
-# Outputs used by the deploy step (bootstrap.sh / CD) and printed for the
-# one manual step that can't be automated: nameserver delegation at the registrar.
+# Outputs used by the deploy step (bootstrap.sh / CD).
 
 output "droplet_ipv4" {
   description = "Public IPv4 of the VPS. SSH target and the IP every DNS A record points at."
@@ -11,13 +10,9 @@ output "droplet_id" {
   value       = digitalocean_droplet.vps.id
 }
 
-output "registrar_nameservers" {
-  description = "Set these as the nameservers at your registrar to delegate DNS to DigitalOcean (one-time manual step)."
-  value = [
-    "ns1.digitalocean.com",
-    "ns2.digitalocean.com",
-    "ns3.digitalocean.com",
-  ]
+output "cloudflare_zone_id" {
+  description = "Cloudflare zone ID for the domain (useful for debugging DNS in the CF dashboard)."
+  value       = data.cloudflare_zone.primary.id
 }
 
 output "subdomain_fqdns" {

@@ -15,19 +15,45 @@
 
 ## 0. Where the keys live (READ FIRST)
 
-This repository contains **no passwords or secrets** on purpose. To do anything
-below you need the credentials, which are stored **outside** this repo:
+This repository contains **no passwords or secrets** on purpose (a deliberate
+rule — see ADR 017). It holds the *procedure*; the *credentials* live **outside**
+it, in a password manager. The two are meant to be combined: this runbook tells
+you **what to do**, the password manager gives you the **logins to do it with**.
 
-- **Password manager** (entry group: `ai-memory-infra`) — DigitalOcean login,
-  registrar login, OpenAI login, and the SSH private key passphrase.
+- **Password manager: Bitwarden** (vault entry group `ai-memory-infra`) — holds
+  the DigitalOcean login, Cloudflare login, OpenAI login, and the SSH private-key
+  passphrase. Chosen for a *managed nominee handoff* (ADR 017).
 - **The SSH private key file** — on the operator's main machine at
   `~/.ssh/id_ed25519` (Windows: `C:\Users\<user>\.ssh\id_ed25519`).
 
-> **For an executor:** if you have the password-manager master password, you have
-> everything. Each account below is reachable by logging in on its website.
+### For the nominee / executor — how you get in
+
+You do **not** need Chandra's master password. Bitwarden has a built-in
+**Emergency Access** handoff that was set up for you in advance:
+
+1. You should already have a (free) **Bitwarden account** and have **accepted an
+   emergency-access invitation** from Chandra. (If you never accepted it, this
+   path won't work — that step can only happen while he's able to invite you.)
+2. Sign in at **bitwarden.com** → **Settings → Emergency Access**.
+3. Under **Emergencies that trust me** (people who named you), find Chandra and
+   click **Request access**.
+4. There is a **wait period** (set when the contact was created — typically a few
+   days). If Chandra doesn't decline within that window, access is granted
+   automatically. With **Takeover** access you can then read every login in the
+   `ai-memory-infra` group.
+5. With those logins, follow Steps 1–5 below to stop all charges. Every account is
+   reachable by logging in on its website.
+
+> **Operator (Chandra) — one-time setup that makes the above work:**
+> Bitwarden → **Settings → Emergency Access → Add emergency contact** → enter the
+> nominee's email (they need a free Bitwarden account) → access level **Takeover**
+> → set a **wait time** (e.g. 2–7 days, so an early/accidental request can still
+> be denied) → **Save**. The nominee accepts the emailed invite. Setting up
+> contacts requires a paid Bitwarden plan (**Families**, ~₹330/mo, taken
+> 2026-06-07); the nominee can be a free account.
 
 The three companies that bill money are: **DigitalOcean** (the server, ~₹2,000/mo),
-the **domain registrar** (the web address, ~₹1,000/yr), and **OpenAI**
+**Cloudflare** (the domain registration, ~₹1,000/yr), and **OpenAI**
 (pay-per-use, only while the memory system is running). Stopping all charges =
 dealing with these three.
 
@@ -72,8 +98,9 @@ server bill. You can rebuild later from this repo in ~15 minutes.
    ssh root@<droplet_ipv4> "cd /opt/ai-memory-infra && bash scripts/backup.sh"
    ```
    Confirm the backup landed in the DigitalOcean Spaces bucket.
-2. **Destroy the billable infra** (server, firewall, DNS, backups bucket) — this
-   is the same one command as a full teardown, but you keep the accounts open:
+2. **Destroy the billable infra** (server, firewall, Cloudflare DNS records,
+   backups bucket) — this is the same one command as a full teardown, but you
+   keep the accounts open:
    ```bash
    python scripts/teardown.py            # preview, confirm, destroy
    ```
@@ -98,8 +125,8 @@ python scripts/teardown.py
 ```
 
 This shows you exactly what will be deleted (read it like a receipt), asks you to
-type the domain name to confirm, then deletes the server, firewall, DNS records,
-and backups bucket. When it finishes it prints the manual checklist below.
+type the domain name to confirm, then deletes the server, firewall, Cloudflare
+DNS records, and backups bucket. When it finishes it prints the manual checklist below.
 
 > Windows without `make`/python on PATH? Run the same destroy directly:
 > `terraform -chdir=infra/terraform plan -destroy` then `... apply` once you've
@@ -115,12 +142,13 @@ and backups bucket. When it finishes it prints the manual checklist below.
    have cleared them).
 4. **Settings → Billing** → confirm balance is ₹0, then **Close account**.
 
-### Step 3 — the domain registrar: stop the yearly renewal
+### Step 3 — Cloudflare: stop the domain renewal
 
-1. Log in to whichever registrar the domain was bought from (in the password
-   manager).
-2. Find the domain → **turn OFF auto-renew**. It will simply expire on its renewal
-   date and cost nothing further. (Or delete/cancel it outright if available.)
+1. Log in at **dash.cloudflare.com**.
+2. **Domain Registration** → select **`chandrav.dev`** (or your domain) →
+   **turn OFF auto-renew**. It will lapse at expiry and cost nothing further.
+   (Transfer out is possible after the 60-day registrar lock; see ADR 016 exit
+   notes.)
 
 ### Step 4 — OpenAI: revoke the key, stop billing
 
@@ -138,7 +166,7 @@ Delete `.git/hooks/pre-commit` in each repo if you want. The repos themselves ca
 be archived on GitHub or kept — they hold no secrets.
 
 ### Done when
-No droplets in DO, balance ₹0, registrar auto-renew off, OpenAI key revoked. From
+No droplets in DO, balance ₹0, Cloudflare auto-renew off, OpenAI key revoked. From
 that point **nothing recurring is billable.**
 
 ---

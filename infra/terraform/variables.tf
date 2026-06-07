@@ -5,7 +5,13 @@
 # ---- Credentials ---------------------------------------------------------
 
 variable "do_token" {
-  description = "DigitalOcean API token (read/write). Provisions the droplet, firewall, and DNS zone."
+  description = "DigitalOcean API token (read/write). Provisions the droplet, firewall, and Spaces bucket."
+  type        = string
+  sensitive   = true
+}
+
+variable "cloudflare_api_token" {
+  description = "Cloudflare API token with Zone → DNS → Edit for the domain zone (ADR 016). Create at dash.cloudflare.com/profile/api-tokens."
   type        = string
   sensitive   = true
 }
@@ -22,13 +28,12 @@ variable "spaces_secret_key" {
   sensitive   = true
 }
 
-# ---- Domain & DNS (DECISION 2 / ADR 012) --------------------------------
-# DNS zone lives at DigitalOcean so Terraform owns every record with one
-# provider/token. The name itself is still TBD — set it in terraform.tfvars;
-# never hard-code it here.
+# ---- Domain & DNS (ADR 016) ---------------------------------------------
+# Domain registered at Cloudflare Registrar; DNS A records managed here.
+# Register the name and create the zone *before* terraform apply.
 
 variable "domain_name" {
-  description = "Registered apex domain, e.g. example.com. Registered at a cheap registrar; nameservers delegated to DigitalOcean. No default on purpose — set it in terraform.tfvars."
+  description = "Registered apex domain at Cloudflare, e.g. chandrav.dev. No default on purpose — set it in terraform.tfvars."
   type        = string
 
   validation {
