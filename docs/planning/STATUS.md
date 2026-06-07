@@ -4,7 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-06 (single Cursor session — control + build unified)
+**Last updated:** 2026-06-07 (handoff for a fresh session; paused on the registrar/
+DNS decision — see "RESUME HERE" under Next action)
 
 ## Current phase
 
@@ -116,15 +117,43 @@ Tenet 11 repo-health instrumentation is **built, committed, and verified** (belo
 
 ## Next action
 
-1. ✅ **Terraform installed + IaC validated** (this session — see "Done"). Optional
+> ⏸ **RESUME HERE — one decision is blocking everything: the registrar + DNS-host
+> fork below.** Nothing is technically broken; we paused mid-question. Present the
+> A/B/variants to Chandra (concierge mode), get his pick, write the ADR, then buy
+> the name. The full decision + verified facts are in "Pending decision" just below.
+
+### ⬇ Pending decision — registrar + DNS host (tenet 12)
+
+Name chosen: **`chandrav.dev`** (`chandra.dev` is taken; `chandrav.dev` + `vvbc.dev`
+verified AVAILABLE via RDAP). App URL would be `memory.chandrav.dev`. **Not yet
+bought** — buy only after the path is picked.
+
+Verified facts (this session): DigitalOcean is **not a registrar** (can't buy a
+name there). Porkbun `.dev` ≈ **$9.81 first yr / $12.87 renew**, supports custom
+nameservers. **Cloudflare Registrar can register a new `.dev` but FORCES Cloudflare
+nameservers** (can't use DO DNS while registered there; exit = transfer out after
+60 days).
+
+| | **Path A — DNS at DigitalOcean** + Porkbun/Namecheap registrar | **Path B — Cloudflare = registrar + DNS** (DO = compute only) |
+|---|---|---|
+| Effort | **Zero rewrite — already built/validated**; one DO token | I rewrite TF DNS block (`digitalocean_record`→`cloudflare_record`) + new CF token + revisit ADR 012 |
+| Company viability | DO public (DOCN) + Porkbun small-private / Namecheap large-private | **Cloudflare public (NET), large-cap, powers ~20% of web** |
+| Ecosystem | standard registrar/DNS | huge (WAF/CDN/Tunnel/ZeroTrust) |
+| Cost | ~$9.81/yr, DO DNS free | at-cost ~$10–12/yr, CF DNS free |
+| Moving parts | fewest (tenet 7) | +1 provider/token |
+
+Agent rec (on Chandra's stated criteria — reputation/balance sheet/ecosystem/
+portability): **Path B / Cloudflare**. Lowest-effort alternative: **Path A + Porkbun**.
+A 4th option Chandra was offered: a deeper tenet-8 research pass before deciding.
+
+1. ✅ **Terraform installed + IaC validated** (prior session — see "Done"). Optional
    remaining toolchain: install **Docker Desktop** (`winget install
    Docker.DockerDesktop`, needs a reboot) + `make` only if you want to run the
    Compose stack / `make` targets *locally*; otherwise the stack runs on the VPS.
-2. **[decision — the gate] Registrar + DNS-host vendor call (tenet 12).** Decide
-   option A (DO DNS + custom-NS registrar) vs B (Cloudflare name+DNS); write the
-   ADR; then buy the name (`chandrav.dev`), set `domain_name` in `terraform.tfvars`,
-   and (option A) delegate NS to `ns1/ns2/ns3.digitalocean.com`. If B, update ADR
-   012 + rewrite the `digitalocean_record` block to `cloudflare_record` + re-validate.
+2. **[THE GATE — decide first] Registrar + DNS-host vendor call (tenet 12).** Pick
+   Path A vs B (table above); write the ADR; then buy `chandrav.dev`, set
+   `domain_name` in `terraform.tfvars`, and (Path A) delegate NS to
+   `ns1/ns2/ns3.digitalocean.com`. If B, update ADR 012 + rewrite the DNS block + re-validate.
 3. **[gather secrets]** DO API token, DO Spaces key pair, SSH keypair, OpenAI API
    key (+ Cloudflare API token if option B) → `terraform.tfvars` + `infra/.env`.
 4. Then `docs/setup.md` → "Phase 1 — deploy to the VPS": `tf-init` (two-step
