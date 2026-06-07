@@ -120,9 +120,8 @@ displaces the Phase-1 deploy (tenet 13).
    pass: add **wife** as a 2nd Takeover contact (8-yo can't — Bitwarden is 13+).
 2. ✅ **`chandrav.dev` registered** at Cloudflare 2026-06-07 — **Active**, expiry
    2036-06-07, auto-renew ON, **10-yr prepay** ($122.20, eyes-open; see
-   `financial-decisions.md`). Personal registrant + WHOIS redaction (on by default).
-   **Verify when propagated:** public WHOIS/RDAP should show "REDACTED FOR PRIVACY"
-   (was still propagating at session end — re-check next session).
+   `financial-decisions.md`).    Personal registrant + WHOIS redaction (on by default). ✅ **Public WHOIS verified
+   redacted** 2026-06-07 (no name/email/phone/street — only State+Country show).
 3. **← NEXT: [gather secrets]** DO API token, DO Spaces key pair, Cloudflare API
    token (Zone→DNS→Edit), SSH keypair, OpenAI API key → `terraform.tfvars` +
    `infra/.env`. Store each in the Bitwarden `ai-memory-infra` folder as generated.

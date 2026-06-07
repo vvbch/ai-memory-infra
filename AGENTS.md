@@ -140,6 +140,12 @@ Full diagram: `docs/architecture.md`.
 - Python 3.12, `pyproject.toml` is source of truth (ruff/mypy/pytest configured).
 - Tooling entrypoints are cross-platform: `scaffold.py`, not `scaffold.sh`.
 - Secrets only via `.env` (gitignored) and CI secrets. Never in code/commits/logs.
+- **Credential custody:** every account login, API token, and key for the project
+  is stored in the **Bitwarden `ai-memory-infra` individual-vault folder** the moment
+  it's created (ADR 017). The vault is the single home for secrets, mirroring how git
+  (tenet 1) is the single home for everything non-secret — nothing important lives
+  only in a chat window. For SSO logins, store a note (e.g. "DigitalOcean = Google
+  SSO, <email>") so the nominee can still get in.
 - When a fact about an external product/API could be stale, verify before coding.
 
 ## Working model (sessions, tooling, governance)
@@ -177,6 +183,7 @@ docs to update:
 | A `src/` module or capability | tests first (TDD), `README.md`/`architecture.md` if user-facing, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |
 | Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |
 | Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
+| Create / obtain any account, API token, key, or secret | Store it **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault |
 | End of any working session | `docs/planning/STATUS.md` — overwrite: current phase, last decisions, open blockers, next action |
 
 **Done means:** code tests green (if code) · the trigger row's docs updated · an

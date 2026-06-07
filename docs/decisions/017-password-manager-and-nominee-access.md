@@ -42,7 +42,10 @@ ecosystem. Facts below verified 2026-06-07 from each vendor's docs/pricing pages
 Access as the nominee handoff.**
 
 1. One **individual-vault Folder** named `ai-memory-infra` holds: DigitalOcean,
-   Cloudflare, OpenAI logins (+ 2FA where used) and the SSH private-key passphrase.
+   Cloudflare, OpenAI logins (+ 2FA where used), the SSH private-key passphrase, and
+   **every other project credential as it is created** (API tokens, DO Spaces keys,
+   etc.) — codified as a Definition-of-Done gate in `AGENTS.md`. For SSO logins
+   (e.g. DigitalOcean via Google), store a note so the nominee knows the path in.
    **It must be an individual-vault Folder, NOT a Families/Organization
    Collection:** Bitwarden Emergency Access (incl. Takeover) reaches only the
    grantor's *individual* vault — it explicitly cannot read organization
