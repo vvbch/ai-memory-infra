@@ -4,10 +4,10 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-07 (session resume. Repo-health green; clarified that
-Bitwarden secrets go in an **individual-vault Folder, not a Families Collection**
-(Emergency Access can't read collections) — fixed ADR 017 + `decommission.md` §0.
-**Next: finish Bitwarden vault + buy `chandrav.dev`, then secrets + deploy.**)
+**Last updated:** 2026-06-07 (session resume. Repo-health green. Clarified Bitwarden
+secrets → **individual-vault Folder, not a Families Collection** (fixed ADR 017 +
+`decommission.md`). **Bitwarden setup done**; **`chandrav.dev` registered** (Active,
+**10-yr prepay**, personal+redaction). **Next: gather secrets, then deploy.**)
 
 ## Current phase
 
@@ -110,19 +110,22 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Next action
 
-> **RESUME HERE — finish Bitwarden, buy the domain, then secrets, then deploy.**
+> **RESUME HERE — gather secrets, then deploy.**
 
 0. ✅ Cloudflare password rotated. ✅ Bitwarden account + **Families** plan taken.
-1. **[YOU] Finish Bitwarden setup:** create a **Folder `ai-memory-infra` in your
-   individual vault** (NOT a Families Collection — Emergency Access can't read
-   collections; see note below); store the **new Cloudflare login** there now (and
-   DO/OpenAI/SSH secrets as you generate them); add the nominee as a **Takeover**
-   emergency contact (`decommission.md` §0).
-2. **[YOU — one click path] Register `chandrav.dev` at Cloudflare** — `docs/setup.md`
-   Step 0b (Domain Registration → Register Domains → checkout). Confirm Active under
-   Websites.
-3. **[gather secrets]** DO API token, DO Spaces key pair, Cloudflare API token
-   (Zone→DNS→Edit), SSH keypair, OpenAI API key → `terraform.tfvars` + `infra/.env`.
+1. ✅ **Bitwarden setup done:** Folder `ai-memory-infra` in the **individual vault**;
+   Cloudflare login stored; elder son (`rkrishv14@gmail.com`) invited as **Takeover**
+   contact (7-day wait). **Follow-ups:** (a) son must *accept* the invite, then YOU
+   *confirm* him (Invited→Accepted→Confirmed) — not live until then; (b) secondary
+   pass: add **wife** as a 2nd Takeover contact (8-yo can't — Bitwarden is 13+).
+2. ✅ **`chandrav.dev` registered** at Cloudflare 2026-06-07 — **Active**, expiry
+   2036-06-07, auto-renew ON, **10-yr prepay** ($122.20, eyes-open; see
+   `financial-decisions.md`). Personal registrant + WHOIS redaction (on by default).
+   **Verify when propagated:** public WHOIS/RDAP should show "REDACTED FOR PRIVACY"
+   (was still propagating at session end — re-check next session).
+3. **← NEXT: [gather secrets]** DO API token, DO Spaces key pair, Cloudflare API
+   token (Zone→DNS→Edit), SSH keypair, OpenAI API key → `terraform.tfvars` +
+   `infra/.env`. Store each in the Bitwarden `ai-memory-infra` folder as generated.
 4. **`docs/setup.md` Steps 1–7:** `tf-init` → `tf-plan` → **`tf-apply`** →
    `bootstrap.sh` on droplet → health-check `https://memory.chandrav.dev/docs`.
    (Mind the income-change risk above when picking deploy timing.)
