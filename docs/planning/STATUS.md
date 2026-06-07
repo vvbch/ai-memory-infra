@@ -4,19 +4,20 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-07 (session wrap, ~90 min. Bitwarden vault + nominee set up;
-`chandrav.dev` registered (10-yr prepay, redaction verified); **4 of 5 secrets
-gathered** (DO token, CF token, Spaces key, SSH key — all in Bitwarden). New this
-session: tenet 15, ADR 019 (compute provider), credential-custody DoD gate, BUILD-LOG
-mechanism. **Next: OpenAI billing+key (5th secret), then assemble tfvars/.env + deploy.**)
+**Last updated:** 2026-06-07 (session-resume #2. **5 of 5 secrets gathered** — OpenAI
+billing + key done: $10 prepaid, **auto-recharge OFF**, org budget $10 w/ 80%/100%
+alerts, key in Bitwarden. New this session: **landed-cost discipline (×1.3 for GST +
+forex)** codified + every cost re-baselined (true outflow ~₹3,800/mo landed, not
+₹2,920). **Next: assemble tfvars/.env from Bitwarden, then `tf-plan` → `tf-apply` → deploy.**)
 
 ## Current phase
 
 **Phase 1 — Infrastructure as Code.** IaC is written, **`terraform fmt`-clean +
 `terraform validate`-pass** with **Cloudflare DNS** (ADR 016; supersedes ADR 012).
 Providers: `digitalocean ~> 2.0` + `cloudflare ~> 5.0`. **Not yet `plan`'d or
-applied** — needs domain registered at Cloudflare first, then DO/CF tokens +
-secrets (see blockers). Tenet 11 repo-health instrumentation is live (below).
+applied** — but the prerequisites are now met: ✅ domain registered, ✅ all 5 secrets
+gathered. Remaining: transcribe secrets into `tfvars`/`.env`, then `plan` → `apply`
+(see Next action). Tenet 11 repo-health instrumentation is live (below).
 
 ## Done this session (2026-06-07, Path B — Cloudflare registrar + DNS)
 
@@ -82,6 +83,22 @@ secrets (see blockers). Tenet 11 repo-health instrumentation is live (below).
   (HA out of scope — tenet 4 covers outages); best India latency; clean exit (plain
   Compose). Stay on DO for Phase 1; Hetzner/Alienware are documented revisit paths.
 
+## Last decisions (2026-06-07, session-resume #2)
+
+- **OpenAI = 5th secret gathered.** $10 prepaid credits on Amex (after card-decline
+  troubleshooting — enable international txns; Visa/MC credit > Amex > debit/RuPay on
+  OpenAI's processor); **auto-recharge OFF** = the real tenet-15 hard cap (the dashboard
+  "usage limit" is only advisory/late). Org budget set to $10 with 80%/100% email alerts.
+  API key `ai-memory-prod` (project `ai-memory`) stored in Bitwarden. **All 5 secrets now
+  in the vault** → the secrets deploy-blocker is cleared.
+- **Landed-cost discipline codified (×1.3) — tenet-6 sharpening, tenet-14 control-plane
+  fix.** The OpenAI buy exposed that all our `(~₹X/mo)` figures were *list/spot* and
+  ignored **18% GST + ~4–6% forex**, making budgets ~30% optimistic. Codified **landed ≈
+  list × 1.3** (canonical in private `financial-decisions.md`; tenet-6 note in `tenets.md`
+  + `AGENTS.md`; depersonalized TCO footnote in public `architecture.md`). Re-baselined
+  every line: **true steady-state ~₹3,800/mo landed** (was ₹2,920 list). Parked a
+  zero-forex card as a *personal* finance call (≈₹1.2k/yr saving; off the critical path).
+
 ## Last clarification (2026-06-07, session-resume)
 
 - **Bitwarden secrets must live in an individual-vault Folder, not a Families
@@ -112,14 +129,16 @@ displaces the Phase-1 deploy (tenet 13).
   (setup Step 0b) before `terraform apply` — the zone must exist.
 - **Local tooling:** `docker` + `make` still not installed (Compose stack runs on
   VPS; optional locally). `terraform` v1.15.5 works.
-- **Secrets not gathered:** DO API token, DO Spaces keys, Cloudflare API token
-  (Zone → DNS → Edit), SSH keypair, OpenAI key → `terraform.tfvars` + `infra/.env`.
+- ✅ **All 5 secrets gathered** (DO API token, DO Spaces keys, Cloudflare API token,
+  SSH keypair, OpenAI key) — all in the Bitwarden `ai-memory-infra` folder. Remaining:
+  *transcribe* them into `terraform.tfvars` + `infra/.env` (next action, step 4).
 - **Verify at deploy:** Mem0 image tags, `gpt-5-mini` on pinned server version,
   GHCR package visibility (unchanged from prior STATUS).
 - **Operator income change risk (end-June 2026).** Possibly between jobs soon →
-  once deployed, recurring spend (~₹2,920/mo) must stay **pause-able**. The pause
-  path (`decommission.md` §2 → `teardown.py`) drops the ~₹2,000/mo droplet in one
-  command. Factor into *deploy timing* (tenet 12 / `financial-decisions.md`).
+  once deployed, recurring spend (**~₹3,800/mo landed**, ~₹2,920 list) must stay
+  **pause-able**. The pause path (`decommission.md` §2 → `teardown.py`) drops the
+  droplet (~₹2,600/mo landed) in one command. Factor into *deploy timing* (tenet 12 /
+  `financial-decisions.md`).
 
 ## Environment notes
 
@@ -129,7 +148,8 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Next action
 
-> **RESUME HERE — gather secrets, then deploy.**
+> **RESUME HERE — all 5 secrets gathered. Assemble config from Bitwarden, then deploy
+> (step 4).** Steps 0–3 below are ✅ done; jump to step 4.
 
 0. ✅ Cloudflare password rotated. ✅ Bitwarden account + **Families** plan taken.
 1. ✅ **Bitwarden setup done:** Folder `ai-memory-infra` in the **individual vault**;
@@ -141,14 +161,13 @@ displaces the Phase-1 deploy (tenet 13).
    2036-06-07, auto-renew ON, **10-yr prepay** ($122.20, eyes-open; see
    `financial-decisions.md`). Personal registrant + WHOIS redaction (on by default).
    ✅ **Public WHOIS verified redacted** (no name/email/phone/street — only State+Country).
-3. **[gather secrets] — 4 of 5 done**, all in the Bitwarden `ai-memory-infra` folder:
+3. ✅ **[gather secrets] — 5 of 5 done**, all in the Bitwarden `ai-memory-infra` folder:
    ✅ DO API token (`terraform-ai-memory`, Full Access) · ✅ Cloudflare API token
    (`terraform-ai-memory-dns`, zone-scoped to chandrav.dev) · ✅ DO Spaces key
    (`ai-memory-spaces`, Full access) · ✅ SSH keypair (`~/.ssh/id_ed25519`(.pub),
-   passphrase in Bitwarden). **← NEXT: OpenAI (the 5th).** Account exists, **no
-   billing yet**: (a) add card + **$10 prepaid credits, auto-recharge OFF** (tenet 15
-   hard cap); (b) set a usage-limit email alert; (c) create an API key → Bitwarden.
-4. **[assemble config]** Fill `infra/terraform/terraform.tfvars` (do_token,
+   passphrase in Bitwarden) · ✅ **OpenAI** key `ai-memory-prod` (project `ai-memory`;
+   $10 prepaid, **auto-recharge OFF**, org budget $10 w/ 80%/100% alerts).
+4. **← RESUME HERE — [assemble config + deploy].** Fill `infra/terraform/terraform.tfvars` (do_token,
    cloudflare_api_token, spaces access id/secret, ssh_public_key from
    `~/.ssh/id_ed25519.pub`, domain_name=`chandrav.dev`, backup_bucket_name) and
    `infra/.env` (secrets + OPENAI_API_KEY + DOMAIN/ACME_EMAIL) — both **gitignored**,

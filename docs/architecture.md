@@ -75,6 +75,12 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | GitHub — repo + Actions (CI/CD) | Source of truth, CI on PRs, CD to the VPS, weekly backup/eval jobs | **(₹0)** (free for public repo) |
 | | **Approx. total** | **~₹2,590/mo** |
 
+> **List price vs. landed cost (TCO).** The figures above are **vendor list price**
+> (locale-neutral). The *total cost of ownership* for an India-based operator is
+> **~30% higher** — **18% GST** on imported digital services plus **~4–6% forex**
+> (card markup + FX spread) — so plan against **list × ~1.3** (here, ~₹3,370/mo
+> infra landed). We estimate and budget on landed cost, not the sticker (tenet 6).
+
 **Domain sub-components** — the single domain name decomposes into several
 pieces; all are ₹0 beyond the registration fee above (Cloudflare DNS is free).
 DNS lives at Cloudflare (ADR 016, supersedes ADR 012); compute is a single

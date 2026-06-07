@@ -55,7 +55,11 @@ while still employed and in launch/seed stage, a spend that buys materially
 better reliability, capability, or time is acceptable when explicitly justified.
 Optimize for total cost of ownership (including the operator's time), not just
 the monthly invoice. Annotate components with their `(~₹X/mo)` cost so the
-trade-off is always visible.
+trade-off is always visible. **These `(~₹X/mo)` annotations are vendor *list
+price*** (locale-neutral); the operator's **landed cost ≈ list × 1.3** — +18% GST
+on imported digital services, +~4–6% forex (card markup + FX spread). **Budget
+and size spend ceilings on landed cost, not the sticker.** The personal wallet
+view (actual ₹ outflow) lives in the private `financial-decisions.md`.
 
 ## 7. Fewer moving parts
 For a one-person project, simplicity beats sophistication. Every container,

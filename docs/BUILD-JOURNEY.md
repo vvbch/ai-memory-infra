@@ -12,8 +12,8 @@
 ## 2026-06-07 — Accounts, domain & secrets for Phase-1 deploy
 
 **Focus:** stand up the external accounts, domain, and secrets needed before
-`terraform apply` (Phase 1). **Effort:** ~90 min (single collaborative session);
-4 of 5 secret sets gathered (OpenAI key pending next session).
+`terraform apply` (Phase 1). **Effort:** ~2 hr across two collaborative sessions;
+**all 5 secret sets gathered** — Phase-1 prerequisites complete.
 
 **Milestones**
 - Credential vault + **time-delayed nominee handoff** set up (Bitwarden Emergency
@@ -22,6 +22,8 @@
 - Domain **`chandrav.dev`** registered with privacy redaction; 10-year registration.
 - Cloud account + billing + a spend **alert** in place; all provider API
   credentials generated under **least-privilege, zone/scope-bound** where possible.
+- **Model-API billing** set up with a true hard cap — **prepaid credits + auto-recharge
+  off** (the vendor's dashboard "limit" is only advisory), plus 80%/100% usage alerts.
 
 **Decisions**
 - **ADR 019** — compute provider (DigitalOcean droplet, Bangalore) chosen over
@@ -31,9 +33,15 @@
   a mild premium; hard caps + billing alerts on anything usage-based.
 - **Credential-custody gate** — every account/token/key is stored in the vault as
   it's created; never in the repo or chat (extends ADR 017).
+- **Landed-cost discipline (×1.3)** — sharpened tenet 6: budget on **total cost of
+  ownership** (list price + ~18% GST + forex), not the vendor sticker. A single purchase
+  revealed every estimate was ~30% optimistic; fixed the *estimating method*, not one
+  number, and re-baselined the cost model.
 
 **Engineering notes**
 - Verified each volatile fact before baking it in (Bitwarden emergency-access scope,
-  Cloudflare multi-year registration, live VPS pricing, Cloudflare-vs-VM capability).
+  Cloudflare multi-year registration, live VPS pricing, OpenAI billing flow).
 - Caught two silent-failure traps before they bit (vault-scope; a changed provider
   console flow) and turned recurring questions into durable tenets/ADRs.
+- Held the critical path through a payment rabbit hole — parked a marginal
+  card-optimization as a separate decision rather than letting it delay the deploy.

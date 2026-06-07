@@ -62,6 +62,9 @@ over option lists; flag scope creep; call out trade-offs explicitly.
    / social / RIA logic lives in separate private repos that plug in via REST.
 6. **Cost-conscious, not cost-blind.** Default to cheaper, justify every
    recurring rupee, annotate `(~₹X/mo)`. Justified spend is OK in seed stage.
+   `(~₹X/mo)` annotations are vendor **list price**; the operator's **landed cost
+   ≈ list × 1.3** (+18% GST, +~4–6% forex) — budget on landed, not sticker. Actual
+   ₹ outflow lives in the private `financial-decisions.md`.
 7. **Fewer moving parts.** For a solo project, simplicity wins; add a
    container/provider/dep only when its value exceeds lifetime maintenance.
 8. **Verify in the right tier.** Web/docs/repo for dated facts → deep research
