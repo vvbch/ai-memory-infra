@@ -190,7 +190,7 @@ docs to update:
 | Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |
 | Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
 | Create / obtain any account, API token, key, or secret | Store it **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault |
-| End of any working session | `docs/planning/STATUS.md` — overwrite: current phase, last decisions, open blockers, next action |
+| End of any working session | (1) `docs/planning/STATUS.md` — overwrite: current phase, last decisions, open blockers, next action. (2) **Append** a session entry to the private `docs/planning/BUILD-LOG.md` (steps · gotchas/micro-lessons · time: wall-clock + rough human/agent split) and a curated, no-personal-detail summary to public `docs/BUILD-JOURNEY.md` (keep them in agreement, tenet 10) |
 
 **Done means:** code tests green (if code) · the trigger row's docs updated · an
 ADR exists for any major choice · `STATUS.md` refreshed · PR checklist ticked ·
