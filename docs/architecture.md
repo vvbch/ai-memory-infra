@@ -68,7 +68,7 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | Component | Role | Monthly cost |
 |---|---|---|
 | Domain name | The project's address; one registered name, subdomains carved out of it | **(~₹85/mo)** (~₹1,000/yr) |
-| VPS — DigitalOcean 4GB droplet, BLR1 (Bangalore) | Runs the whole Docker Compose stack (Mem0 API, Postgres/pgvector, Neo4j, dashboard, Caddy, monitoring) | **(~₹2,000/mo)** |
+| VPS — DigitalOcean 4GB droplet, BLR1 (Bangalore) | Runs the whole Docker Compose stack (Mem0 API, Postgres/pgvector, Neo4j, dashboard, Caddy, monitoring); single-node by design (ADR 019) | **(~₹2,000/mo)** |
 | OpenAI `gpt-5-mini` — extraction LLM | Pulls discrete facts out of conversations; chosen for structured-output reliability (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹90/mo)** |
 | OpenAI `text-embedding-3-small` — embeddings | Vectorizes facts + queries for pgvector similarity search (Mem0's default embedder) | **(~₹15/mo)** |
 | DO Spaces — backup object storage | Off-box destination for daily `pg_dump` + Neo4j dumps (Phase 2) | **(~₹400/mo)** |
@@ -77,7 +77,9 @@ interactions/day; see ADR 002 for the extraction-cost model.
 
 **Domain sub-components** — the single domain name decomposes into several
 pieces; all are ₹0 beyond the registration fee above (Cloudflare DNS is free).
-DNS lives at Cloudflare; compute at DigitalOcean (ADR 016, supersedes ADR 012).
+DNS lives at Cloudflare (ADR 016, supersedes ADR 012); compute is a single
+DigitalOcean droplet in BLR1 (ADR 019 — cost/latency/exit rationale vs
+AWS/GCP/Azure/Hetzner).
 
 | Sub-component | Role | Cost |
 |---|---|---|

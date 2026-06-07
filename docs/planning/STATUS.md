@@ -74,6 +74,12 @@ secrets (see blockers). Tenet 11 repo-health instrumentation is live (below).
 - **Credential custody codified as a DoD gate** (ADR 017 generalized): every
   account/token/key lands in the Bitwarden `ai-memory-infra` individual-vault folder
   as created; SSO logins get a note for the nominee.
+- **Compute provider documented (ADR 019) — closes a tenet-12 gap.** DigitalOcean
+  was never written up vs hyperscalers. Verified: DO BLR1 $24/mo is at the floor for
+  mainstream India-region flat-rate (ties Vultr/Linode; Lightsail egress is the
+  variable trap; Hetzner ~60% cheaper but no India DC / no SLA). Single-node by design
+  (HA out of scope — tenet 4 covers outages); best India latency; clean exit (plain
+  Compose). Stay on DO for Phase 1; Hetzner/Alienware are documented revisit paths.
 
 ## Last clarification (2026-06-07, session-resume)
 
