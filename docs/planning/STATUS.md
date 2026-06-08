@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 10: sidebar Recent Memories fetch fixed;
-extension reload next**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
+**Last updated:** 2026-06-08 (**Phase 3 — session 11: browser reload still failing;
+fresh debug session next**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
 private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
 MIT `mem0ai/mem0-chrome-extension` history, installed Node.js LTS on Windows, verified the raw
 upstream build, then rewrote the extension in commit **`7ac3011`**: default server
@@ -25,9 +25,13 @@ itself, the folder containing `manifest.json`. Session 10: after API-key entry, 
 **Error loading memories**; fixed `src/sidebar.ts` to fetch `GET /memories?user_id=...` using the same
 stored `serverUrl`, `apiKey`, and `userId` helper path as the popup/content scripts, to reject non-2xx
 responses clearly, and to tolerate both array and `{ results, count }` response shapes. Verification:
-`npm run type-check` green; `npm run build` green. **Next: reload the unpacked extension in
-`chrome://extensions/`, reopen OpenMemory, and verify Recent Memories loads before testing add/search/get
-from a browser page.**
+`npm run type-check` green; `npm run build` green. Session 11: operator reloaded the unpacked extension
+in Chrome, but the browser still displayed errors on `https://chatgpt.com/`: **`Error fetching
+memories: TypeError: Failed to fetch`** at `assets/sidebar.ts-CSsZSEPr.js:126`, plus **`Unchecked
+runtime.lastError: Cannot create item with duplicate id mem0.saveSelection`**. **Next: start a fresh
+debug session; inspect the extension runtime/service-worker/content-script errors, verify whether the
+fetch failure is CORS/host-permission/service-worker-context related, and make context-menu creation
+idempotent.**
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -714,8 +718,8 @@ pre-commit is now DONE** (gitleaks gate).
 ## Next action
 
 > **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; self-hosted
-> rewrite is committed; unpacked extension load is done; sidebar fetch fix is built; next is extension
-> reload + browser verification.** Session 8 (2026-06-08): created private GitHub repo
+> rewrite is committed; unpacked extension load is done; sidebar fetch fix is built but browser reload
+> still fails; next is a focused extension debug session.** Session 8 (2026-06-08): created private GitHub repo
 > **`vvbch/ai-memory-extension`**,
 > imported upstream MIT history, verified the raw upstream baseline, then rewrote and committed the
 > self-hosted fork (`7ac3011`). Session 9: operator loaded `ai-memory-extension/dist` as an unpacked
@@ -742,9 +746,14 @@ pre-commit is now DONE** (gitleaks gate).
 > 6. ✅ Fix and rebuild the sidebar Recent Memories fetch: it now uses stored `serverUrl`, `apiKey`, and
 >    `userId` consistently, handles non-2xx responses, and accepts the self-hosted memory response shape.
 >    `npm run type-check` + `npm run build` green.
-> 7. Reload the unpacked extension in `chrome://extensions/`, reopen OpenMemory, then verify
->    `/memories`, `/search`, and `GET /memories?user_id=` from the browser.
-> 8. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 7. ✅ Reloaded the unpacked extension in `chrome://extensions/`; browser still showed:
+>    `Error fetching memories: TypeError: Failed to fetch` on `https://chatgpt.com/`
+>    (`assets/sidebar.ts-CSsZSEPr.js:126`) and `Cannot create item with duplicate id mem0.saveSelection`.
+> 8. Fresh-session debug target: inspect the extension runtime/service-worker/content-script errors,
+>    verify CORS/host-permission/request-context for `GET /memories?user_id=...`, and make context-menu
+>    registration idempotent. Then rebuild, reload, and continue `/memories`, `/search`, and
+>    `GET /memories?user_id=` browser verification.
+> 9. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly

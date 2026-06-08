@@ -600,3 +600,18 @@ the step harder than it should be.
 **Next**
 - Reload the unpacked extension in Chrome, reopen OpenMemory, then continue browser add/search/get
   verification.
+
+## 2026-06-08 — Browser reload still shows extension runtime errors
+
+**Focus:** stop the session at a clean debug boundary.
+
+**Milestones**
+- **Reload tested.** The unpacked extension was reloaded after the sidebar fetch fix.
+- **Errors captured.** On `https://chatgpt.com/`, Chrome still reports `Error fetching memories:
+  TypeError: Failed to fetch` from the sidebar bundle, plus `Cannot create item with duplicate id
+  mem0.saveSelection`.
+
+**Next**
+- In a fresh session, inspect the extension runtime/service-worker/content-script errors, verify whether
+  the fetch failure is CORS/host-permission/request-context related, make context-menu registration
+  idempotent, rebuild, reload, and continue browser verification.
