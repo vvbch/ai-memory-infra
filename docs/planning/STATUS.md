@@ -4,7 +4,23 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
+**Last updated:** 2026-06-08 (**Phase 3 — session 7: Chrome extension fork DECIDED; separate
+private repo chosen; infra repo checkpoint COMMITTED**). Phase 2 is closed; started Phase 3
+(browser reach). Ran repo-health (both repos green, `0 ahead/0 behind`). **Web-verified the
+extension landscape (tenet 8)** — mem0's own **`mem0ai/mem0-chrome-extension`** (MIT, archived
+2026-03; ships per-site content scripts for ChatGPT/Claude/Gemini/DeepSeek + Grok/Perplexity) vs
+3rd-party forks that ship their *own* backend (SYNQ/ArcRift — Ollama + local DBs, against tenet 7)
+vs build-from-scratch. Surfaced the call to the operator (concierge); operator chose to **fork
+mem0's MIT extension and rewire it to our self-hosted server** (ADR 024). Follow-up operator call:
+**extension gets its own GitHub repo, private for now** (avoid public confusion/licensing worry while
+the raw fork is cleaned up and rewritten). The temporarily-vendored upstream source was **not
+committed** into `ai-memory-infra`; `extension/README.md` is now only a pointer. **Scoped the
+rewiring** (read the source before cleanup): cloud coupling is isolated — calls hit hardcoded
+`https://api.mem0.ai` with `Authorization: Bearer/Token`, plus PostHog telemetry; our server uses
+`https://memory.chandrav.dev` + **`X-API-Key`**. **Next: create private `ai-memory-extension` repo
+from the upstream fork/baseline, then do cleanup + rewrite there.**
+
+**Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
 operator click-by-click to create the **drill's own (second) healthchecks.io check** ("ai-memory
 restore drill", cron `30 19 1 * *` UTC = 01:00 IST on the 1st, **2 h grace**, email notification
@@ -301,9 +317,16 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
+**Phase 3 — Chrome extension fork → IN PROGRESS (session 7).** Decision made (**ADR 024**): fork
+mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
+self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source lives
+in the new repo. **Next: create private `ai-memory-extension` repo, then rewire the transport/auth
+layer there** (base URL → `memory.chandrav.dev`; `Authorization: Bearer/Token` → `X-API-Key`; drop
+Google sign-in; strip PostHog telemetry; verify `/memories` + `/search` shapes).
+
 **Phase 2 — backup/restore → COMPLETE.** Scripts DONE & PROVEN; automation §1–§4 all built &
 verified; the drill's 2nd healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is now **wired & verified
-green** (session 6). **DoD fully met — no operator steps remain. Next: Phase 3 (Chrome extension).**
+green** (session 6). **DoD fully met — no operator steps remain.**
 
 **Phase 2 — backup/restore → (history) REOPENED (scripts DONE & PROVEN; automation IN PROGRESS).**
 `scripts/backup.sh` + `scripts/restore.sh` are live and proven: backup = online `pg_dump -Fc` +
@@ -679,24 +702,26 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 2 is COMPLETE; start Phase 3 (Chrome extension fork).** Session 6
-> (2026-06-08) closed the last Phase-2 step: wired the **drill's own (second) healthchecks.io check**
-> (`DRILL_HEALTHCHECK_URL` appended to the droplet `/opt/ai-memory-infra/infra/.env`, clean/no-CR),
-> ran `restore-drill.sh` on the droplet → **DRILL PASSED** (`20260608T151504Z`) → operator confirmed
-> the check went **green**. The droplet was already at GitHub truth (clean, 0 ahead/behind). **Phase 2
-> DoD is fully met: backups run on a nightly timer, both the nightly backup *and* the monthly drill
-> have live dead-man's-switch alerting (both green), the backup store is delete/overwrite-resistant
-> with a least-privilege key, restore takes a pre-snapshot, and the restore drill is built + proven.**
+> **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Decision made; next is create the
+> separate private extension repo.** Session 7 (2026-06-08): ran repo-health (green), web-verified the
+> landscape (tenet 8), surfaced the call, **operator chose to fork mem0's MIT
+> `mem0-chrome-extension`** (ADR 024). Follow-up operator decision: **extension source gets its own
+> private GitHub repo for now** (not vendored into `ai-memory-infra`) while we clean up/rewrite and
+> avoid public confusion/licensing worry during the raw-fork phase. The temporary vendored source was
+> removed before commit; `ai-memory-infra/extension/README.md` is only a pointer.
 >
-> **NEXT ACTION = Phase 3 — Chrome extension fork.** Per build phases (AGENTS.md): fork/adapt a
-> Chrome extension so the memory layer reaches the browser (desktop / ChromeOS). **Start by
-> web-verifying the current extension landscape (tenet 8)** — what open-source mem0/AI-memory browser
-> extensions exist now, their license/fork-ability, and how they talk to a backend — *before*
-> committing to one (tenet 12 if it pulls in any new dependency/vendor). Keep the extension a thin
-> **MCP/REST client of the live API** (`https://memory.chandrav.dev`, `X-API-Key`), not a second
-> brain. Android is **best-effort only** (Kiwi archived Jan 2025, ADR 004); iOS non-Claude LLMs are a
-> known gap. Surface the fork/build-vs-adapt call to the operator (one recommended default + the
-> trade-off) before writing code.
+> **NEXT ACTION (next session, one step at a time):**
+> 1. Create private GitHub repo **`ai-memory-extension`** (unless operator picks a different name).
+>    Prefer a true fork/import of `mem0ai/mem0-chrome-extension` so upstream MIT history and attribution
+>    are preserved. Keep it private initially.
+> 2. Move the working surface to that repo, then run its Node install/build once (`npm install`,
+>    `npm run build`) to verify the upstream baseline before changing code.
+> 3. Rewire the transport/auth layer there: centralize `https://api.mem0.ai`; point default server to
+>    `https://memory.chandrav.dev`; replace `Authorization: Bearer/Token` with **`X-API-Key`**; replace
+>    Google sign-in with settings (server URL + API key + user id); strip PostHog telemetry; verify
+>    `/memories`, `/search`, and `GET /memories?user_id=` against the running server from the browser.
+> 4. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+>    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
 > drill timer live (`30 19 1 * *` UTC ≈ 01:00 IST on the 1st), both watched by healthchecks.io. The

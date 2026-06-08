@@ -493,3 +493,21 @@ whole thing with a real run. Short concierge session.
 **Next**
 - **Phase 3 — the Chrome browser extension**, so the memory layer reaches the browser. First step is
   to survey what already exists before building.
+
+## 2026-06-08 — Phase 3 starts: browser extension fork decision
+
+**Focus:** decide the browser-extension path before writing code.
+
+**Milestones**
+- **Extension landscape checked first.** We compared mem0's archived MIT Chrome extension, a fresh
+  build, and third-party local-memory extensions. The mem0 extension is the best starting point
+  because it already has the fragile per-site browser plumbing for ChatGPT, Claude, Gemini,
+  DeepSeek, Grok, and Perplexity, while still matching our mem0 server model.
+- **Decision captured in ADR 024.** We will fork mem0's extension and rewire it to the self-hosted
+  server (`memory.chandrav.dev`) with `X-API-Key`, removing mem0 cloud login and telemetry.
+- **Repo boundary corrected before committing.** The extension will live in its own private GitHub
+  repo, not inside the infra repo. The infra repo now keeps only the decision record and a pointer.
+
+**Next**
+- Create the private extension repo, verify the upstream baseline builds, then do the self-hosted
+  auth/URL rewrite there.
