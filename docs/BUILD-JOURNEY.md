@@ -9,6 +9,25 @@
 
 ---
 
+## 2026-06-09 — Closed the agent/persona pre-build gate
+
+**Focus:** define the agents that will own future memory skills before building
+the skills themselves.
+
+**Milestones**
+- **Added `docs/agent-personas.md`.** The first three personas are Build Agent,
+  Research and Strategy Agent, and Operator Assistant, with Memory Steward as a
+  supporting hygiene role.
+- **Used the recent COEs as design input.** The first skills are ordered around
+  the actual failure modes: session checkpointing, all-repo handoff verification,
+  and concierge formatting for operator actions.
+- **Moved the backlog forward.** The pre-build gate is marked done; the next
+  work is implementation of the first agent-owned skills.
+
+**Decision**
+- Skills must declare an owner persona, allowed store/retrieve behavior, never-store
+  boundaries, visible success condition, and canonical repo/doc before they are built.
+
 ## 2026-06-09 — Tightened COE and concierge handoff controls
 
 **Focus:** close a repeat governance failure before continuing the MCP client check.

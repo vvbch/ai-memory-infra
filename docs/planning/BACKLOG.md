@@ -10,7 +10,8 @@
 
 ## Active pre-build gate — do before any more build work
 
-- **`[product-design]` Define agent/persona definitions before skills/tools.** This
+- ✅ **`[product-design]` Define agent/persona definitions before skills/tools — DONE
+  (2026-06-09).** See `docs/agent-personas.md`. This
   is the next resume point even though it is not a numbered infra build phase.
   Before implementing more skills, define the small set of agents/personas that
   will use the memory layer, their boundaries, what each is allowed to
@@ -18,6 +19,12 @@
   those agents. Reason: skills without agent definitions become a bag of commands
   with no owner or success criteria. Set by operator 2026-06-09 after Cursor MCP
   visibility was proven.
+
+- **`[skills]` Build the first agent-owned skills.** Start with the COE-driven
+  mechanics in `docs/agent-personas.md`: Build Agent session checkpoint, Build
+  Agent repo handoff verifier, and Operator Assistant concierge action formatter.
+  These directly address the repeated handoff/operator-action failures before
+  adding broader research or memory-hygiene skills.
 
 ## P1 — do at the start of Phase-1 CI work
 

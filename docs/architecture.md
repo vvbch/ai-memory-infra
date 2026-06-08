@@ -124,6 +124,13 @@ Docker internal network (ADR 009).
 | Claude Code / Cursor / VS Code | Local stdio MCP proxy to live REST API | Full |
 | Any future tool | REST API | Full |
 
+## Agent personas
+
+The first consumers of the shared memory layer are defined in
+`docs/agent-personas.md`: Build Agent, Research and Strategy Agent, and Operator
+Assistant, with a supporting Memory Steward role for hygiene and metadata. Skills
+must attach to one of these owners before they are built.
+
 ## Degradation
 
 VPS down ⇒ every LLM still works with its own native memory; the extension

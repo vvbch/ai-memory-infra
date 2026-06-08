@@ -14,6 +14,8 @@ context across every LLM, on any device.
   Claude Code, Cursor, and VS Code. Claude mobile needs a later remote HTTP MCP
   endpoint. Android extension coverage is best-effort only (see ADR 004). Native
   LLM UIs unchanged.
+- **Agent personas**: Build Agent, Research and Strategy Agent, and Operator
+  Assistant own future skills/tools. See `docs/agent-personas.md`.
 - **Models**: OpenAI `gpt-5-mini` extraction (Mem0's default; chosen for
   structured-output reliability) + `text-embedding-3-small` embeddings (single
   provider, swappable; ~Rs.105/mo). See ADR 013.

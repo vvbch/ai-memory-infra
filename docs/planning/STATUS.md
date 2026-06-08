@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Phase 4 — session 19: Cursor MCP server visible; next =
-pre-build agent definitions before skills/build work**). Parent
+**Last updated:** 2026-06-09 (**Phase 4 — session 20: agent/persona gate done; next =
+build first COE-driven skills under those agents**). Parent
 workspace `ai-memory` now has a root `AGENTS.md` plus `.cursor/rules/00-workspace-control-plane.mdc`,
 both thin pointers that route future agents directly to `ai-memory-infra` as the control
 plane before they spend time rediscovering the folder layout. Live OpenAPI showed
@@ -38,8 +38,11 @@ verifier from P2 to P1. Operator then confirmed Cursor lists a **workspace MCP s
 added after another operator catch: do **not** print a resume prompt while waiting on Chandra to
 perform the next step in the same active flow, even if `STATUS.md` is current. Operator then set
 the next resume point: before any further build work, define the agents/personas that will use the
-memory layer, then define skills/tools under them. This is a pre-build product-design gate, not a
-numbered infra phase. Phase 2 is closed;
+memory layer, then define skills/tools under them. Session 20 closed that product-design gate in
+`docs/agent-personas.md`: primary owners are **Build Agent**, **Research and Strategy Agent**, and
+**Operator Assistant**, with a supporting **Memory Steward** role. The COEs drove the first build
+order: session checkpoint, repo handoff verifier, and concierge action formatter before broader
+research/memory hygiene skills. Next is implementation, not more design. Phase 2 is closed;
 Phase 3
 browser reach is sufficiently proven for the seamless path. Session 17 ran repo-health
 green for `ai-memory-infra` + `ai-memory-infra-private`, then proved ChatGPT-side
@@ -413,19 +416,18 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 4 — Claude + Cursor/VS Code MCP reach (session 19).** Phase 3 browser reach is proven
+**Phase 4 — Claude + Cursor/VS Code MCP reach (session 20).** Phase 3 browser reach is proven
 enough for the seamless path. The local stdio MCP proxy (`ai-memory-mcp`) is built and proven
 against the live REST API; Cursor/VS Code/Claude Code project configs are present at the parent
 workspace root; the persistent `AI_MEMORY_API_KEY` user env var is already set; and the operator has
 reloaded Cursor. Cursor now lists a workspace MCP server named `ai-memory`, so Cursor-side local
 MCP visibility is proven. The current correction tightened concierge/handoff rules after the agent
 gave a vague MCP-check instruction and emitted resume prompts while operator action was pending.
-**Next:** **pre-build gate — define agent/persona definitions before any more build work.** Do not
-start implementing skills/tools yet. First define the small set of agents/personas that will use the
-memory layer (for example: coding agent, research/strategy agent, personal operator assistant), their
-boundaries, what each should store/retrieve, and success criteria. Then add skills/tools under those
-agents. Reason: skills without agent definitions become a bag of commands with no owner or success
-criteria.
+The pre-build persona gate is now done in `docs/agent-personas.md`: **Build Agent**, **Research and
+Strategy Agent**, and **Operator Assistant** own future skills, with **Memory Steward** as a
+supporting hygiene role. **Next:** build the first COE-driven skills under those owners: Build Agent
+session checkpoint, Build Agent repo handoff verifier, then Operator Assistant concierge action
+formatter.
 
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
@@ -821,81 +823,30 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 4 (Claude + Cursor/VS Code MCP) is next. Phase 3 browser reach is proven
-> enough for the seamless path.** Private extension repo exists; self-hosted rewrite is committed;
-> unpacked extension load is done; background-relay fix is built; Chrome reload + ChatGPT sidebar
-> Recent Memories are verified green; ChatGPT automatic save + live search are verified against the
-> live server. Session 8 (2026-06-08): created private GitHub repo
-> **`vvbch/ai-memory-extension`**,
-> imported upstream MIT history, verified the raw upstream baseline, then rewrote and committed the
-> self-hosted fork (`7ac3011`). Session 9: operator loaded `ai-memory-extension/dist` as an unpacked
-> Chrome extension and confirmed **OpenMemory** appears on `chrome://extensions`. The stale Chrome
-> load prompt was fixed in the control plane: web-verify current console/browser UI docs before
-> prompting, name the exact artifact to select, and give the visible success condition. Node.js LTS was
-> installed with `winget`; on this Windows PowerShell use `C:\Program Files\nodejs\npm.cmd` because
-> `npm.ps1` is blocked by execution policy. npm reported 11 inherited audit findings; do not run
-> `npm audit fix` blindly.
+> **RESUME HERE — build the first agent-owned skills.** Phase 3 browser reach is proven enough for
+> the seamless path. Phase 4 local MCP proxy is built and proven against the live API. Cursor lists a
+> workspace MCP server named `ai-memory`, so Cursor-side MCP visibility is proven. The pre-build
+> product gate is now closed in `docs/agent-personas.md`: the primary personas are **Build Agent**,
+> **Research and Strategy Agent**, and **Operator Assistant**, with a supporting **Memory Steward**
+> role.
 >
 > **NEXT ACTION (next session, one step at a time):**
-> 1. ✅ Create private GitHub repo **`ai-memory-extension`** and preserve upstream history/attribution.
-> 2. ✅ Move the working surface to that repo and verify the raw upstream baseline (`npm install`,
->    `npm run build`) before changing code.
-> 3. ✅ Rewire the transport/auth layer: `https://api.mem0.ai` gone; default server
->    `https://memory.chandrav.dev`; `Authorization: Bearer/Token` gone; **`X-API-Key`** helper; Google
->    sign-in replaced with local settings (server URL + API key + user id); PostHog/mem0 telemetry
->    removed/no-op. `npm run type-check` + `npm run build` green.
-> 4. ✅ Load `ai-memory-extension/dist` as an unpacked Chrome extension. Current Chrome flow:
->    `chrome://extensions/` → Developer mode toggle → **Load unpacked** → select the `dist` folder
->    itself (the folder containing `manifest.json`) → confirm **OpenMemory** appears.
-> 5. ✅ Enter the real API key from Bitwarden in the OpenMemory popup. Sidebar initially showed
->    **Error loading memories**.
-> 6. ✅ Fix and rebuild the sidebar Recent Memories fetch: it now uses stored `serverUrl`, `apiKey`, and
->    `userId` consistently, handles non-2xx responses, and accepts the self-hosted memory response shape.
->    `npm run type-check` + `npm run build` green.
-> 7. ✅ Reloaded the unpacked extension in `chrome://extensions/`; browser still showed:
->    `Error fetching memories: TypeError: Failed to fetch` on `https://chatgpt.com/`
->    (`assets/sidebar.ts-CSsZSEPr.js:126`) and `Cannot create item with duplicate id mem0.saveSelection`.
-> 8. ✅ Fixed and rebuilt the two runtime errors from session 11. Chrome docs confirmed content scripts
->    on `chatgpt.com` cannot directly bypass CORS; the extension service worker must perform permitted
->    cross-origin API calls. Added a background API relay for `/memories` + `/search`, switched the
->    sidebar Recent Memories fetch plus ChatGPT content-script search/save calls through that relay, and
->    made `mem0.saveSelection` context-menu setup idempotent by remove/recreate on worker init.
->    `npm run type-check` + `npm run build` green; `dist/` regenerated.
-> 9. ✅ Reloaded the real unpacked OpenMemory extension in Chrome
->    (`jdajdehjpohgmolnlijiiggfbolmenmo`, loaded from `ai-memory-extension/dist`), opened
->    `https://chatgpt.com/`, and verified the OpenMemory sidebar renders live Recent Memories:
->    **Total Memories = 1**, with Copy/View actions on the loaded memory card. The prior visible
->    `TypeError: Failed to fetch` sidebar state did not recur after the background relay.
-> 10. ✅ **ChatGPT-side save/search proven against the live server.** Baseline search for
->    `PHASE3-OM-20260608-2339-RIVER` had 0 exact matches; operator sent a ChatGPT prompt asking it to
->    remember the codeword; live `GET /memories?user_id=chrome-extension-user` returned the new exact
->    codeword memory; live `/search` for "What is my OpenMemory Phase 3 verification codeword?" returned
->    3 memories including the codeword; the real extension sidebar showed **Total Memories = 3** and
->    displayed the codeword memory. The inline composer modal still opens off-screen/mostly invisible
->    after a local viewport-clamp attempt and rebuild; the ineffective code change was not retained, and
->    this is parked as P2 extension polish because seamless
->    memory capture/retrieval does not depend on manual modal clicks.
-> 11. ✅ **Phase 4 local MCP proxy built and proven.** Live OpenAPI showed no `/mcp` routes and direct
->    probes returned 404, so ADR 025 adds `ai-memory-mcp`: a local stdio MCP proxy that calls the live
->    REST API. Added parent workspace configs: `.cursor/mcp.json` (Cursor), `.vscode/mcp.json` (VS Code),
->    and `.mcp.json` (Claude Code). Verified with a Python MCP client: tools
->    `add_memory,list_memories,search_memories` listed; `search_memories` found exact live codeword
->    `PHASE3-OM-20260608-2339-RIVER` without printing the API key.
->    User env check now shows persistent `AI_MEMORY_API_KEY` is already present (43 chars, not printed),
->    `ai-memory-mcp` resolves on PATH, and the operator has reloaded Cursor. Current Cursor guidance says
->    the server should appear under **Cursor Settings → Tools & MCP**; older builds may show
->    **Settings → Features → Model Context Protocol**; debug logs are under **Output → MCP Logs**.
->    **NEXT ACTION:** one operator UI check, concierge-style: open Cursor Settings → Tools & MCP and look
->    for an `ai-memory` server entry. Success condition: `ai-memory` is listed and enabled. Claude Code
->    CLI is not installed on this machine; when installed, open it from parent workspace `ai-memory` and
->    approve the project `.mcp.json` server.
-> 12. **Handoff rule reminder:** when the next reversible session step is done and verified, update
+> 1. Build the **Build Agent session checkpoint skill**. It should capture current work item,
+>    verification, touched repos, and next action into the right repo docs without duplicating long
+>    chat context.
+> 2. Then build the **Build Agent repo handoff verifier**. It should mechanically check dirty/ahead/behind
+>    state for touched repos before final response.
+> 3. Then build the **Operator Assistant concierge action formatter**. It should turn unavoidable
+>    operator steps into purpose + exact action + visible success + wait point.
+> 4. After those are working, continue with Research and Strategy decision capture and Memory Steward
+>    hygiene checks from `docs/agent-personas.md`.
+> 5. **Handoff rule reminder:** when the next reversible session step is done and verified, update
 >    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
 >    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos
 >    such as `ai-memory-extension`. This is already authorized by the project control plane; do not leave
 >    completed work uncommitted or merely local/ahead. Final answer must name each touched repo's latest
 >    pushed commit.
-> 13. Keep every client a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 6. Keep every client a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
@@ -905,7 +856,7 @@ pre-commit is now DONE** (gitleaks gate).
 > needed: `git fetch && git diff --stat origin/main` then `git reset --hard origin/main` (`.env`
 > gitignored, untouched by reset).
 
-**§3(b) console flow (web-verified 2026-06-08, DO docs — for the next step):** DO **Per-Bucket Access
+**Historical §3(b) console flow (completed 2026-06-08; kept only for audit):** DO **Per-Bucket Access
 Keys** are GA. Console → **Spaces Object Storage** → **Access Keys** tab → **Create Access Key** →
 scope **Limited access** → tick **only** `ai-memory-infra-backups-chandrav` → permission
 **Read/Write/Delete** (DO has no write-without-delete tier) → name it (e.g. `ai-memory-backup-only`) →
