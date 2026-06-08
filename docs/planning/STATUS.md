@@ -4,19 +4,30 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (reproducible-deploy session — **step 5 DONE; Phase 1 is now
-fully reproducible**). Rebuilt `mem0-api-server:local` on the droplet from the patched
+**Last updated:** 2026-06-08 (P1-security session — **secret-scan gate DONE; `.env`-strip
+consciously DEFERRED to a post-burn-in cleanup pass**). Added **gitleaks v8.30.1** as a second
+pre-commit gate (after the Tenet-11 repo-health gate) in `scripts/hooks/pre-commit`: it runs
+`gitleaks git --staged` against a versioned `.gitleaks.toml` and **blocks the commit** on any
+finding (or if gitleaks is missing — a silent no-op would defeat the gate). `install-hooks.ps1`
+now also **ensures gitleaks is installed** (winget). **Tested both ways:** a staged fake AWS key
+was blocked (exit 1); the real changeset passed ("no leaks found"). So "no secrets in git" is now
+a deterministic gate. **The plaintext secrets comment block in `infra/.env` was NOT stripped this
+session** — the operator is keeping the admin-UI login note handy through ~1 week of real usage;
+it's parked in BACKLOG with a trigger (~2026-06-15) under the new **tenet 18 (burn-in before
+hardening)**. Safe to hold: `.env` is gitignored *and* the new gitleaks gate stops it ever
+reaching git (the active risk — secrets in history — is closed). **Added tenet 18** to
+`tenets.md` + the `AGENTS.md` summary. **Next: Phase 2 — backup/restore.**
+
+**Prior update:** 2026-06-08 (reproducible-deploy session — **step 5 DONE; Phase 1 fully
+reproducible**). Rebuilt `mem0-api-server:local` on the droplet from the patched
 `infra/mem0-server.Dockerfile` (ADR 021 baked in, build-time `assert` passed), then
 **`compose up --force-recreate`'d mem0 and re-ran the round-trip** (user_id
-`diag-rebuild-20260608`): `POST /memories` extracted 2 facts (PostgreSQL / platform-engineer
-in Bangalore) → `GET` + `/search` returned them ranked — proving the redeploy no longer
-reverts the gpt-5-mini bug (the live patch is now in the *image*, not just the writable
-layer). **Folded the from-source build into `scripts/bootstrap.sh`** (clones the pinned
-mem0 source `MEM0_REF`, `docker build`s the image, pulls only the external base images) and
-**updated `docs/setup.md`** (Step 6 auto-build + OpenAI allow-both-models prereq). A clean
-`bootstrap.sh` now works end-to-end (`bash -n` clean; build verified on the droplet). **Next:
-P1 security cleanup** (strip the plaintext secrets comment block from `infra/.env`; add a
-secret-scan pre-commit). **Earlier this session (prior chat):** the OpenAI embeddings 403 is
+`diag-rebuild-20260608`): `POST /memories` extracted 2 facts → `GET` + `/search` returned them
+ranked — proving the redeploy no longer reverts the gpt-5-mini bug (the live patch is now in the
+*image*, not just the writable layer). **Folded the from-source build into `scripts/bootstrap.sh`**
+(clones pinned `MEM0_REF`, `docker build`s the image, pulls only external base images) and
+**updated `docs/setup.md`**. A clean `bootstrap.sh` works end-to-end (`bash -n` clean; build
+verified on the droplet). **Earlier (prior chat):** the OpenAI embeddings 403 is
 fixed (operator set the
 `ai-memory` project to "allow all models" — `text-embedding-3-small` → 200). Re-running the
 round-trip then surfaced a **second, different blocker**: extraction to `gpt-5-mini` 400'd with
@@ -79,6 +90,18 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
    manual by-hand build), and the `gpt-5-mini` bug-fix is permanently baked into the image —
    we proved a from-scratch-style redeploy keeps it (rebuilt the image + recreated the
    container + the memory test still stuck). So a clean reinstall just works now.
+5. ✅ **Lock the door on accidental secret leaks** — DONE (2026-06-08). Added an automatic
+   "secret scanner" (gitleaks) that runs every time we save work to git: if a password or key
+   ever sneaks into a file we're about to commit, the save is **blocked** before it can reach
+   GitHub. Tested it — it caught a planted fake key and stopped the commit, and let a clean
+   one through. So "no secrets in git" is now enforced by a machine, not just a rule we try to
+   remember.
+6. ⏸️ **Tidy the leftover password note in the config file** — ON PURPOSE, LATER. There's a
+   plaintext note (the admin login for the graph/dashboard pages) sitting in the server's
+   config file. It's already safe in Bitwarden, but you asked to keep it handy for ~a week of
+   real use before we delete it. It's parked with a reminder (~Jun 15) and it's safe to leave:
+   that config file never goes to git, and the new scanner above would block it anyway. This is
+   the new "burn-in, then clean up" rule (tenet 18).
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -95,7 +118,7 @@ key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 
 Ask for **concierge mode** (one step at a time, plain English, no jargon).
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action: the BACKLOG P1 security cleanup — (1) strip the plaintext secrets comment block from infra/.env on BOTH the droplet (/opt/ai-memory-infra/infra/.env) and the local copy (values are already in Bitwarden, so nothing plaintext should sit at rest), and (2) add a secret-scan pre-commit hook (e.g. gitleaks) so "no secrets in git" is a deterministic gate. Concierge mode, one step at a time, plain English. Context: Phase 1 is DEPLOYED, usable, and now fully REPRODUCIBLE — step 5 is DONE: the mem0 image was rebuilt from infra/mem0-server.Dockerfile (ADR 021 gpt-5-mini patch baked in), a compose --force-recreate + round-trip proved the bug no longer reverts (user_id diag-rebuild-20260608), the from-source build is folded into scripts/bootstrap.sh (pinned MEM0_REF), and setup.md is updated. ADR 020 (make bootstrap = locked dead end) still stands. ADMIN_API_KEY custody gate CLOSED. SSH key is in ssh-agent; secrets read from server .env, never printed. After P1 security, Phase 2 is backup/restore.
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action: Phase 2 — backup/restore. Stand up + verify the backup/restore path (scripts/backup.sh + scripts/restore.sh already exist as scaffolding): back up Postgres/pgvector + Neo4j + the mem0 SQLite history to the Spaces bucket (ai-memory-infra-backups-chandrav), then prove a restore round-trips a known memory. Concierge mode, one step at a time, plain English. Context: Phase 1 is DEPLOYED, usable, REPRODUCIBLE, and now SECURED — the gitleaks secret-scan pre-commit gate is live ("no secrets in git" is deterministic; tested both ways). The one remaining P1 item — stripping the plaintext admin-UI login note from infra/.env (local + droplet /opt/ai-memory-infra/infra/.env) — is CONSCIOUSLY DEFERRED to a post-burn-in cleanup pass (tenet 18, trigger ~2026-06-15); it's safe because .env is gitignored AND gitleaks blocks it from git. Do NOT strip it early unless asked. ADR 020 (make bootstrap = locked dead end) still stands. ADMIN_API_KEY custody gate CLOSED. SSH key is in ssh-agent; secrets read from server .env, never printed.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
@@ -109,10 +132,12 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 bootstrapped (Docker + Compose + UFW). **Core stack live & healthy**: Caddy + Mem0
 (built from source, `mem0-api-server:local`) + Postgres/pgvector + Neo4j. RAM ~1.6G/3.9G
 used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert. **API is
-usable** (admin key works, models verified, round-trip persists) **and the deploy is now
-reproducible** (`bootstrap.sh` builds the image from pinned source; step 5 done). Remaining
-Phase-1 work is P1 security hardening (strip plaintext `.env` secrets block; secret-scan
-pre-commit), then Phase 2 (backup/restore).
+usable** (admin key works, models verified, round-trip persists), **reproducible**
+(`bootstrap.sh` builds the image from pinned source; step 5 done), **and secured** (gitleaks
+secret-scan pre-commit gate live — "no secrets in git" is deterministic). The one remaining
+P1 item (strip the plaintext admin-UI note from `infra/.env`, local + droplet) is consciously
+deferred to a post-burn-in cleanup pass (tenet 18, ~2026-06-15). **Next: Phase 2
+(backup/restore).**
 
 ## Done this session (2026-06-07, session-resume #3 — DEPLOY)
 
@@ -221,6 +246,29 @@ pre-commit), then Phase 2 (backup/restore).
   every line: **true steady-state ~₹3,800/mo landed** (was ₹2,920 list). Parked a
   zero-forex card as a *personal* finance call (≈₹1.2k/yr saving; off the critical path).
 
+## Last decisions (2026-06-08, P1-security session)
+
+- **Tenet 18 added — burn-in before hardening; defer non-critical cleanup to a tracked
+  post-launch pass.** Operator's call: keep a few convenience/diagnostic affordances (here,
+  the plaintext admin-UI login note in `infra/.env`) through ~1 week of real usage, then sweep
+  them in a deliberate hardening pass. The deferral must be **explicit, tracked, time-boxed**
+  (parked in `BACKLOG.md` with a trigger), never left to memory — and **active risks / one-way
+  doors are exempt** (fixed now, not parked). In `tenets.md` + `AGENTS.md` summary. Same
+  reversibility test as tenet 17, applied to cleanup *timing*.
+- **P1(a) `.env`-strip DEFERRED (tenet 18), P1(b) secret-scan DONE.** Split the BACKLOG P1
+  security item: the plaintext-block strip is parked to the post-burn-in pass (~2026-06-15);
+  the gitleaks pre-commit gate is implemented now. No ADR needed — gitleaks is a standard,
+  reversible dev-tooling addition (the vendor-deliberation tenet 12 is for paid/lock-in
+  dependencies; gitleaks is free, MIT, single static binary, trivially removable).
+- **Secret-scan = native binary + the existing hand-rolled hook, not the `pre-commit`
+  framework.** Chose `gitleaks git --staged` invoked from `scripts/hooks/pre-commit` (which
+  already runs the Tenet-11 repo-health gate) over adopting the Python `pre-commit` framework —
+  fewer moving parts (tenet 7; no Python-framework + Go/Docker toolchain), and it reuses the
+  install path we already have (`install-hooks.ps1`, ADR 015). Config is a versioned
+  `.gitleaks.toml` (tenet 1) extending the upstream default ruleset. **Missing-binary policy:
+  BLOCK** (a security gate that silently no-ops is worse than one that asks to be installed);
+  `install-hooks.ps1` auto-installs gitleaks via winget to keep the gate deterministic.
+
 ## Last decisions (2026-06-08, reproducible-deploy session)
 
 - **Step 5 closed — deploy is reproducible; no new ADR needed.** Rebuilt the Mem0 image from
@@ -296,10 +344,11 @@ pre-commit), then Phase 2 (backup/restore).
 ## Backlog (parked work)
 
 Prioritized backlog lives in **`docs/planning/BACKLOG.md`** (P1/P2/P3) — single
-source so it can't drift. Holds deferred-but-valuable work (P1 secret-scan
-pre-commit; P2 policy-as-code pointer enforcement + eval/CI gates; P3 Bitwarden
-family rollout + KeePassXC offline backup) so nothing is lost and nothing
-displaces the Phase-1 deploy (tenet 13).
+source so it can't drift. Holds deferred-but-valuable work (P1 `.env` plaintext-note
+strip — deferred to the post-burn-in pass, tenet 18; P2 policy-as-code pointer
+enforcement + eval/CI gates; P3 Bitwarden family rollout + KeePassXC offline backup)
+so nothing is lost and nothing displaces the critical path (tenet 13). **P1 secret-scan
+pre-commit is now DONE** (gitleaks gate).
 
 ## Open blockers / risks
 
@@ -372,8 +421,9 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Next action
 
-> **RESUME HERE — Phase 1 is DEPLOYED, usable, and fully REPRODUCIBLE. Harden it (P1
-> security), then Phase 2 (backup/restore).**
+> **RESUME HERE — Phase 1 is DEPLOYED, usable, REPRODUCIBLE, and SECURED (gitleaks gate
+> live). Next is Phase 2 (backup/restore). One P1 item (`.env` plaintext-note strip) is
+> consciously deferred to a post-burn-in pass (tenet 18, ~2026-06-15).**
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
@@ -400,11 +450,16 @@ displaces the Phase-1 deploy (tenet 13).
    clone-pinned-src + `docker build` into `scripts/bootstrap.sh` (pulls only external base
    images so the local Mem0 image doesn't break `pull`); updated `setup.md` (Step 6 auto-build +
    OpenAI allow-both-models prereq). A clean `bootstrap.sh` now works (`bash -n` clean).
-6. **← NEXT — P1 security cleanup** (BACKLOG P1): (a) strip the plaintext secrets comment block
-   from `infra/.env` on **both** the droplet (`/opt/ai-memory-infra/infra/.env`) and the local
-   copy — the values are already in Bitwarden, so nothing plaintext should sit at rest; (b) add
-   a secret-scan pre-commit hook (e.g. gitleaks) so "no secrets in git" is a deterministic gate.
-   Then Phase 2 = backup/restore.
+6. **P1 security cleanup — split (2026-06-08):** (a) **DEFERRED** — strip the plaintext admin-UI
+   note from `infra/.env` (local + droplet `/opt/ai-memory-infra/infra/.env`) is parked to the
+   post-burn-in cleanup pass (**tenet 18**, trigger ~2026-06-15); safe because `.env` is
+   gitignored AND gitleaks now blocks it from git. (b) ✅ **DONE** — gitleaks secret-scan
+   pre-commit gate added + tested (blocks secrets, passes clean); `install-hooks.ps1` ensures
+   gitleaks is installed. "No secrets in git" is now deterministic.
+7. **← NEXT — Phase 2: backup/restore.** Stand up + verify the backup/restore path
+   (`scripts/backup.sh` + `scripts/restore.sh` already exist as scaffolding): back up
+   Postgres/pgvector + Neo4j + the mem0 SQLite history to the Spaces bucket
+   (`ai-memory-infra-backups-chandrav`), then prove a restore round-trips a known memory.
 
 **Connection details:** droplet `168.144.145.29` (SSH `root@`, key passphrase in
 Bitwarden); API `https://memory.chandrav.dev` (`/docs` open); Neo4j browser

@@ -9,6 +9,39 @@
 
 ---
 
+## 2026-06-08 — Made "no secrets in git" a machine-enforced gate
+
+**Focus:** turn the project's "never commit secrets" rule from prose into an automatic,
+deterministic check. Short, single-task session (concierge mode).
+
+**Milestones**
+- **Added a secret-scanning pre-commit gate.** Every commit now runs a scanner (gitleaks)
+  over the staged changes; if it spots anything that looks like a key, token, or password,
+  the commit is **blocked before it can reach the remote**. This sits alongside the existing
+  repo-integrity check as a second gate in the same hook.
+- **Made the gate reliable, not optional.** The hook *blocks* if the scanner isn't installed
+  (a security check that silently does nothing is worse than one that asks to be set up), and
+  the install script now ensures the scanner is present, so the protection survives a fresh
+  clone.
+- **Proved it works both ways.** A planted fake credential was caught and the commit stopped;
+  a clean change set passed cleanly.
+
+**Decisions**
+- **Reused the existing hook + the scanner's native binary** instead of adopting a separate
+  hook framework — fewer moving parts, and it slots into the install path already in place. The
+  scanner's rules are pinned in a versioned config that extends the maintained default ruleset.
+- **Added a "burn-in before hardening" principle.** When something first goes live it's
+  reasonable to keep a few convenience affordances for the first week of real use, then remove
+  them in a deliberate cleanup pass — *provided* the deferral is explicit, tracked, and
+  time-boxed, and never covers an active risk. One leftover cleanup item was consciously parked
+  under this rule (safe to hold, because the new gate would block it from git anyway).
+
+**Engineering notes**
+- Verified the tool's current usage before wiring it in (the recommended command had changed in
+  a recent major version), then confirmed the exact flag against the installed binary.
+- Tested the hook by running it directly rather than through a real commit, to exercise the gate
+  without creating throwaway history.
+
 ## 2026-06-08 — Made the deployment reproducible (close Phase 1)
 
 **Focus:** turn a deploy that needed a manual, by-hand image build into one a single script

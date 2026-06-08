@@ -41,8 +41,13 @@ Open a new shell after `setx` (or pass `-RepoList "<path>","<path>"` each call).
    ```powershell
    powershell -ExecutionPolicy Bypass -File scripts\check-repo-health.ps1
    ```
-2. **Fast (pre-commit hook):** installs the fast subset as `.git/hooks/pre-commit`
-   (a **copy**, not a symlink — tenet 3). Re-run after any re-clone (hooks live in
+2. **Fast (pre-commit hook):** installs `.git/hooks/pre-commit` (a **copy**, not a
+   symlink — tenet 3). The shim runs **two gates, both of which block the commit**:
+   (a) the repo-integrity fast subset above, and (b) a **secret-scan** —
+   `gitleaks git --staged` against the versioned `.gitleaks.toml` ("no secrets in
+   git", tenet 14 / AGENTS.md secrets rule). The installer also **ensures gitleaks
+   is on PATH** (auto-installs via winget when missing); after a fresh install,
+   open a new shell so the binary is found. Re-run after any re-clone (hooks live in
    `.git/`, which isn't versioned). Bypass a known-safe block with
    `git commit --no-verify`:
    ```powershell

@@ -122,6 +122,16 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     operator's attention for **one-way doors** (spend, lock-in, deletion, scope change —
     tenet 12/15 class) and genuine matters of taste. **Bias for action, bounded by
     reversibility.** Sharpens "lead, don't quiz"; attention-corollary of tenet 7.
+18. **Burn-in before hardening — defer non-critical cleanup to a tracked post-launch
+    pass.** When a system first goes live, keep a few **convenience/diagnostic
+    affordances** (a cred note kept handy, verbose logging, a looser setting) that ease
+    the first ~week of real use, then run a **deliberate cleanup/hardening pass** once
+    usage proves it stable. The deferral must be **explicit, tracked, and time-boxed** —
+    parked in `BACKLOG.md` with a "after ~1 week of full usage" trigger (tenet 13), never
+    left to memory. **Never defer an active risk or a one-way door** (secrets reaching git
+    history, data loss, public exposure) — those are fixed *now*; burn-in covers only
+    reversible convenience/cosmetic debt. Same reversibility test as tenet 17, applied to
+    cleanup *timing*.
 
 ## Architecture (summary)
 

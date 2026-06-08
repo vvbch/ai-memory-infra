@@ -304,3 +304,35 @@ Operating rules:
 This is the *attention* corollary of tenet 7 (fewer moving parts): don't spend the
 operator's focus on a decision that a revert can undo. Reversibility, not seniority,
 decides whether the agent acts or asks.
+
+## 18. Burn-in before hardening — defer non-critical cleanup to a tracked post-launch pass
+When a system first goes live, it is legitimate to keep a few **convenience and
+diagnostic affordances** that make the shake-out period easier — a credential note kept
+handy for fast admin-UI logins, more verbose logging, a looser setting that aids
+debugging. Ripping all of it out on day one optimises for a tidiness that nobody is
+benefiting from yet, while the operator is still learning the live system's failure
+modes. So we **run the system in first, then harden it** — the SRE "burn-in" idea: let
+real usage (~a week) expose the rough edges, *then* do a deliberate cleanup/hardening
+pass once the system has earned trust.
+
+The discipline is **not** "skip the cleanup" — it's that the cleanup is **explicit,
+tracked, and time-boxed**, never left to memory:
+
+- **Park it, don't drop it (tenet 13).** Any deferred cleanup goes into
+  `docs/planning/BACKLOG.md` as a concrete item with a trigger ("after ~1 week of full
+  usage") — so it cannot silently rot into permanent tech/security debt.
+- **Time-box the deferral.** "Later" means a named milestone (post-burn-in), not
+  "someday". The whole point of burn-in is that it *ends*.
+- **Never defer a real, active risk.** Burn-in covers *convenience scaffolding and
+  cosmetic debt*, not live exposures: anything that is actively exploitable, or a
+  one-way door (secrets reaching git history, data loss, public exposure) is fixed
+  **now**, not parked. When in doubt, treat it as active and fix it.
+- **Schedule the sweep.** The post-burn-in pass is itself a planned session (a STATUS
+  "Next action"), not an afterthought — it removes the parked affordances, tightens
+  settings, and closes the burn-in backlog items as a batch.
+
+This complements tenet 13 (capture-don't-chase: the deferral is a conscious park, not
+drift), tenet 14 (the backlog item is the Detect/Mitigate record), and tenet 7
+(don't pay maintenance/attention cost before the value is real). The line it draws —
+*reversible convenience may wait for burn-in; active risk and one-way doors may not* —
+is the same reversibility test as tenet 17, applied to **cleanup timing**.

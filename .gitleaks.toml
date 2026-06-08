@@ -1,0 +1,34 @@
+# gitleaks config — "no secrets in git" deterministic gate.
+# Tenet 14 (Detect layer) + AGENTS.md secrets rule ("Secrets only via .env
+# (gitignored) and CI secrets. Never in code/commits/logs."). Run by the
+# pre-commit shim (scripts/hooks/pre-commit) on STAGED changes, and usable in CI.
+#
+# We extend gitleaks' built-in ruleset and add only narrow, documented allowlists
+# for known-safe placeholders. Real secrets live in infra/.env (gitignored) and
+# Bitwarden — never here.
+
+title = "ai-memory-infra gitleaks config"
+
+[extend]
+# Inherit gitleaks' maintained default rules (AWS, GCP, OpenAI, generic
+# high-entropy keys, etc.) so the gate improves as upstream does.
+useDefault = true
+
+[allowlist]
+description = "Project-wide false-positive allowlist (keep narrow)"
+
+paths = [
+  # The committed template ships intentional placeholders (REPLACE_ME,
+  # sk-REPLACE_ME) — not real secrets. Real values go in the gitignored .env.
+  '''infra/\.env\.example$''',
+  # This config and the gitleaks report artifact must not flag themselves.
+  '''\.gitleaks\.toml$''',
+  '''gitleaks-report\.json$''',
+]
+
+regexes = [
+  # Generic placeholder tokens used across docs/examples.
+  '''REPLACE_ME''',
+  '''EXAMPLE''',
+  '''example\.com''',
+]

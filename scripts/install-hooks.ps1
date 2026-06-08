@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Install the Tenet 11 / ADR 015 pre-commit integrity hook into each repo.
+    Install the pre-commit guard (repo-integrity + secret-scan) into each repo.
 
 .DESCRIPTION
     Copies scripts/hooks/pre-commit into <repo>/.git/hooks/pre-commit for every
@@ -8,6 +8,13 @@
     hostile). Because hooks live in .git/ (which is NOT versioned), re-run this
     after any re-clone. The committed shim + this installer are what "survive" a
     re-clone, per ADR 015.
+
+    The shim runs TWO gates, both of which BLOCK the commit on failure:
+      1. repo-integrity (Tenet 11 / ADR 015) — Drive-sync corruption check.
+      2. secret-scan (Tenet 14 / AGENTS.md secrets rule) — gitleaks on staged
+         changes ("no secrets in git" as a deterministic gate).
+    Gate 2 needs the `gitleaks` binary on PATH, so this installer also ENSURES
+    gitleaks is present (auto-installs via winget on Windows when missing).
 
 .PARAMETER RepoList
     Repo paths. If omitted, falls back to the AI_MEMORY_REPOS env var
@@ -59,3 +66,38 @@ foreach ($repo in $RepoList) {
 Write-Host ""
 Write-Host "Done. Installed into $installed repo(s)." -ForegroundColor Cyan
 Write-Host "Re-run this after any re-clone (hooks are not versioned)." -ForegroundColor DarkGray
+
+# --- Ensure gitleaks (secret-scan gate, Tenet 14) ---------------------------
+# The pre-commit shim BLOCKS commits if gitleaks is missing, so the gate is only
+# deterministic when the binary is present. Check PATH; auto-install via winget
+# on Windows when missing. Refresh PATH in-process so the check sees a just-
+# installed binary without a shell restart.
+Write-Host ""
+Write-Host "Checking secret-scan dependency (gitleaks)..." -ForegroundColor Cyan
+function Test-Gitleaks { [bool](Get-Command gitleaks -ErrorAction SilentlyContinue) }
+
+if (-not (Test-Gitleaks)) {
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
+                [Environment]::GetEnvironmentVariable('Path','User')
+}
+
+if (Test-Gitleaks) {
+    Write-Host "gitleaks present: $((Get-Command gitleaks).Source)" -ForegroundColor Green
+} elseif (Get-Command winget -ErrorAction SilentlyContinue) {
+    Write-Host "gitleaks missing -> installing via winget (Gitleaks.Gitleaks)..." -ForegroundColor Yellow
+    winget install --id Gitleaks.Gitleaks -e `
+        --accept-source-agreements --accept-package-agreements --disable-interactivity
+    $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' +
+                [Environment]::GetEnvironmentVariable('Path','User')
+    if (Test-Gitleaks) {
+        Write-Host "gitleaks installed: $((Get-Command gitleaks).Source)" -ForegroundColor Green
+        Write-Host "NOTE: open a NEW shell / restart your editor so gitleaks is on PATH for commits." -ForegroundColor Yellow
+    } else {
+        Write-Host "WARNING: gitleaks still not on PATH. Open a new shell, or install manually:" -ForegroundColor Red
+        Write-Host "  winget install Gitleaks.Gitleaks" -ForegroundColor Red
+    }
+} else {
+    Write-Host "WARNING: gitleaks missing and winget unavailable. Install gitleaks manually:" -ForegroundColor Red
+    Write-Host "  https://github.com/gitleaks/gitleaks/releases  (add to PATH)" -ForegroundColor Red
+    Write-Host "Until then, commits will be BLOCKED by the secret-scan gate (Tenet 14)." -ForegroundColor Red
+}

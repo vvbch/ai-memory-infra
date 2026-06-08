@@ -10,15 +10,28 @@
 
 ## P1 — do at the start of Phase-1 CI work
 
-- **`[security]` Strip the plaintext secrets block from `infra/.env`.** The
-  generated dash/graph admin password (and copy-to-Bitwarden reminder) currently
-  live as a comment block at the top of `infra/.env` — both locally and, after
-  deploy, on the droplet. The values are already safe in Bitwarden, so delete the
-  block from both copies; nothing plaintext should sit at rest. Consciously
-  deferred 2026-06-07. Ties: AGENTS.md secrets rule, ADR 017, tenet 14.
-- **`[security]` Secret-scan pre-commit (e.g. gitleaks).** Make "no secrets in git" a
-  *deterministic gate*, not just a prose rule — relevant now that we handle DO /
-  Cloudflare / OpenAI tokens. Ties: AGENTS.md secrets rule, tenet 14 (Detect layer).
+- **`[security]` Strip the plaintext secrets block from `infra/.env` (post-burn-in
+  cleanup).** The generated dash/graph admin password (and copy-to-Bitwarden reminder)
+  live as a comment block at the top of `infra/.env` — both locally and, after deploy, on
+  the droplet (`/opt/ai-memory-infra/infra/.env`). The values are already safe in
+  Bitwarden, so delete the block from both copies; nothing plaintext should sit at rest.
+  **Deferred to the post-burn-in cleanup pass (tenet 18):** the operator is keeping the
+  admin-UI login note handy through ~1 week of full real-world usage, then this gets swept.
+  Trigger: **after ~1 week of full usage (~2026-06-15)**. Safe to hold because `.env` is
+  gitignored *and* the new gitleaks pre-commit gate stops it ever reaching git (the active
+  risk — secrets in history — is already closed). Consciously deferred 2026-06-07,
+  re-deferred with a trigger 2026-06-08. Ties: AGENTS.md secrets rule, ADR 017, tenets
+  14 & 18.
+- ✅ **`[security]` Secret-scan pre-commit (gitleaks) — DONE (2026-06-08).** "No secrets
+  in git" is now a *deterministic gate*. Added **gitleaks v8.30.1** as a second pre-commit
+  gate in `scripts/hooks/pre-commit` (after the Tenet-11 repo-health gate): it runs
+  `gitleaks git --staged` against a versioned `.gitleaks.toml` (extends the upstream default
+  ruleset; narrow allowlist for `.env.example` placeholders) and **blocks the commit** on any
+  finding — or if gitleaks is missing (a silent no-op would defeat the gate).
+  `scripts/install-hooks.ps1` now also **ensures gitleaks is installed** (auto-installs via
+  winget when missing) so the gate is reliably present after a re-clone. Verified both ways:
+  a staged fake AWS key was blocked (exit 1); the real changeset passed ("no leaks found").
+  Ties: AGENTS.md secrets rule, tenet 14 (Detect layer), tenet 1 (versioned config).
 
 - ✅ **`[deploy]` Make the deploy reproducible end-to-end — DONE (2026-06-08).** Rebuilt
   `mem0-api-server:local` on the droplet from `infra/mem0-server.Dockerfile` (ADR 021 baked

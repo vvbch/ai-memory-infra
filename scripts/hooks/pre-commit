@@ -1,38 +1,77 @@
 #!/bin/sh
-# Tenet 11 / ADR 015 — pre-commit repo-integrity guard (FAST subset).
+# pre-commit guard — TWO gates, both BLOCK the commit on failure:
+#   1. Tenet 11 / ADR 015 — repo-integrity (FAST subset, Drive-sync corruption).
+#   2. Tenet 14 (Detect) / AGENTS.md secrets rule — secret-scan (gitleaks).
 #
 # Git runs hooks through its bundled POSIX sh (even on Windows), so this shim is
-# portable. It delegates to the PowerShell check (the Drive-sync risk is a
-# Windows concern). Installed by scripts/install-hooks.ps1 as a COPY, not a
-# symlink (tenet 3: symlinks are Windows-hostile). Hooks live in .git/, which is
-# not versioned, so re-run install-hooks after any re-clone.
-#
-# Fast subset = conflicted-copy + stale index.lock only (no fsck) so commits
-# stay quick. A non-zero exit BLOCKS the commit.
+# portable. Installed by scripts/install-hooks.ps1 as a COPY, not a symlink
+# (tenet 3: symlinks are Windows-hostile). Hooks live in .git/, which is not
+# versioned, so re-run install-hooks after any re-clone.
 
 repo="$(git rev-parse --show-toplevel)"
-script="$repo/scripts/check-repo-health.ps1"
 
+# ---------------------------------------------------------------------------
+# Gate 1 — repo-integrity (Tenet 11 / ADR 015).
+# Fast subset = conflicted-copy + stale index.lock only (no fsck) so commits
+# stay quick. Delegates to the PowerShell check (the Drive-sync risk is a
+# Windows concern).
+# ---------------------------------------------------------------------------
+script="$repo/scripts/check-repo-health.ps1"
 if [ ! -f "$script" ]; then
   echo "pre-commit: $script not found; skipping repo-health check (Tenet 11)." >&2
-  exit 0
-fi
-
-if command -v powershell >/dev/null 2>&1; then
-  ps="powershell"
-elif command -v pwsh >/dev/null 2>&1; then
-  ps="pwsh"
 else
-  echo "pre-commit: PowerShell not found; skipping repo-health check (Tenet 11)." >&2
-  exit 0
+  if command -v powershell >/dev/null 2>&1; then
+    ps="powershell"
+  elif command -v pwsh >/dev/null 2>&1; then
+    ps="pwsh"
+  else
+    ps=""
+    echo "pre-commit: PowerShell not found; skipping repo-health check (Tenet 11)." >&2
+  fi
+
+  if [ -n "$ps" ]; then
+    "$ps" -NoProfile -ExecutionPolicy Bypass -File "$script" -Fast -RepoList "$repo"
+    status=$?
+    if [ "$status" -ne 0 ]; then
+      echo "" >&2
+      echo "pre-commit BLOCKED: repo integrity check failed (Tenet 11 / ADR 015)." >&2
+      echo "Do NOT hand-repair. Re-clone from GitHub and re-apply work." >&2
+      echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+      exit $status
+    fi
+  fi
 fi
 
-"$ps" -NoProfile -ExecutionPolicy Bypass -File "$script" -Fast -RepoList "$repo"
-status=$?
-if [ "$status" -ne 0 ]; then
+# ---------------------------------------------------------------------------
+# Gate 2 — secret-scan (Tenet 14 Detect / AGENTS.md secrets rule).
+# "No secrets in git" must be a DETERMINISTIC gate, not just a prose rule. We
+# scan only STAGED changes (fast) with gitleaks. If gitleaks is missing we BLOCK
+# (a security gate that silently no-ops is worse than one that asks to be set up)
+# — install it once via scripts/install-hooks.ps1 (or `winget install
+# Gitleaks.Gitleaks`) and restart the shell so it lands on PATH.
+# ---------------------------------------------------------------------------
+if ! command -v gitleaks >/dev/null 2>&1; then
   echo "" >&2
-  echo "pre-commit BLOCKED: repo integrity check failed (Tenet 11 / ADR 015)." >&2
-  echo "Do NOT hand-repair. Re-clone from GitHub and re-apply work." >&2
+  echo "pre-commit BLOCKED: gitleaks not found on PATH (secret-scan gate)." >&2
+  echo "Install it once:  winget install Gitleaks.Gitleaks   (or re-run scripts/install-hooks.ps1)," >&2
+  echo "then open a NEW shell so it lands on PATH." >&2
   echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+  exit 1
 fi
-exit $status
+
+if [ -f "$repo/.gitleaks.toml" ]; then
+  gitleaks git --staged --no-banner --redact --config "$repo/.gitleaks.toml" "$repo"
+else
+  gitleaks git --staged --no-banner --redact "$repo"
+fi
+glstatus=$?
+if [ "$glstatus" -ne 0 ]; then
+  echo "" >&2
+  echo "pre-commit BLOCKED: gitleaks found a potential secret in your STAGED changes." >&2
+  echo "Do NOT commit secrets. Move the value into infra/.env (gitignored) + Bitwarden." >&2
+  echo "If it is a genuine false positive, add a NARROW allowlist to .gitleaks.toml." >&2
+  echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+  exit $glstatus
+fi
+
+exit 0
