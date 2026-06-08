@@ -268,3 +268,40 @@ the functional milestone that makes the stack *usable*, not just *up*.
 - **Secrets via files, never the command line.** Moving the storage keys onto the
   server went through a temporary file that was shredded afterward; only key *lengths*
   were ever printed.
+
+## 2026-06-08 — A backup review that changed a rule, not just the code
+
+**Focus:** before building more, stop and ask *how good are these backups, really?* —
+and let the answer reshape both a principle and the plan.
+
+**Milestones**
+- **Strategy reviewed in the open:** named the two numbers that decide every backup
+  design — how much data you can lose (we were weak: backups ran *by hand*) and how
+  fast you recover (we were strong: one command, minutes). Plus the honest gaps: a
+  failed backup told no one, and the backups themselves weren't protected from
+  accidental or malicious deletion.
+- **A principle got sharper, not just the system.** We caught that destructive actions
+  (overwrite-on-restore, delete-on-cleanup) had been treated as routine because the
+  *code* was easy to undo — even though the *data loss* wouldn't be. The rule now says:
+  judge a decision by whether its **effect** can be undone, not its code. Ask before
+  building anything that can erase or overwrite data.
+- **Backups, properly automated, became part of the job.** Automatic daily backups, an
+  alarm when one fails, delete-resistant storage, a safety snapshot taken *before* any
+  restore, and a regular practice-restore are now in scope — not a "maybe later".
+
+**Decisions**
+- **Run it in, then close it out.** Rather than declare backups "done" while they still
+  needed a human to remember them, we reopened the phase and wrote the automation plan
+  down — including leaving one genuine choice (which monitoring service to trust) to the
+  owner instead of quietly picking it.
+
+**Engineering notes**
+- **A dead machine can't email you that it's dead.** The right way to be told a backup
+  stopped is an outside watcher that expects a regular "I'm alive" ping and raises the
+  alarm on silence — not the server trying to report its own failure.
+- **Don't bake a vendor capability you haven't checked.** We declined to assume the
+  object store supports versioning/immutability just because similar services do — it's
+  a thing to verify before relying on it.
+- **The cheapest, highest-leverage change was a sentence in the rulebook.** No code
+  shipped; the lasting output was a tightened principle that prevents a whole class of
+  "oops, that deleted data" mistakes.

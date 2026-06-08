@@ -120,8 +120,15 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     and reports the call** (commit every session — never leave changes hanging; pick
     reasonable defaults; proceed); a clean `git revert` is the safety net. Reserve the
     operator's attention for **one-way doors** (spend, lock-in, deletion, scope change —
-    tenet 12/15 class) and genuine matters of taste. **Bias for action, bounded by
-    reversibility.** Sharpens "lead, don't quiz"; attention-corollary of tenet 7.
+    tenet 12/15 class) and genuine matters of taste. **Classify by the irreversibility of
+    the *effect*, not the code:** reversible code (a script/config a `git revert` removes)
+    can still encode an *irreversible effect* — destructive restore, delete-on-prune
+    retention, `DROP`, TTL/expiry, `--force` push. When code destroys or overwrites data
+    (or sets the policy that will), the data-loss semantics are a **one-way door needing
+    sign-off**, even though the diff reverts trivially. Test: "if this runs, can I get the
+    data back?", not "can I delete the script?". **Bias for action, bounded by
+    reversibility (of the effect).** Sharpens "lead, don't quiz"; attention-corollary of
+    tenet 7. (Effect-vs-code sharpening: ADR 023.)
 18. **Burn-in before hardening — defer non-critical cleanup to a tracked post-launch
     pass.** When a system first goes live, keep a few **convenience/diagnostic
     affordances** (a cred note kept handy, verbose logging, a looser setting) that ease

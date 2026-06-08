@@ -55,14 +55,15 @@
 
 ## P2 — governance & quality hardening (fold into CI / eval phases)
 
-- **`[backup]` Schedule backups + a periodic restore drill.** Phase 2 stood up
-  `scripts/backup.sh` / `restore.sh` (ADR 022) and **proved a restore round-trips**
-  (2026-06-08), but backups are **manual** today. Add a daily **cron / systemd
-  timer** on the droplet (`backup.sh` is non-interactive and self-prunes to 7), a
-  failure alert (the backup landing is the only current signal), and a recurring
-  **restore drill** (e.g. monthly into a throwaway namespace) so the restore path
-  can't silently rot. Cheap version: a cron line + a check that the newest prefix
-  is < 25 h old. Tie: tenet 4 (graceful degradation), ADR 022.
+- **`[backup]` ⬆ PROMOTED into active Phase 2 (2026-06-08) — no longer parked.** Automating
+  backups + adding a restore drill was re-scoped *into* Phase 2 (it isn't done until backups
+  are scheduled, self-monitoring, and drilled). Design is locked in **ADR 023**; it is the
+  current `STATUS.md` "Next action" for the next session. Scope: daily **systemd timer**
+  (`Persistent=true`), **dead-man's-switch** failure alerting (vendor = an open operator
+  decision, tenet 12), **data-loss hardening** (server-side lifecycle/versioning instead of a
+  client-side delete-prune; a least-privilege backup key; a pre-restore safety snapshot), and a
+  recurring **restore drill**. Tie: tenets 4 (graceful degradation), 17 (effect-vs-code),
+  ADR 022 + ADR 023.
 - **`[deploy]` Build & re-enable the Mem0 dashboard.** No published `mem0/mem0-dashboard`
   image exists; it's gated behind the compose `dashboard` profile and deferred. Build it
   from the mem0 repo's `server/dashboard` context (Next.js, needs a node build), then

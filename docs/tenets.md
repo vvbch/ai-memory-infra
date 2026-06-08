@@ -292,18 +292,35 @@ ceiling). This is **bias for action, bounded by reversibility**; it sharpens the
 "lead, don't quiz / pre-make every mechanical decision" rule and complements tenet 13 (stay
 on the critical path without constant check-ins).
 
+**Classify by the irreversibility of the *effect*, not of the code.** This is the
+sharp edge that's easy to get wrong: a perfectly reversible *artifact* — a script, a
+config, a `compose` change, all removable by a clean `git revert` — can still **encode an
+irreversible *effect*** on data. A retention policy that *deletes* old backups, a
+destructive whole-DB restore/overwrite, a `DROP`/`TRUNCATE`, a `--force` push, a TTL that
+expires records — the revertibility of the *code* says nothing about the recoverability of
+the *data it destroys*. **When code creates, deletes, or overwrites data — or sets the
+policy that later will (retention counts, overwrite-without-snapshot, expiry windows) —
+treat the data-loss semantics as a one-way door** needing operator sign-off, even though
+the lines delivering them revert trivially. The test is "if this runs, can I get the data
+back?", not "can I delete the script?". (Added 2026-06-08 after a backup/restore review
+found destructive-restore + delete-on-prune semantics had been auto-made as "mechanical
+defaults" because the *scripts* were reversible — ADR 023.)
+
 Operating rules:
 - **Two-way door → act, then report.** Commit every session (never leave changes hanging),
   pick a reasonable default (naming, formatting, structure, ordering), proceed — and *state
   the call* so it's visible and trivially reversible. A clean revert is the safety net.
 - **One-way door → stop and get a conscious go/no-go.** Money committed, lock-in entered,
-  data/ history destroyed, scope materially changed, or any tenet-12/15-class decision.
+  data/ history destroyed, scope materially changed, or any tenet-12/15-class decision —
+  **including data-loss semantics delivered by otherwise-reversible code** (destructive
+  restore, delete-on-prune retention, expiry/TTL): surface the *effect* for sign-off, not
+  just the diff.
 - **When genuinely unsure which it is, ask the cheap question once** — but default to
   action whenever the cost of being wrong is a quick `git revert`.
 
 This is the *attention* corollary of tenet 7 (fewer moving parts): don't spend the
-operator's focus on a decision that a revert can undo. Reversibility, not seniority,
-decides whether the agent acts or asks.
+operator's focus on a decision that a revert can undo. **Reversibility of the effect, not
+of the code — and not seniority — decides whether the agent acts or asks.**
 
 ## 18. Burn-in before hardening — defer non-critical cleanup to a tracked post-launch pass
 When a system first goes live, it is legitimate to keep a few **convenience and
