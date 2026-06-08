@@ -566,3 +566,21 @@ still builds before changing it.
 **Next**
 - Load `ai-memory-extension/dist` as an unpacked Chrome extension, enter the real API key from
   Bitwarden, then prove add/search/get from the browser against the running server.
+
+## 2026-06-08 — Chrome unpacked load verified; prompt control-plane tightened
+
+**Focus:** load the rewritten extension in Chrome and fix the stale operator instructions that made
+the step harder than it should be.
+
+**Milestones**
+- **Unpacked extension loaded.** The operator loaded `ai-memory-extension/dist` in Chrome and confirmed
+  **OpenMemory** appears on `chrome://extensions`.
+- **Install wording corrected.** The README now follows Chrome's current flow and says to select the
+  `dist` folder itself, because it contains `manifest.json`.
+- **Control plane tightened.** Agent instructions now require current-doc/live-UI verification before
+  giving volatile browser or console click steps, plus an exact target artifact and visible success
+  condition.
+
+**Next**
+- Enter the real `ADMIN_API_KEY` from Bitwarden in the OpenMemory popup, then prove add/search/get from
+  the browser against the running server.

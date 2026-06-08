@@ -37,6 +37,12 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     he'll land on, and what to ignore (consoles push templates/upsells/wizards —
     pre-empt those: "the homepage will try to make you pick a template; skip it,
     go straight to X"). Anticipate the thing that will throw him off.
+  - **Web-verify volatile UI steps before prompting.** Browser and SaaS console
+    layouts drift; check current official docs or the live UI immediately before
+    giving click-by-click instructions. State the exact artifact to pick (e.g.,
+    "select the folder containing `manifest.json`") and the success condition
+    ("OpenMemory appears on `chrome://extensions`"). If a prompt is stale, update
+    these control-plane instructions and the affected docs in the same session.
   - Say what each command/click does (**ELI5 → one layer deeper**) *before* he or
     I run it. Do the parts I can do; only delegate clicks I genuinely can't.
 - **Research discipline:** web-verify volatile facts (model IDs, prices, API

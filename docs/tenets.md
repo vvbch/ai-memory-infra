@@ -82,6 +82,9 @@ effort to the question. In order of preference:
    dated; fine for durable engineering judgement.
 When sources conflict, prefer the most authoritative and most recent, and write
 down the one-line command the operator can run to confirm before committing.
+This includes operator-facing console/browser UI instructions: vendor UIs drift,
+so check current official docs or the live UI before giving click-by-click
+prompts, then name the exact target artifact and visible success condition.
 
 ## 9. One provider across pipeline stages, unless the gap is vast
 When a pipeline has multiple model-backed stages (e.g. fact *extraction* and
