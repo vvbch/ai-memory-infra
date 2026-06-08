@@ -268,6 +268,33 @@ sudo bash /opt/ai-memory-infra/scripts/restore.sh 20260608T062241Z   # a specifi
 > before bringing everything back. Give Neo4j ~30 s to warm up, then verify with a
 > `/search`.
 
+### Restore DRILL  **[on the droplet — SAFE; never touches live data]**
+A monthly "fire drill" that proves the restore path still works, by restoring the
+latest backup into **throwaway scratch containers** and asserting a known canary
+survived. Runs automatically via a `systemd` timer (1st of the month, 01:00 IST);
+the commands below are the manual/setup path. Design: **ADR 023 §4**.
+
+```bash
+# One-time: plant the permanent canary memory the drill checks for, then take a
+# fresh backup so it's included.
+sudo bash /opt/ai-memory-infra/scripts/plant-drill-canary.sh
+sudo systemctl start ai-memory-backup.service
+
+# Run a drill on demand (the timer also runs it monthly):
+sudo bash /opt/ai-memory-infra/scripts/restore-drill.sh
+```
+> **Deeper:** the drill verifies the SHA-256 manifest, restores `postgres.dump`
+> into a scratch `pgvector` container and asserts the canary row exists *with a
+> non-null embedding*, `neo4j-admin load`s the graph dump into a throwaway volume
+> (a clean load proves restorability), and checks the mem0 history tar is a valid
+> SQLite file — then tears all scratch down. It **never** touches the live
+> Postgres/Neo4j/mem0 volumes. Lightweight (no full second stack) because the 4 GB
+> box has no headroom for one. To alert on a failed/missed drill, create a *second*
+> healthchecks.io check and set `DRILL_HEALTHCHECK_URL` in the droplet `.env` (see
+> `.env.example`).
+
 ### Done when
-`backup.sh` lands four files in the bucket, and a restore round-trips a known
-memory (verified 2026-06-08, ADR 022). Phase 3 is the Chrome extension fork.
+`backup.sh` lands four files in the bucket, a restore round-trips a known memory
+(verified 2026-06-08, ADR 022), and the monthly restore **drill** passes against a
+throwaway target (verified 2026-06-08, ADR 023 §4). That closes Phase 2; Phase 3 is
+the Chrome extension fork.

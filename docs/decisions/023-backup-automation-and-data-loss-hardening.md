@@ -1,9 +1,11 @@
 # ADR 023: Backup automation & data-loss hardening (Phase 2, reopened)
 
-**Status:** Accepted — **§1 (timer) + §2 (heartbeat) LIVE; §3 (data-loss hardening)
-IMPLEMENTED 2026-06-08** (see Implementation update below). **§3(b) least-privilege key
-pending an operator console step; §4 (restore drill) not yet started.** This ADR is the
-spec; the Implementation update records what was verified and built.
+**Status:** Accepted — **§1 (timer) + §2 (heartbeat) LIVE; §3 (data-loss hardening) DONE
+(incl. §3b least-privilege key); §4 (restore drill) IMPLEMENTED & VERIFIED 2026-06-08** (see
+the Implementation updates below). All five decisions are now built; the only remaining task
+is the operator console step to create the drill's second healthchecks.io check
+(`DRILL_HEALTHCHECK_URL`). This ADR is the spec; the Implementation updates record what was
+verified and built.
 **Date:** 2026-06-08
 **Deciders:** Chandra
 
@@ -155,12 +157,62 @@ irreversibility of the effect, not the code".)*
 
 **Still open:**
 
-- **(§3b) Least-privilege backup key** — DO can't do write-without-delete, so the plan is a
-  **bucket-scoped** Spaces key (+ Bitwarden custody, ADR 017). This needs an **operator
-  console step** (create the scoped key) + a droplet `.env` swap → done as the next concierge
-  step.
-- **(§4) Recurring restore drill** — not started.
+- ~~**(§3b) Least-privilege backup key**~~ — **DONE 2026-06-08 (session 4):** bucket-scoped
+  `ai-memory-backup-only` key (R/W/D — DO has no write-without-delete tier) created in the
+  console, stored in Bitwarden, swapped into the droplet `.env`; backup verified on it.
+- ~~**(§4) Recurring restore drill**~~ — **DONE 2026-06-08 (session 5):** see the §4
+  implementation update below.
 
 *(Cross-platform fix shipped alongside: `backup.sh`/`restore.sh` `.env` readers now strip a
 trailing CR via `tr -d '\r'`, so a Windows/PowerShell-appended `.env` line can't corrupt a
 value — retires the manual `sed -i 's/\r$//'` gotcha.)*
+
+---
+
+## Implementation update (2026-06-08, §4 recurring restore drill)
+
+**Design (operator-approved: lightweight, isolated):** a **monthly** drill that restores the
+**latest** backup into **throwaway scratch containers/volumes** and asserts a known canary
+survived — **never touching live Postgres/Neo4j/mem0 volumes**. "Lightweight" over a full
+scratch-stack `/search` round-trip because the 4 GB droplet has no headroom to stand up a
+second full stack alongside the live one without risking it (tenet 17 — don't let a drill
+endanger live data). The drill verifies the part that actually rots — that the **backup
+artifacts restore into structurally-valid, non-empty data** — not mem0's (unchanged) query
+code.
+
+**Built:**
+
+- **`scripts/restore-drill.sh`** — downloads `latest` (or a given timestamp), verifies the
+  SHA-256 manifest (same gate as `restore.sh`), then: **(Postgres)** restores `postgres.dump`
+  into a scratch `ankane/pgvector` container (`--memory=512m`, unique name) and asserts the
+  `memories` table is non-empty **and** ≥1 canary row exists *with a non-null embedding*
+  (`payload::text ilike '%drill-canary%' and vector is not null`); **(Neo4j)** `neo4j-admin
+  database load`s `neo4j.dump` into a throwaway volume (a clean load proves restorability);
+  **(mem0 history)** extracts the tar and checks the SQLite file has a valid `SQLite format 3`
+  header. An EXIT trap force-removes the scratch container + volume + temp dir every time.
+  Reports to a **separate** dead-man's-switch (`DRILL_HEALTHCHECK_URL`, no-op if unset).
+- **`scripts/plant-drill-canary.sh`** — plants the permanent, clearly-namespaced canary
+  (`user_id=drill-canary`, codeword `DRILLCANARY7Q4Z9`) via `POST /memories` so every backup
+  contains a deterministic assertion target. Idempotent enough (the drill only needs ≥1).
+  Committed (tenet 1) so the canary is re-plantable after a from-scratch rebuild or a restore
+  predating it.
+- **systemd units** (`infra/systemd/ai-memory-restore-drill.{service,timer}` +
+  `…-failure.service`) — monthly `OnCalendar=*-*-01 19:30 UTC` (01:00 IST, an hour after the
+  nightly backup so the drill restores a fresh same-night backup and they never overlap),
+  `Persistent=true` (catch-up if the box was paused), `OnFailure` journal marker.
+  `bootstrap.sh` installs + `enable --now`s them for clean rebuilds.
+
+**Verified on the droplet (tenet 17 — proven before declaring done):** planted the canary →
+took a fresh backup (`Result=success`) → ran the drill → **DRILL PASSED**: checksums OK,
+scratch Postgres `total=6, canary-with-embedding=2`, 258 MB Neo4j dump loaded clean, mem0
+history a valid SQLite DB; scratch fully torn down (no leftover `drill-*` containers/volumes),
+live stack untouched (mem0 up 9 h, ~2.3 GB free).
+
+**Open operator step (concierge):** create the **second healthchecks.io check** for the drill
+(period ~35 d, grace ~2 h) and paste its URL into the droplet `.env` as
+`DRILL_HEALTHCHECK_URL` — until then the drill self-tests but doesn't externally alert.
+
+**Phase-2 DoD (decision 5) now MET:** backups run on the timer · success/failure reaches the
+operator · the store is delete/overwrite-resistant · restore pre-snapshots · **a drill cadence
+exists**. Phase 2 closes (pending the drill heartbeat wiring). Next: **Phase 3 — Chrome
+extension.**

@@ -1,0 +1,12 @@
+[Unit]
+Description=ai-memory-infra restore-drill failure marker (local backstop for ADR 023 §4 alerting)
+Documentation=file:///opt/ai-memory-infra/docs/decisions/023-backup-automation-and-data-loss-hardening.md
+
+[Service]
+Type=oneshot
+# Local-only backstop alongside the external drill dead-man's-switch (ADR 023 §4):
+# write a clear, greppable ALERT line to the journal at error priority. Inspect:
+#   journalctl -t ai-memory-restore-drill -p err
+# NOTE: this can only report a drill that RAN and failed. A dead box or a timer
+# that never fired is exactly what the EXTERNAL drill heartbeat monitor catches.
+ExecStart=/bin/sh -c 'echo "ALERT: ai-memory-infra restore DRILL FAILED — see: journalctl -u ai-memory-restore-drill.service" | systemd-cat -t ai-memory-restore-drill -p err'

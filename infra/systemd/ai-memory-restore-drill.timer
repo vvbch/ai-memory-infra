@@ -1,0 +1,18 @@
+[Unit]
+Description=Run the ai-memory-infra restore drill monthly
+Documentation=file:///opt/ai-memory-infra/docs/decisions/023-backup-automation-and-data-loss-hardening.md
+
+[Timer]
+# 1st of each month, 19:30 UTC = 01:00 IST — an hour after the nightly backup
+# window (18:30 UTC), so the drill restores a fresh same-night backup and the two
+# jobs never overlap on the small box.
+OnCalendar=*-*-01 19:30:00 UTC
+# Persistent=true: if the droplet was paused/off on the 1st (the income-risk
+# pause/resume path), run the missed drill on next boot (ADR 023 §1 pattern).
+Persistent=true
+# Smear start by up to 5 min so we're not hitting Spaces on a round number.
+RandomizedDelaySec=300
+Unit=ai-memory-restore-drill.service
+
+[Install]
+WantedBy=timers.target

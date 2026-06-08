@@ -428,3 +428,37 @@ broad key that could touch the whole cloud account.
 **What's left for backups**
 - Set up a recurring *practice* restore (a "drill") so we stay confident the recover-button works.
   That's the last piece before the backup system is considered done.
+
+## 2026-06-08 — A monthly fire drill for restores
+
+**Focus:** the last piece of the backup system — a recurring **practice restore** that proves the
+recover-button still works, run safely so it can never harm the live data.
+
+**Milestones**
+- **A monthly restore drill, fully automated.** Once a month the server quietly restores the most
+  recent backup into a **disposable, throwaway copy** — never the live system — and checks three
+  things: that a planted "canary" memory comes back *with its search-vector intact*, that the
+  knowledge-graph file reloads cleanly, and that the edit-history file is a valid database. Then it
+  deletes the throwaway copy. If a drill ever fails or stops running, a watchdog will email the owner.
+- **Proven end-to-end.** We planted the canary, took a fresh backup, and ran the drill for real — it
+  **passed**, and afterwards the live system was completely untouched and the throwaway copy was gone.
+- **A backup you've never test-restored is only a hope.** This closes that gap: the restore path is
+  now exercised on a schedule, so it can't silently rot as the system changes.
+
+**Engineering notes**
+- **A drill must never endanger what it's protecting.** The everyday restore tool deliberately
+  overwrites the live data, so the drill couldn't reuse it — it needed its own isolated path that
+  spins up scratch copies, checks them, and throws them away, with cleanup that runs even if something
+  fails midway.
+- **Let the real constraint drive the design.** The server is a small machine with no room to run a
+  second full copy of everything at once. Rather than fight that, the drill verifies the part that
+  actually goes stale — *do the backup files restore into working data?* — which is both safer and
+  simpler than cloning the whole system.
+- **Make the test deterministic.** The drill checks for a specific, permanently-planted "canary"
+  memory, so a pass means something exact ("this known thing came back, search-vector and all"),
+  not a vague "looks non-empty."
+
+**What's left for backups**
+- One 3-minute setup click for the owner: create a second free watchdog check so a failed or missed
+  monthly drill sends an email. After that, the backup system is fully done — every layer scheduled,
+  self-monitoring, deletion-resistant, and now drill-tested.

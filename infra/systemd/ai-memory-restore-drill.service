@@ -1,0 +1,22 @@
+[Unit]
+Description=ai-memory-infra monthly restore DRILL (restore latest backup into throwaway scratch, assert canary)
+Documentation=file:///opt/ai-memory-infra/docs/decisions/023-backup-automation-and-data-loss-hardening.md
+# The drill needs Docker (scratch containers) + the network (Spaces download).
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+# Local backstop (ADR 023 §4 -> §2): on failure, drop a clear ALERT in the journal
+# even before/independent of the external drill dead-man's-switch.
+OnFailure=ai-memory-restore-drill-failure.service
+
+[Service]
+Type=oneshot
+# restore-drill.sh is NON-destructive to live data: it restores only into
+# throwaway scratch containers/volumes and tears them down. Safe unattended.
+ExecStart=/usr/bin/env bash /opt/ai-memory-infra/scripts/restore-drill.sh
+# A drill spins up a scratch Postgres + runs neo4j-admin load; give it room but
+# never let a hung run linger.
+TimeoutStartSec=1800
+# Be gentle on the 4GB box — the drill is not latency-sensitive.
+Nice=10
+IOSchedulingClass=idle

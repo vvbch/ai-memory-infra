@@ -102,11 +102,18 @@ if [[ -d "${SYSTEMD_SRC}" ]]; then
 	install -m 0644 "${SYSTEMD_SRC}/ai-memory-backup.service" /etc/systemd/system/ai-memory-backup.service
 	install -m 0644 "${SYSTEMD_SRC}/ai-memory-backup.timer" /etc/systemd/system/ai-memory-backup.timer
 	install -m 0644 "${SYSTEMD_SRC}/ai-memory-backup-failure.service" /etc/systemd/system/ai-memory-backup-failure.service
+	# Monthly restore drill (ADR 023 §4): proves the restore path still works by
+	# restoring the latest backup into throwaway scratch and asserting a canary —
+	# never touches live data. Needs the canary planted once (plant-drill-canary.sh).
+	install -m 0644 "${SYSTEMD_SRC}/ai-memory-restore-drill.service" /etc/systemd/system/ai-memory-restore-drill.service
+	install -m 0644 "${SYSTEMD_SRC}/ai-memory-restore-drill.timer" /etc/systemd/system/ai-memory-restore-drill.timer
+	install -m 0644 "${SYSTEMD_SRC}/ai-memory-restore-drill-failure.service" /etc/systemd/system/ai-memory-restore-drill-failure.service
 	systemctl daemon-reload
 	systemctl enable --now ai-memory-backup.timer
-	systemctl list-timers ai-memory-backup.timer --no-pager || true
+	systemctl enable --now ai-memory-restore-drill.timer
+	systemctl list-timers ai-memory-backup.timer ai-memory-restore-drill.timer --no-pager || true
 else
-	echo "WARNING: ${SYSTEMD_SRC} not found — skipping backup timer install." >&2
+	echo "WARNING: ${SYSTEMD_SRC} not found — skipping backup/drill timer install." >&2
 fi
 
 # 8. Health check ------------------------------------------------------------
