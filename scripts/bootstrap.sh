@@ -92,7 +92,24 @@ cd "${INFRA_DIR}"
 docker compose -f docker-compose.yml -f docker-compose.prod.yml pull caddy postgres neo4j
 docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
 
-# 7. Health check ------------------------------------------------------------
+# 7. Install + enable the daily backup timer (systemd) -----------------------
+# Versioned unit files (infra/systemd/) install the ADR 023 daily backup:
+# a oneshot service that runs backup.sh, driven by a Persistent=true daily timer
+# (catches a missed run if the box was paused), with a local OnFailure marker.
+log "Installing the daily backup systemd timer (ADR 023)"
+SYSTEMD_SRC="${INFRA_DIR}/systemd"
+if [[ -d "${SYSTEMD_SRC}" ]]; then
+	install -m 0644 "${SYSTEMD_SRC}/ai-memory-backup.service" /etc/systemd/system/ai-memory-backup.service
+	install -m 0644 "${SYSTEMD_SRC}/ai-memory-backup.timer" /etc/systemd/system/ai-memory-backup.timer
+	install -m 0644 "${SYSTEMD_SRC}/ai-memory-backup-failure.service" /etc/systemd/system/ai-memory-backup-failure.service
+	systemctl daemon-reload
+	systemctl enable --now ai-memory-backup.timer
+	systemctl list-timers ai-memory-backup.timer --no-pager || true
+else
+	echo "WARNING: ${SYSTEMD_SRC} not found — skipping backup timer install." >&2
+fi
+
+# 8. Health check ------------------------------------------------------------
 log "Waiting for the API to answer (up to ~90s for Neo4j to warm up)"
 for i in $(seq 1 18); do
 	if curl -fsS http://127.0.0.1:8888/docs >/dev/null 2>&1; then

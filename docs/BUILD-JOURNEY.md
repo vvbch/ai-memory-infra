@@ -305,3 +305,33 @@ and let the answer reshape both a principle and the plan.
 - **The cheapest, highest-leverage change was a sentence in the rulebook.** No code
   shipped; the lasting output was a tightened principle that prevents a whole class of
   "oops, that deleted data" mistakes.
+
+## 2026-06-08 — Automating the backups (and a fix to the hand-off itself)
+
+**Focus:** start turning the proven-but-manual backup into something that runs itself,
+watches itself, and tells you when it breaks.
+
+**Milestones**
+- **The nightly schedule is written.** The server will now back itself up every night at
+  midnight (India time) — no human required — and if it happens to be switched off at
+  that hour, it runs the missed backup the moment it's back on.
+- **A watchdog was chosen and wired in.** After comparing three options, we picked a free,
+  open-source monitoring service. The server sends it a quiet "backup OK" ping after each
+  run; if that ping ever fails to arrive, the watchdog emails you. This is the only way to
+  learn that the *whole machine* died — a dead server can't report its own death.
+
+**Decisions**
+- **Pick the lock-in choices in the open.** The one decision that ties you to an outside
+  vendor — which watchdog service — was put to the owner with three verified options and a
+  recommendation, rather than quietly chosen. Everything reversible (the schedule, the
+  wiring) was just built.
+
+**Engineering notes**
+- **Build the reversible parts, ask about the one-way doors.** The schedule and the alert
+  wiring only *add* behaviour, so they were built directly; the only thing escalated was the
+  vendor commitment.
+- **A hand-off note should point at the truth, not copy it.** Mid-session we noticed the
+  "resume in a fresh chat" note had quietly grown into a full duplicate of the project
+  status — costing effort every time and risking drift. We cut it back to a one-line pointer
+  ("read the status file, then do the next thing"), because the status file *is* the source
+  of truth. Small process leaks compound; fix them when you spot them.

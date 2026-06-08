@@ -49,6 +49,28 @@ envval() {
 	printf '%s' "${line#*=}" | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
 }
 
+# Like envval, but returns empty (no error) when the key is absent — for OPTIONAL
+# settings such as the heartbeat URL.
+envval_opt() {
+	local key="$1"
+	[[ -f "${ENV_FILE}" ]] || return 0
+	local line
+	line="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 || true)"
+	[[ -n "${line}" ]] || return 0
+	printf '%s' "${line#*=}" | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+}
+
+# Optional dead-man's-switch heartbeat (ADR 023 §2). If HEALTHCHECK_URL is set in
+# .env, ping it: "/start" when the backup begins, the bare URL on success, and
+# "/fail" on any failure. An external monitor (healthchecks.io) alerts the
+# operator if the success ping never arrives on schedule — catching a dead box, a
+# skipped timer run, or a silent failure that a self-sent email never could. Always
+# a no-op (never fatal) when unset or the monitor is unreachable.
+hc_ping() {
+	[[ -n "${HC_URL:-}" ]] || return 0
+	curl -fsS -m 10 --retry 3 -o /dev/null "${HC_URL}${1:-}" || true
+}
+
 cd "${INFRA_DIR}" || die "cannot cd to ${INFRA_DIR}"
 
 BACKUP_BUCKET="$(envval BACKUP_BUCKET)"
@@ -58,6 +80,7 @@ SPACES_SECRET_KEY="$(envval SPACES_SECRET_KEY)"
 PG_USER="$(envval POSTGRES_USER)"
 PG_DB="$(envval POSTGRES_DB)"
 PG_PW="$(envval POSTGRES_PASSWORD)"
+HC_URL="$(envval_opt HEALTHCHECK_URL)" # optional dead-man's-switch (ADR 023 §2)
 
 SPACES_HOST="${SPACES_REGION}.digitaloceanspaces.com"
 S3=(s3cmd
@@ -77,7 +100,16 @@ fi
 TS="$(date -u +%Y%m%dT%H%M%SZ)"
 PREFIX="backups/${TS}"
 STAGE="$(mktemp -d)"
-trap 'rm -rf "${STAGE}"' EXIT
+# On exit: always clean the stage dir; if we're exiting non-zero, fire the "/fail"
+# heartbeat so the monitor alerts fast (the missing success ping would catch it
+# anyway, just later).
+cleanup() {
+	local rc=$?
+	rm -rf "${STAGE}"
+	[[ ${rc} -eq 0 ]] || hc_ping /fail
+}
+trap cleanup EXIT
+hc_ping /start
 log "Staging backup ${TS} in ${STAGE}"
 
 # --- 1. Postgres/pgvector (online, transactionally consistent) ----------------
@@ -152,3 +184,6 @@ fi
 
 log "Backup complete: s3://${BACKUP_BUCKET}/${PREFIX}/"
 "${S3[@]}" ls "s3://${BACKUP_BUCKET}/${PREFIX}/"
+
+# Success heartbeat — tells the dead-man's-switch this run finished cleanly.
+hc_ping

@@ -4,7 +4,26 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**backup-strategy review** — decisions-only session). Reviewed the
+**Last updated:** 2026-06-08 (**Phase 2 automation — implementation session 1**). Built the
+*reversible half* of ADR 023 and picked the monitor. **(1) Daily backup schedule DONE (in
+repo):** versioned `systemd` units — `infra/systemd/ai-memory-backup.service` (oneshot →
+`backup.sh`), `…backup.timer` (18:30 UTC = midnight IST, `Persistent=true` catch-up if the
+box was paused), and `…backup-failure.service` (local `OnFailure` journal marker) — installed
+by `bootstrap.sh`. **(2) Monitoring vendor CHOSEN = healthchecks.io** (free Hobbyist tier,
+open-source/self-hostable = no lock-in; web-verified vs cron-job.org + DO Uptime, tenet 8).
+Wired the dead-man's-switch into `backup.sh` (pings `/start`, success on completion, `/fail`
+on error via the EXIT trap; optional `HEALTHCHECK_URL`, no-op if unset). Operator created the
+check (cron `30 18 * * *` UTC, 1 h grace) + saved the ping URL to Bitwarden; `HEALTHCHECK_URL`
+staged in local gitignored `.env`. **NOT yet deployed to the droplet.** **(3) data-loss
+hardening + (4) restore drill = NOT started** (next session). **Control-plane fix:** the
+Resume prompt was bloating into a second copy of STATUS (token cost every prompt — the COE
+2026-06-08 failure mode; drift, tenet 10) → **slimmed it to a pure pointer** (tenet 16, same
+discipline ADR 018 applies to editor pointer files); caveats now live in this file, not the
+prompt. `bash -n` clean on all touched scripts; repo-health green. **Next: deploy the timer +
+heartbeat to the droplet & confirm a real ping, then ADR 023 §3 (data-loss hardening) + §4
+(drill).**
+
+**Prior update:** 2026-06-08 (**backup-strategy review** — decisions-only session). Reviewed the
 backup/restore strategy with the operator. Two outcomes: **(1) control-plane fix** — sharpened
 **tenet 17** so a decision is classified by the irreversibility of its *effect on data*, not of
 the code (destructive restore / delete-on-prune / TTL are one-way doors needing sign-off even
@@ -138,16 +157,16 @@ the new "burn-in, then clean up" rule (tenet 18).
    three places your data lives (the memory database, the knowledge graph, and the edit-history
    file) into the cloud backup bucket, and a one-command **restore** that pulls them back. We
    **proved** it: saved a test memory (a codeword), backed up, **deleted** it, ran restore, and the
-   codeword came back exactly — and search found it again. **What changed this session:** we sat
-   down and reviewed *how good* the backups really are, and decided two things. **(a)** Backups run
-   **by hand** today, which means "how much could I lose" = "however long since I last remembered to
-   run it" — not good enough. So we're pulling **automatic daily backups + an alarm if a backup ever
-   fails + a regular practice-restore** into Phase 2 (it's not "done" until that's in). **(b)** We
-   tightened a rule (tenet 17): the agent is now required to *ask you* before building anything that
-   can **delete or overwrite your data**, even if the code is easy to undo — because deleted data
-   isn't easy to undo. The plan for the automation is written down (ADR 023) and the *building* of
-   it is the very next session. **So: Phase 2 is reopened to finish the automation, THEN Phase 3 —
-   the Chrome browser extension.**
+   codeword came back exactly — and search found it again. **What changed this session:** we started
+   *building* the automation. **(a)** The nightly **auto-backup schedule is written** — the server
+   will run the backup itself every night at midnight (India time), and if it happens to be switched
+   off at that hour it runs the missed one as soon as it's back. **(b)** We picked the **watchdog**:
+   a free service (healthchecks.io) that expects a nightly "backup OK" ping and **emails you if it
+   ever goes silent** — the only way to catch a *dead* server (a dead box can't email you itself).
+   You created the check and saved its link in Bitwarden; I wired the server to ping it. **Still to
+   do (next session):** switch this on on the *live* server and watch a real ping land; make the
+   backup storage itself resistant to accidental deletion; and set up a regular *practice* restore.
+   **So Phase 2 is still open until those are done, THEN Phase 3 — the Chrome browser extension.**
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -160,11 +179,18 @@ key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 
    show it **once** so you can paste it into a new Bitwarden login item in that folder (the
    agent never stores secrets in chat history beyond that one-time display).
 
-**How to talk to the next agent:** paste the line in the box below into a **new chat**.
-Ask for **concierge mode** (one step at a time, plain English, no jargon).
+**How to talk to the next agent:** paste the line below into a **new chat** and ask for
+**concierge mode** (one step at a time, plain English). The Resume prompt is a **thin
+pointer by design** (tenet 16; same discipline ADR 018 applies to editor pointer files)
+— it carries **zero** context. *All* state lives in this file (Plain English + Next
+action) and `AGENTS.md`, which the agent reads first. **Do not inline status, ADR
+summaries, or caveats into it** — that re-creates a second copy of STATUS (drift, tenet
+10) and spends tokens every prompt (the exact context-bloat behind COE 2026-06-08).
+Operational caveats (gitleaks PATH refresh, "don't strip `.env` early", SSH-key-in-agent,
+etc.) live under **Environment notes** / **Next action** below — not in the prompt.
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action: Phase 2 (REOPENED) — implement backup automation + data-loss hardening per ADR 023, THEN Phase 3 (Chrome extension fork). Concierge mode, one step at a time, plain English. Context: Phase 1 is DEPLOYED, usable, REPRODUCIBLE, SECURED (gitleaks pre-commit gate live). Phase 2 backup/restore SCRIPTS are DONE & PROVEN (scripts/backup.sh + restore.sh back up Postgres/pgvector + Neo4j offline-dump + mem0 SQLite history to Spaces bucket ai-memory-infra-backups-chandrav; ZEPHYR-7731 write→backup→delete→restore round-trip verified incl. vector search — ADR 022) — BUT Phase 2 was REOPENED on 2026-06-08: backups are MANUAL today, so the next session must implement ADR 023: (1) daily systemd timer (Persistent=true) running backup.sh; (2) dead-man's-switch failure alerting — the MONITORING VENDOR is an OPEN operator decision (tenet 12): surface 2-3 options (healthchecks.io free / cron-job.org / DO Uptime — web-verify, tenet 8) and let Chandra pick before wiring; (3) data-loss hardening — replace the client-side delete-prune with server-side Spaces lifecycle/versioning (WEB-VERIFY DO Spaces versioning/object-lock support FIRST, tenet 8), add a least-privilege backup-only Spaces key, and make restore.sh take a pre-restore safety snapshot; (4) a recurring restore drill. Phase 2 is NOT done until backups are scheduled + self-monitoring + drilled. Control-plane note: tenet 17 was sharpened this session — classify by irreversibility of the EFFECT not the code; ASK before building anything that deletes/overwrites data even if the script reverts cleanly. Still open: P1 strip the plaintext admin-UI login note from infra/.env (local + droplet) — DEFERRED to post-burn-in pass (tenet 18, ~2026-06-15), safe because .env is gitignored AND gitleaks blocks it; do NOT strip early unless asked. ADR 020 (make bootstrap = locked dead end) stands. ADMIN_API_KEY custody CLOSED. SSH key in ssh-agent; secrets read from server .env, never printed. NOTE: gitleaks is installed but not on a fresh PowerShell PATH — before committing, refresh PATH in the same shell: $env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User').
+Resume ai-memory-infra — read docs/planning/STATUS.md (Plain English + Next action) and AGENTS.md, run repo-health, then do the Next action. Concierge mode: one step at a time, plain English.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
@@ -181,8 +207,9 @@ checksums, confirms, then `pg_restore --clean` + SQLite untar + offline neo4j `l
 round-trip verified end-to-end** (write→backup→delete→restore→memory + vector search returned;
 ADR 022). **But Phase 2 was re-scoped 2026-06-08 (backup-strategy review):** backups are
 **manual** today (unbounded RPO) and fail **silently**, so automation is now *in-scope*, not
-parked. **Next session implements ADR 023:** daily systemd timer; dead-man's-switch failure
-alerting (vendor = open operator pick, tenet 12); data-loss hardening (server-side
+parked. **Implementing ADR 023 (session 1 DONE in repo):** ✅ daily systemd timer + units;
+✅ dead-man's-switch wired, vendor chosen = healthchecks.io (heartbeat in `backup.sh`). ⬜ Still
+to do: deploy (1)+(2) to the droplet + confirm a live ping; data-loss hardening (server-side
 lifecycle/versioning over client-side delete-prune — web-verify DO Spaces support first;
 least-privilege backup key; pre-restore safety snapshot); recurring restore drill. **Phase 2 is
 NOT done until backups are scheduled + self-monitoring + drilled.**
@@ -517,18 +544,30 @@ pre-commit is now DONE** (gitleaks gate).
 - Use `working_directory` param, not raw `cd` (Drive path has spaces/parens).
 - Windows PowerShell 5.1 only; git push auth cached.
 - Repos: `github.com/vvbch/ai-memory-infra(-private)`.
+- **gitleaks PATH:** gitleaks is installed but not on a fresh PowerShell PATH — before
+  committing, refresh PATH in the same shell:
+  `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')`.
+- **SSH:** key is in `ssh-agent` (passphrase in Bitwarden); secrets are read from the server
+  `.env`, never printed. Droplet `168.144.145.29` (`root@`).
+- **No-bash-on-Windows:** `bash -n` syntax checks use the Git-bundled bash at
+  `C:\Program Files\Git\bin\bash.exe`.
 
 ## Next action
 
-> **RESUME HERE — Phase 1 DONE (DEPLOYED/usable/REPRODUCIBLE/SECURED). Phase 2 REOPENED:
-> backup/restore scripts DONE & PROVEN (ADR 022), but automation is now in-scope. NEXT
-> ACTION = implement Phase 2 automation + data-loss hardening per ADR 023 (daily systemd
-> timer; dead-man's-switch alerting w/ vendor = an open operator pick; server-side
-> lifecycle/versioning over client-side delete-prune — web-verify DO Spaces support first;
-> least-privilege backup key; pre-restore safety snapshot; restore drill). THEN Phase 3
-> (Chrome extension fork). Control-plane: tenet 17 sharpened — ASK before building anything
-> that deletes/overwrites data, even if the code reverts cleanly. One P1 item (`.env`
-> plaintext-note strip) deferred to a post-burn-in pass (tenet 18, ~2026-06-15).**
+> **RESUME HERE — Phase 2 automation, session 2. DONE so far (session 1, in the repo,
+> NOT yet deployed):** the daily `systemd` backup timer + units (`infra/systemd/`), wired
+> into `bootstrap.sh`; the dead-man's-switch heartbeat wired into `backup.sh`; **monitoring
+> vendor chosen = healthchecks.io** (`HEALTHCHECK_URL` in local `.env` + Bitwarden; the
+> operator's check is created). **NEXT ACTION = (a) DEPLOY to the droplet** — copy the updated
+> `scripts/` + the new `infra/systemd/` units, `systemctl enable --now ai-memory-backup.timer`,
+> add `HEALTHCHECK_URL` to the droplet `/opt/ai-memory-infra/infra/.env`, run one backup and
+> **confirm the healthchecks.io check goes green**. **(b) ADR 023 §3 data-loss hardening** —
+> ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST (tenet 8); move retention
+> to server-side lifecycle over the client-side `s3cmd del` prune; add a least-privilege
+> backup-only Spaces key; add a pre-restore safety snapshot to `restore.sh`. **(c) §4 restore
+> drill.** THEN Phase 3 (Chrome extension). **Tenet 17:** ASK before building anything that
+> deletes/overwrites data, even if the code reverts cleanly (the §3 prune/lifecycle change is
+> exactly this class). P1 `.env` plaintext-note strip stays deferred (tenet 18, ~2026-06-15).**
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
@@ -571,21 +610,23 @@ pre-commit is now DONE** (gitleaks gate).
    latest` → exact record + `/search` returned (vectors restored). ADR 022. **Re-scoped
    2026-06-08:** backups are manual (unbounded RPO) + fail silently → automation pulled into
    Phase 2 (see step 8). Tenet 17 sharpened (effect-vs-code).
-8. **← NEXT — Phase 2 automation + data-loss hardening (ADR 023).** Implement on the droplet:
-   (1) **daily `systemd` timer** (`Persistent=true`) running `backup.sh` non-interactively (unit
-   files versioned + installed by `bootstrap.sh`); (2) **dead-man's-switch failure alerting** — a
-   self-sent email can't report a dead box, so use an external heartbeat monitor; **the vendor is
-   an OPEN operator decision (tenet 12)** → surface 2–3 options (web-verify, tenet 8:
-   healthchecks.io free / cron-job.org / DO Uptime) and let Chandra pick *before* wiring; local
-   backstop = `OnFailure=` + a "newest prefix < 25 h" freshness check; (3) **data-loss hardening
-   (tenet 17)** — replace the client-side `s3cmd del` prune with **server-side Spaces
-   lifecycle/versioning** (⚠ web-verify DO Spaces versioning/object-lock support FIRST, tenet 8),
-   add a **least-privilege backup-only Spaces key** (write+list, no mass-delete; reuse pattern of
-   ADR 022's parked `backup.env` idea), and make `restore.sh` take a **pre-restore safety
-   snapshot** of current state before overwriting; (4) a recurring **restore drill** (monthly,
-   automated into a throwaway target where feasible). **Done when** backups run on the timer, a
-   success/failure signal reaches the operator, the store is delete/overwrite-resistant, restore
-   pre-snapshots, and a drill cadence exists.
+8. 🔄 **Phase 2 automation + data-loss hardening (ADR 023) — IN PROGRESS (session 1 of ~2).**
+   (1) ✅ **Daily `systemd` timer BUILT (in repo, not deployed)** — `infra/systemd/ai-memory-backup.{service,timer}`
+   (`Persistent=true`, 18:30 UTC) + `…-failure.service` (`OnFailure` journal marker); installed by
+   `bootstrap.sh`. (2) ✅ **Dead-man's-switch wired + vendor chosen = healthchecks.io** (free,
+   open-source, no lock-in; web-verified vs cron-job.org + DO Uptime, tenet 8). `backup.sh` pings
+   `/start` + success + `/fail` from an optional `HEALTHCHECK_URL`; operator created the check (cron
+   `30 18 * * *` UTC, 1 h grace) + saved the URL to Bitwarden; staged in local `.env`. **Local
+   backstop** = `OnFailure=` marker (a "newest prefix < 25 h" freshness check is still a TODO if we
+   want belt-and-suspenders, but the external monitor covers silence). (3) ⬜ **Data-loss hardening
+   (tenet 17) — NOT STARTED:** ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST
+   (tenet 8); replace the client-side `s3cmd del` prune with **server-side lifecycle/versioning**;
+   add a **least-privilege backup-only Spaces key** (write+list, no mass-delete); make `restore.sh`
+   take a **pre-restore safety snapshot** before overwriting. (4) ⬜ **Restore drill — NOT STARTED**
+   (monthly, automated into a throwaway target where feasible). **Plus a deploy step:** push (1)+(2)
+   to the droplet and confirm a real ping. **Done when** backups run on the timer, a success/failure
+   signal reaches the operator, the store is delete/overwrite-resistant, restore pre-snapshots, and
+   a drill cadence exists.
 9. **THEN — Phase 3: Chrome extension fork.** Per build phases (AGENTS.md): fork/adapt a
    Chrome extension so the memory layer reaches the browser (desktop / ChromeOS). Web-verify
    the current extension landscape before committing (tenet 8); Android is best-effort only

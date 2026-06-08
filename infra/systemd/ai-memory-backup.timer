@@ -1,0 +1,17 @@
+[Unit]
+Description=Run the ai-memory-infra backup daily
+Documentation=file:///opt/ai-memory-infra/docs/decisions/023-backup-automation-and-data-loss-hardening.md
+
+[Timer]
+# 18:30 UTC = 00:00 IST — midnight in Bangalore, the lowest-traffic window
+# (the backup briefly pauses the Neo4j graph; the API stays up).
+OnCalendar=*-*-* 18:30:00 UTC
+# Persistent=true: if the droplet was paused/off at the scheduled time (the
+# income-risk pause/resume path), run the missed backup on next boot (ADR 023 §1).
+Persistent=true
+# Smear start by up to 5 min so we're not hammering Spaces on a round number.
+RandomizedDelaySec=300
+Unit=ai-memory-backup.service
+
+[Install]
+WantedBy=timers.target

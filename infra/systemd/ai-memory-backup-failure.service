@@ -1,0 +1,14 @@
+[Unit]
+Description=ai-memory-infra backup failure marker (local backstop for ADR 023 alerting)
+Documentation=file:///opt/ai-memory-infra/docs/decisions/023-backup-automation-and-data-loss-hardening.md
+
+[Service]
+Type=oneshot
+# Local-only backstop until the external dead-man's-switch monitor is wired
+# (ADR 023 §2): write a clear, greppable ALERT line to the journal at error
+# priority. journald timestamps it; inspect with:
+#   journalctl -t ai-memory-backup -p err
+# NOTE: this can only report a backup that RAN and failed. It cannot report a
+# dead box or a timer that never fired — that is exactly why an EXTERNAL
+# heartbeat monitor (ADR 023 §2) is still required.
+ExecStart=/bin/sh -c 'echo "ALERT: ai-memory-infra backup FAILED — see: journalctl -u ai-memory-backup.service" | systemd-cat -t ai-memory-backup -p err'

@@ -1,0 +1,21 @@
+[Unit]
+Description=ai-memory-infra daily backup (Postgres + Neo4j + mem0 history -> DO Spaces)
+Documentation=file:///opt/ai-memory-infra/docs/decisions/023-backup-automation-and-data-loss-hardening.md
+# Backups need Docker + the network (Spaces upload). Don't run before they're up.
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+# Local backstop (ADR 023 §2): if the backup fails, fire the failure marker so a
+# clear ALERT lands in the journal even before the external dead-man's-switch is wired.
+OnFailure=ai-memory-backup-failure.service
+
+[Service]
+Type=oneshot
+# backup.sh reads creds from infra/.env, runs every step non-interactively, and
+# self-prunes. It is safe to run unattended (no prompts).
+ExecStart=/usr/bin/env bash /opt/ai-memory-infra/scripts/backup.sh
+# A backup briefly stops Neo4j; never let a hung run hold the graph down forever.
+TimeoutStartSec=1800
+# Be gentle on the 4GB box — backups are not latency-sensitive.
+Nice=10
+IOSchedulingClass=idle
