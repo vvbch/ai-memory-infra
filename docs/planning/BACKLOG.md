@@ -20,21 +20,18 @@
   *deterministic gate*, not just a prose rule — relevant now that we handle DO /
   Cloudflare / OpenAI tokens. Ties: AGENTS.md secrets rule, tenet 14 (Detect layer).
 
-- **`[deploy]` Make the deploy reproducible end-to-end.** The Mem0 API image is built
-  by hand this session (`infra/mem0-server.Dockerfile` against `/opt/mem0-src/server`,
-  tagged `mem0-api-server:local`) because the published image is arm64-only. A fresh
-  `bootstrap.sh` would fail at `docker compose pull` (can't pull a local-only image; the
-  dashboard image 404s). Fix: fold `git clone mem0ai/mem0` + `docker build` into
-  `bootstrap.sh` (or build + push `mem0-api-server` to GHCR and reference that), make the
-  `pull` step tolerant, and **update `setup.md`** (prereqs + Step 6) to match (tenet 10).
+- ✅ **`[deploy]` Make the deploy reproducible end-to-end — DONE (2026-06-08).** Rebuilt
+  `mem0-api-server:local` on the droplet from `infra/mem0-server.Dockerfile` (ADR 021 baked
+  in), proved it survives `compose up --force-recreate` (round-trip persisted, user_id
+  `diag-rebuild-20260608`), and folded the clone-pinned-src (`MEM0_REF`) + `docker build` into
+  `scripts/bootstrap.sh`. `compose pull` now names only the external images so the local-only
+  Mem0 image + profiled-off dashboard don't break it. `setup.md` Step 6 updated. Chose
+  build-on-droplet over GHCR (tenet 7); revisit GHCR only if we go multi-node.
 
-- **`[deploy]` Document the OpenAI project model-access requirement in `setup.md`.** Step 4
-  (round-trip) was blocked because the OpenAI project was scoped to only `gpt-5-mini`, so
-  `text-embedding-3-small` returned 403 and every `add` failed. `setup.md` (Step 0/secrets +
-  Step 7 "Done when") should call out: the OpenAI project must allow **both** `gpt-5-mini` and
-  `text-embedding-3-small` (or "allow all models"); the project model allow-list UI is currently
-  buggy (use "allow all", or the Admin API model-permissions endpoint). Tie: ADR 013/011, tenet
-  10. Control-plane fix for the step-4 blocker (2026-06-08).
+- ✅ **`[deploy]` Document the OpenAI project model-access requirement in `setup.md` — DONE
+  (2026-06-08).** `setup.md` Prereq 6 + Step 7 now call out that the OpenAI project must allow
+  **both** `gpt-5-mini` and `text-embedding-3-small` (or "Allow all models"), and that a `200`
+  with 0 memories is the silent symptom of this. Tie: ADR 013/011, tenet 10.
 
 > **Resolved / moved out of backlog:** "Stand up admin/API-key + confirm model
 > config" is **no longer deferred** — the admin key is done (built-in

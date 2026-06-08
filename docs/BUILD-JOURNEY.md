@@ -9,6 +9,42 @@
 
 ---
 
+## 2026-06-08 — Made the deployment reproducible (close Phase 1)
+
+**Focus:** turn a deploy that needed a manual, by-hand image build into one a single script
+reproduces from scratch. Short, single-task session (concierge mode).
+
+**Milestones**
+- **Re-baked the application image from its blueprint and proved the fix is permanent.** A
+  prior session had hand-patched a bug *inside the running container* (a scratch-layer fix that
+  a rebuild would discard). This session rebuilt the image from the corrected blueprint, then
+  deliberately destroyed-and-recreated the container — the exact operation that used to revert
+  the fix — and re-ran the memory round-trip: a fact was extracted, stored, retrieved, and
+  found by search. The fix now lives in the image, not on a sticky note.
+- **Folded the from-source build into the install script.** The installer now clones a
+  *pinned* revision of the upstream source and builds the image automatically, and only
+  downloads the third-party base images (it no longer chokes trying to "download" an image that
+  only exists locally). A clean reinstall now works end-to-end.
+- **Updated the setup guide** to match: the build is automatic, and a new prerequisite note
+  spells out the external provider's model-access requirement that silently broke the first
+  round-trip.
+
+**Decisions**
+- **Pinned the upstream source to an exact revision** (overridable) so the build is
+  deterministic, backed by a build-time self-check that fails loudly if a future upstream
+  version moves the code the patch depends on.
+- **Build on the server rather than publish to a registry** — fewer moving parts and no extra
+  account/secret to manage for a single-node deploy; revisit only if it ever goes multi-node.
+
+**Engineering notes**
+- Treated the running, healthy stack as precious: rebuilt the image (which doesn't touch the
+  live container), verified the fix was baked in via a throwaway container, and only then swapped
+  the live one — each step reversible.
+- Verified at three levels — the image source, the recreated container's code, and a real
+  end-to-end round-trip — rather than trusting any single signal.
+- The production secret never left the server: the authenticated test ran on the host, reading
+  the key from the environment, never into logs or chat.
+
 ## 2026-06-08 — Verified the running models; isolated a provider-side block
 
 **Focus:** confirm the live server actually uses the chosen models, then prove a memory

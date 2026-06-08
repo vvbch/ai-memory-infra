@@ -4,8 +4,20 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (round-trip session — **steps 1–4 ALL CLOSED**; next is step 5
-(reproducible deploy)). The OpenAI embeddings 403 is fixed (operator set the
+**Last updated:** 2026-06-08 (reproducible-deploy session — **step 5 DONE; Phase 1 is now
+fully reproducible**). Rebuilt `mem0-api-server:local` on the droplet from the patched
+`infra/mem0-server.Dockerfile` (ADR 021 baked in, build-time `assert` passed), then
+**`compose up --force-recreate`'d mem0 and re-ran the round-trip** (user_id
+`diag-rebuild-20260608`): `POST /memories` extracted 2 facts (PostgreSQL / platform-engineer
+in Bangalore) → `GET` + `/search` returned them ranked — proving the redeploy no longer
+reverts the gpt-5-mini bug (the live patch is now in the *image*, not just the writable
+layer). **Folded the from-source build into `scripts/bootstrap.sh`** (clones the pinned
+mem0 source `MEM0_REF`, `docker build`s the image, pulls only the external base images) and
+**updated `docs/setup.md`** (Step 6 auto-build + OpenAI allow-both-models prereq). A clean
+`bootstrap.sh` now works end-to-end (`bash -n` clean; build verified on the droplet). **Next:
+P1 security cleanup** (strip the plaintext secrets comment block from `infra/.env`; add a
+secret-scan pre-commit). **Earlier this session (prior chat):** the OpenAI embeddings 403 is
+fixed (operator set the
 `ai-memory` project to "allow all models" — `text-embedding-3-small` → 200). Re-running the
 round-trip then surfaced a **second, different blocker**: extraction to `gpt-5-mini` 400'd with
 *"Unsupported parameter: 'max_tokens' … use 'max_completion_tokens'"* — a **bug in `mem0ai`
@@ -62,10 +74,11 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
    now correctly saved "favorite language = Python" and "lives in Bangalore" and found them
    on search. ✅ **And your master API key is now saved in Bitwarden** (custody gate closed —
    copied server→clipboard→vault, never shown in chat). **Steps 1–4 are all done.**
-4. **Make reinstall repeatable** — if we had to rebuild the server from scratch today,
-   the install script would need a manual fix (we built the app image by hand this
-   session, and the `gpt-5-mini` bug-fix patch must be rebuilt into the image before the
-   next redeploy). Parked in BACKLOG P1.
+4. ✅ **Make reinstall repeatable** — DONE (2026-06-08). The install script
+   (`bootstrap.sh`) now builds the app image from source automatically (it used to need a
+   manual by-hand build), and the `gpt-5-mini` bug-fix is permanently baked into the image —
+   we proved a from-scratch-style redeploy keeps it (rebuilt the image + recreated the
+   container + the memory test still stuck). So a clean reinstall just works now.
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -82,7 +95,7 @@ key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 
 Ask for **concierge mode** (one step at a time, plain English, no jargon).
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 5: make the deploy reproducible (BACKLOG P1) — rebuild the mem0 image from infra/mem0-server.Dockerfile (now carries the ADR 021 gpt-5-mini patch) on the droplet so a clean bootstrap.sh works, and fold the from-source build into bootstrap.sh; update setup.md. Concierge mode, one step at a time, plain English. Context: steps 1–4 DONE — the POST /memories round-trip persists end-to-end (user_id diag-roundtrip-20260608; verified via GET + /search). Two blockers were cleared: OpenAI embeddings 403 (operator set project to "allow all models") and a mem0ai 2.0.4 bug where gpt-5-mini was sent max_tokens (ADR 021 — patched live container + Dockerfile). CAVEAT: the live container's patch is in its writable layer only; it survives restart/reboot but a `compose up --force-recreate`/redeploy from the un-rebuilt image reverts the bug — rebuild the image first. ADR 020 (make bootstrap = locked dead end) still stands. The ADMIN_API_KEY Bitwarden custody gate is CLOSED (steps 1–4 all done). SSH key is in ssh-agent; secrets read from server .env, never printed.
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action: the BACKLOG P1 security cleanup — (1) strip the plaintext secrets comment block from infra/.env on BOTH the droplet (/opt/ai-memory-infra/infra/.env) and the local copy (values are already in Bitwarden, so nothing plaintext should sit at rest), and (2) add a secret-scan pre-commit hook (e.g. gitleaks) so "no secrets in git" is a deterministic gate. Concierge mode, one step at a time, plain English. Context: Phase 1 is DEPLOYED, usable, and now fully REPRODUCIBLE — step 5 is DONE: the mem0 image was rebuilt from infra/mem0-server.Dockerfile (ADR 021 gpt-5-mini patch baked in), a compose --force-recreate + round-trip proved the bug no longer reverts (user_id diag-rebuild-20260608), the from-source build is folded into scripts/bootstrap.sh (pinned MEM0_REF), and setup.md is updated. ADR 020 (make bootstrap = locked dead end) still stands. ADMIN_API_KEY custody gate CLOSED. SSH key is in ssh-agent; secrets read from server .env, never printed. After P1 security, Phase 2 is backup/restore.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
@@ -95,8 +108,11 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 5 Cloudflare A records, Spaces bucket `ai-memory-infra-backups-chandrav`). Droplet
 bootstrapped (Docker + Compose + UFW). **Core stack live & healthy**: Caddy + Mem0
 (built from source, `mem0-api-server:local`) + Postgres/pgvector + Neo4j. RAM ~1.6G/3.9G
-used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert. To
-*use* the API still needs admin/API-key setup + model-config verification (blockers below).
+used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert. **API is
+usable** (admin key works, models verified, round-trip persists) **and the deploy is now
+reproducible** (`bootstrap.sh` builds the image from pinned source; step 5 done). Remaining
+Phase-1 work is P1 security hardening (strip plaintext `.env` secrets block; secret-scan
+pre-commit), then Phase 2 (backup/restore).
 
 ## Done this session (2026-06-07, session-resume #3 — DEPLOY)
 
@@ -205,6 +221,20 @@ used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert.
   every line: **true steady-state ~₹3,800/mo landed** (was ₹2,920 list). Parked a
   zero-forex card as a *personal* finance call (≈₹1.2k/yr saving; off the critical path).
 
+## Last decisions (2026-06-08, reproducible-deploy session)
+
+- **Step 5 closed — deploy is reproducible; no new ADR needed.** Rebuilt the Mem0 image from
+  the patched `infra/mem0-server.Dockerfile` (this is the control-plane fix promised by ADR
+  021), proved it survives `compose up --force-recreate` via a fresh round-trip, and folded the
+  clone-pinned-src + `docker build` into `scripts/bootstrap.sh`. **Reproducibility choices:**
+  (a) **pin `MEM0_REF`** to a full commit SHA (overridable) so the build is deterministic —
+  the Dockerfile's build-time `assert` is the safety net if a bumped ref restructures the
+  patched code; (b) **build from source on the droplet** rather than push to GHCR (tenet 7 —
+  fewer moving parts, no registry account/secret to manage; revisit GHCR only if multi-node);
+  (c) **`compose pull` names only the external images** (caddy/postgres/neo4j) so the
+  local-only Mem0 image + profiled-off dashboard can't break a clean bootstrap. Also documented
+  the OpenAI allow-both-models prereq in `setup.md` (closes the step-4 blocker's doc debt).
+
 ## Last decisions (2026-06-08, round-trip session)
 
 - **ADR 021 — patch mem0ai's GPT-5 detection so `gpt-5-mini` extraction works.** mem0ai 2.0.4's
@@ -298,10 +328,11 @@ displaces the Phase-1 deploy (tenet 13).
   `infra/mem0-server.Dockerfile`. **Verified:** `POST /memories` (user_id
   `diag-roundtrip-20260608`) extracted 2 facts (Python / Bangalore, event `ADD`); `GET
   /memories?user_id=…` + `POST /search "favorite programming language"` returned them ranked.
-  **⚠️ Caveat (control-plane debt):** the live patch is in the container's writable layer — it
-  survives `docker restart` + droplet reboot but **not** a `compose up --force-recreate` /
-  redeploy from the un-rebuilt image. **Rebuild the image from the patched Dockerfile before
-  the next redeploy** (BACKLOG P1). ✅ **Steps 1–4 all done** (Bitwarden custody gate closed).
+  **✅ Caveat RESOLVED (2026-06-08, step 5):** the writable-layer patch is now baked into the
+  rebuilt image — `compose up --force-recreate mem0` + a fresh round-trip (user_id
+  `diag-rebuild-20260608`) proved the gpt-5-mini bug no longer reverts on redeploy, and the
+  from-source build is folded into `bootstrap.sh`. ✅ **Steps 1–5 all done** (Bitwarden custody
+  gate closed; deploy reproducible).
 - ✅ **Model config VERIFIED (2026-06-08, step 3).** Earlier note was **wrong** — the
   server source *does* read these env vars: `main.py` L115-116 `DEFAULT_LLM_MODEL =
   os.environ.get("MEM0_DEFAULT_LLM_MODEL", "gpt-4.1-nano-2025-04-14")` /
@@ -312,11 +343,16 @@ displaces the Phase-1 deploy (tenet 13).
   `gpt-4.1-nano`, so if `MEM0_DEFAULT_LLM_MODEL` were ever unset the server would silently
   run nano — `.env.example` already pins it; keep it set. No `/configure` GET route; config
   is boot-time only (no persisted override; ADR 020 = no dashboard/wizard).
-- **Deploy not yet fully reproducible.** A fresh `bootstrap.sh` would fail at
-  `docker compose pull` (it can't pull the locally-built `mem0-api-server:local`, and the
-  dashboard image 404s). The image was built by hand this session. Fold the
-  clone-mem0-src + `docker build` step into `bootstrap.sh` (or push the image to GHCR) and
-  update `setup.md` — see BACKLOG P1.
+- ✅ **Deploy now fully reproducible (2026-06-08, step 5 DONE).** `scripts/bootstrap.sh`
+  now clones the **pinned** mem0 source (`MEM0_REF=366945965…`, overridable), `docker
+  build`s `mem0-api-server:local` from `infra/mem0-server.Dockerfile` (graph deps + ADR 021
+  patch + build-time `assert`), and pulls only the external base images (caddy/postgres/neo4j)
+  so the local-only Mem0 image + profiled-off dashboard don't break `pull`. **Proven on the
+  droplet:** rebuilt the image → `compose up --force-recreate mem0` → round-trip persisted
+  (user_id `diag-rebuild-20260608`), confirming the gpt-5-mini patch now lives in the image,
+  not just the writable layer. `bash -n` clean. `setup.md` updated (Step 6 auto-build +
+  OpenAI allow-both-models prereq). Remaining redeploy nicety (P2): the dashboard image still
+  needs building before its profile can be enabled.
 - **Cosmetic:** Compose prints `"wdqOTNUqJsh" variable is not set` (the bcrypt `$` in
   `BASIC_AUTH_HASH`). Harmless (Caddy gets the right hash via `env_file`); silence by
   escaping `$`→`$$` in `.env` if desired.
@@ -336,7 +372,8 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Next action
 
-> **RESUME HERE — stack is DEPLOYED & healthy over HTTPS. Make it *usable*.**
+> **RESUME HERE — Phase 1 is DEPLOYED, usable, and fully REPRODUCIBLE. Harden it (P1
+> security), then Phase 2 (backup/restore).**
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
@@ -356,12 +393,18 @@ displaces the Phase-1 deploy (tenet 13).
    /memories?user_id=…` + `POST /search` returned them (setup.md "Done when" met). ✅ **Custody
    gate closed (2026-06-08):** `ADMIN_API_KEY` saved in Bitwarden `ai-memory-infra` (copied
    server→clipboard→vault, never shown in chat). **Steps 1–4 are all complete.**
-5. **← NEXT — Make the deploy reproducible** (BACKLOG P1): the live container's ADR-021 patch is
-   in its writable layer only, so a redeploy from the un-rebuilt image reverts the gpt-5-mini
-   bug. **Rebuild `mem0-api-server:local` from the patched `infra/mem0-server.Dockerfile`** on
-   the droplet, then fold the clone-mem0-src + `docker build` step into `bootstrap.sh` (or push
-   the image to GHCR) so a clean `bootstrap.sh` works; update `setup.md` (Step 6 + prereqs).
-   Currently a fresh bootstrap fails at `docker compose pull`.
+5. ✅ **Make the deploy reproducible — DONE (2026-06-08).** Rebuilt `mem0-api-server:local`
+   from the patched `infra/mem0-server.Dockerfile` on the droplet (ADR 021 baked in, build-time
+   `assert` passed); `compose up --force-recreate mem0` + a fresh round-trip (user_id
+   `diag-rebuild-20260608`) proved the gpt-5-mini bug no longer reverts. Folded the
+   clone-pinned-src + `docker build` into `scripts/bootstrap.sh` (pulls only external base
+   images so the local Mem0 image doesn't break `pull`); updated `setup.md` (Step 6 auto-build +
+   OpenAI allow-both-models prereq). A clean `bootstrap.sh` now works (`bash -n` clean).
+6. **← NEXT — P1 security cleanup** (BACKLOG P1): (a) strip the plaintext secrets comment block
+   from `infra/.env` on **both** the droplet (`/opt/ai-memory-infra/infra/.env`) and the local
+   copy — the values are already in Bitwarden, so nothing plaintext should sit at rest; (b) add
+   a secret-scan pre-commit hook (e.g. gitleaks) so "no secrets in git" is a deterministic gate.
+   Then Phase 2 = backup/restore.
 
 **Connection details:** droplet `168.144.145.29` (SSH `root@`, key passphrase in
 Bitwarden); API `https://memory.chandrav.dev` (`/docs` open); Neo4j browser

@@ -33,7 +33,12 @@ You need these before Step 1:
    at Cloudflare Registrar *before* `terraform apply`. This creates the DNS zone
    Terraform writes records into. See Step 0b below.
 6. **An OpenAI API key** — platform.openai.com. Serves both extraction
-   (`gpt-5-mini`) and embeddings (`text-embedding-3-small`).
+   (`gpt-5-mini`) and embeddings (`text-embedding-3-small`). **The project must
+   allow *both* models** (or "Allow all models"): if the project is scoped to
+   only `gpt-5-mini`, `text-embedding-3-small` returns 403 and every `add`
+   silently fails. The per-model allow-list UI has been flaky — prefer
+   *Project → Limits → Allow all models*. (Cost stays capped by auto-recharge
+   OFF + the org budget; tenet 15.)
 
 ---
 
@@ -168,13 +173,20 @@ cp .env.example .env && nano .env        # paste the SAME secrets as local (prod
 sudo bash ../scripts/bootstrap.sh
 ```
 
-> **Deeper:** `bootstrap.sh` installs Docker + Compose, sets UFW (22/80/443),
-> then `docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d` and
-> polls the API. In prod `.env`, set `DASHBOARD_URL=https://dash.<domain>` and
-> `DASHBOARD_API_URL=https://memory.<domain>` so CORS + the dashboard work.
-> ⚠️ Verify at this point: the `mem0/mem0-api-server` image tag bundles
-> `psycopg`/`langchain-neo4j` (older tags need the patch Dockerfile from the mem0
-> self-host guide), and a `mem0-dashboard` image exists (else build from the repo).
+> **Deeper:** `bootstrap.sh` installs Docker + Compose + git, sets UFW
+> (22/80/443), then **builds the Mem0 API image from source** and brings the
+> stack up (`docker compose … up -d`), polling the API. The build is automatic
+> and reproducible: it clones the pinned mem0 source (`MEM0_REF` in the script)
+> and runs `docker build -f infra/mem0-server.Dockerfile -t mem0-api-server:local
+> <src>/server`. We build because the published `mem0/mem0-api-server` image is
+> arm64-only (no amd64) and omits the Neo4j graph deps; the Dockerfile adds those
+> plus the gpt-5-mini extraction patch (ADR 021) and carries a build-time `assert`
+> that fails loudly if a future mem0 ref breaks the patch. The `compose pull` step
+> pulls only the external images (caddy/postgres/neo4j) — the local Mem0 image
+> isn't pulled, and the dashboard is profiled-off (P2). In prod `.env`, set
+> `DASHBOARD_URL=https://dash.<domain>` and `DASHBOARD_API_URL=https://memory.<domain>`
+> so CORS + the (later) dashboard work. To bump the mem0 version, override
+> `MEM0_REF=<git-sha>` when running the script.
 
 ---
 
@@ -192,6 +204,9 @@ Phase 8.
 > Let's Encrypt certs. If you get cert errors, confirm DNS resolves to the droplet
 > (`nslookup memory.<domain>`). Logs:
 > `docker compose -f docker-compose.yml -f docker-compose.prod.yml logs mem0 --tail 50`.
+> If a `POST /memories` returns `200` but stores **0 memories**, extraction failed
+> silently — almost always the OpenAI project model-access (see Prereq 6: allow
+> both `gpt-5-mini` and `text-embedding-3-small`).
 
 ---
 
