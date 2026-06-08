@@ -231,6 +231,11 @@ Full diagram: `docs/architecture.md`.
   leave a routine "operator will commit/push" gate. Pause before commit/push only for
   one-way-door effects (spend, lock-in, deletion, data overwrite/retention policy),
   secrets, destructive operations, or an explicit operator pause.
+  The instruction to read `AGENTS.md`/`STATUS.md` and continue the next action is the
+  standing operator authorization for this repo's reversible completion commit+push;
+  do not require a second "please commit" prompt. If a higher-level tool policy or a
+  real blocker prevents commit/push, say that before the final answer and leave the
+  repo in a clearly documented handoff state.
 
 ## Documentation discipline / Definition of Done
 

@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 13: control-plane guidance corrected;
-operator reload/test still next**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
+**Last updated:** 2026-06-08 (**Phase 3 — session 15: completion gate corrected;
+commit+push required at handoff**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
 private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
 MIT `mem0ai/mem0-chrome-extension` history, installed Node.js LTS on Windows, verified the raw
 upstream build, then rewrote the extension in commit **`7ac3011`**: default server
@@ -43,9 +43,19 @@ console and page console for the new background-relay error.** Session 13: opera
 agent working model after root/context drift. Updated `AGENTS.md` to make explicit that the parent
 `ai-memory` workspace is the operating surface, `ai-memory-infra` is the control plane for all three
 sibling repos, package repos are targeted data-plane workspaces only, and reversible completed work
-items must be committed and pushed to remote in the same session. **Next remains:** operator reloads
-the unpacked extension in Chrome and tests the ChatGPT sidebar; if it still fails, inspect the
-extension service-worker console and page console for the new background-relay error.
+items must be committed and pushed to remote in the same session. Session 14: ran repo-health green
+for `ai-memory-infra` + `ai-memory-infra-private`; reloaded the real unpacked OpenMemory extension in
+Chrome (`jdajdehjpohgmolnlijiiggfbolmenmo`, loaded from `ai-memory-extension/dist`); opened
+`https://chatgpt.com/`; the OpenMemory sidebar rendered successfully and loaded live Recent Memories:
+**Total Memories = 1**, with a memory card plus Copy/View actions. The prior `TypeError: Failed to
+fetch` sidebar failure did **not** reproduce in the visible sidebar path, and the duplicate
+context-menu reload failure did not block extension startup. **Next:** continue Phase 3 browser
+verification by proving ChatGPT-side save/search behavior against the live server, then update docs
+and close the extension browser-reach milestone. Session 15: operator caught that session 14 ended
+without committing/pushing, violating the repo's completion gate and atomic-session handoff model.
+Sharpened `AGENTS.md`: reading `AGENTS.md`/`STATUS.md` and continuing the next action is the standing
+operator authorization to commit+push reversible completed work in this repo; do not wait for a second
+commit prompt unless blocked, one-way-door, secret, destructive, or explicitly paused.
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -344,14 +354,15 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 3 — Chrome extension fork → IN PROGRESS (session 8).** Decision made (**ADR 024**): fork
+**Phase 3 — Chrome extension fork → IN PROGRESS (session 14).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
 self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source now
 lives in private repo **`vvbch/ai-memory-extension`**. Upstream baseline builds green, and the
 self-hosted rewrite is committed in that repo (`7ac3011`): `memory.chandrav.dev`, `X-API-Key`,
 `/memories`, `/search`, local settings, no mem0 cloud login, no PostHog. `dist/` is now loaded in
-Chrome and **OpenMemory** appears on `chrome://extensions`. **Next: enter the real API key and prove
-add/search/get against the live server from the browser.**
+Chrome and **OpenMemory** appears on `chrome://extensions`; after the background-relay fix, the
+ChatGPT sidebar now opens and loads Recent Memories from the live server. **Next: prove ChatGPT-side
+save/search behavior against the live server, then close Phase 3 browser-reach docs.**
 
 **Phase 2 — backup/restore → COMPLETE.** Scripts DONE & PROVEN; automation §1–§4 all built &
 verified; the drill's 2nd healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is now **wired & verified
@@ -732,8 +743,8 @@ pre-commit is now DONE** (gitleaks gate).
 ## Next action
 
 > **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; self-hosted
-> rewrite is committed; unpacked extension load is done; sidebar fetch fix is built but browser reload
-> still fails; next is a focused extension debug session.** Session 8 (2026-06-08): created private GitHub repo
+> rewrite is committed; unpacked extension load is done; background-relay fix is built; Chrome reload
+> + ChatGPT sidebar Recent Memories are verified green.** Session 8 (2026-06-08): created private GitHub repo
 > **`vvbch/ai-memory-extension`**,
 > imported upstream MIT history, verified the raw upstream baseline, then rewrote and committed the
 > self-hosted fork (`7ac3011`). Session 9: operator loaded `ai-memory-extension/dist` as an unpacked
@@ -769,13 +780,18 @@ pre-commit is now DONE** (gitleaks gate).
 >    sidebar Recent Memories fetch plus ChatGPT content-script search/save calls through that relay, and
 >    made `mem0.saveSelection` context-menu setup idempotent by remove/recreate on worker init.
 >    `npm run type-check` + `npm run build` green; `dist/` regenerated.
-> 9. **NEXT OPERATOR STEP:** in Chrome, go to `chrome://extensions/`, click **Reload** on
->    **OpenMemory**, then open/refresh `https://chatgpt.com/` and click the OpenMemory sidebar/widget.
->    Expected: no duplicate context-menu error, and Recent Memories loads or shows a real HTTP/auth
->    error instead of `TypeError: Failed to fetch`.
-> 10. If it still fails, inspect the OpenMemory service-worker console plus the ChatGPT page console
->    and continue `/memories`, `/search`, and `GET /memories?user_id=` browser verification.
-> 11. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 9. ✅ Reloaded the real unpacked OpenMemory extension in Chrome
+>    (`jdajdehjpohgmolnlijiiggfbolmenmo`, loaded from `ai-memory-extension/dist`), opened
+>    `https://chatgpt.com/`, and verified the OpenMemory sidebar renders live Recent Memories:
+>    **Total Memories = 1**, with Copy/View actions on the loaded memory card. The prior visible
+>    `TypeError: Failed to fetch` sidebar state did not recur after the background relay.
+> 10. **NEXT ACTION:** prove ChatGPT-side save/search behavior against the live server. Use the real
+>    Chrome profile with OpenMemory already loaded; if it fails, inspect the OpenMemory service-worker
+>    console plus the ChatGPT page console for background-relay errors.
+> 11. **Handoff rule reminder:** when the next reversible session step is done and verified, update
+>    `STATUS.md`/logs, run repo-health, then commit and push every touched repo before final response.
+>    This is already authorized by the project control plane; do not leave completed work uncommitted.
+> 12. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly

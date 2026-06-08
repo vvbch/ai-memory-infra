@@ -615,3 +615,37 @@ the step harder than it should be.
 - In a fresh session, inspect the extension runtime/service-worker/content-script errors, verify whether
   the fetch failure is CORS/host-permission/request-context related, make context-menu registration
   idempotent, rebuild, reload, and continue browser verification.
+
+## 2026-06-08 — ChatGPT sidebar loads live memories after reload
+
+**Focus:** prove the rebuilt extension works in the real Chrome profile after the background-relay fix.
+
+**Milestones**
+- **Repo health is green.** The control-plane and private repos both passed the standard health check and
+  were `0 ahead / 0 behind` remote.
+- **Real Chrome extension reloaded.** OpenMemory was reloaded from the installed unpacked `dist` folder,
+  not a separate test profile.
+- **ChatGPT sidebar is green.** On `https://chatgpt.com/`, the OpenMemory sidebar opened and loaded live
+  Recent Memories: **Total Memories = 1**, with a memory card plus Copy/View actions. The prior visible
+  `TypeError: Failed to fetch` sidebar failure did not recur.
+
+**Next**
+- Prove ChatGPT-side save/search behavior against the live server, then close the Phase 3 browser-reach
+  milestone if that path is green.
+
+## 2026-06-08 — Handoff gate sharpened
+
+**Focus:** fix the process miss where completed session work was checkpointed locally but not committed
+and pushed.
+
+**Milestones**
+- **Miss caught immediately.** The sidebar verification work was done, but the session handoff was
+  incomplete because the docs were left only in the local working tree.
+- **Control plane clarified.** The project instructions now state that continuing the next action from
+  `AGENTS.md`/`STATUS.md` is standing authorization to commit and push reversible completed work.
+- **Handoff model reaffirmed.** GitHub, not a local working tree, is the atomic session boundary for the
+  next agent.
+
+**Next**
+- Continue Phase 3 with ChatGPT-side save/search verification, and commit+push every touched repo before
+  ending the session.
