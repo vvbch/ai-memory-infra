@@ -653,11 +653,22 @@ pre-commit is now DONE** (gitleaks gate).
    notes); two on-demand `systemctl start ai-memory-backup.service` runs succeeded and **healthchecks.io
    returned HTTP 200 `OK`**. Operator's check = cron `30 18 * * *` UTC, 1 h grace; URL in Bitwarden.
    **Local backstop** = `OnFailure=` marker (a "newest prefix < 25 h" freshness check is still a TODO if
-   we want belt-and-suspenders, but the external monitor covers silence). (3) ⬜ **Data-loss hardening
-   (tenet 17) — NOT STARTED:** ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST
-   (tenet 8); replace the client-side `s3cmd del` prune with **server-side lifecycle/versioning**;
-   add a **least-privilege backup-only Spaces key** (write+list, no mass-delete); make `restore.sh`
-   take a **pre-restore safety snapshot** before overwriting. (4) ⬜ **Restore drill — NOT STARTED**
+   we want belt-and-suspenders, but the external monitor covers silence).    (3) 🔄 **Data-loss hardening
+   (tenet 17) — VENDOR FACTS VERIFIED 2026-06-08, awaiting operator sign-off (one-way door):**
+   per DO official docs — **Bucket Versioning = SUPPORTED** (API-only / Terraform `versioning{}`;
+   delete→delete-marker, prior versions recoverable; "can never return to unversioned", only
+   suspend); **Bucket Lifecycle = SUPPORTED** (time-based `expiration` + `noncurrent_version_expiration`
+   + `expired_object_delete_marker` + abort-incomplete-MPU; tag-based NOT supported; via API /
+   `s3cmd expire`/`setlifecycle` / Terraform `lifecycle_rule{}`); **Object Lock / WORM = NOT
+   SUPPORTED** (DO staff-confirmed; true immutability would need a provider change = tenet-12, out of
+   scope). **Spaces key scopes = Read / Read+Write+Delete / All only** → no "write-but-can't-delete"
+   tier; closest least-privilege = a key **scoped to the backup bucket only** (limits blast radius),
+   with versioning as the real delete-recovery net. **Recommended plan:** (a) enable versioning on
+   `ai-memory-infra-backups-chandrav` (Terraform); (b) replace the client-side `s3cmd del` prune with
+   a **server-side lifecycle rule** (expire current after ~30 d, expire noncurrent after ~14 d, delete
+   expired markers); (c) bucket-scoped backup key (operator console step + Bitwarden); (d) **pre-restore
+   safety snapshot** in `restore.sh` (additive). **All of (a)–(c) are TTL/delete-policy one-way doors →
+   ASK before applying (tenet 17).** (4) ⬜ **Restore drill — NOT STARTED**
    (monthly, automated into a throwaway target where feasible). **Plus a deploy step:** push (1)+(2)
    to the droplet and confirm a real ping. **Done when** backups run on the timer, a success/failure
    signal reaches the operator, the store is delete/overwrite-resistant, restore pre-snapshots, and
