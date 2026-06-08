@@ -4,7 +4,25 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (P1-security session — **secret-scan gate DONE; `.env`-strip
+**Last updated:** 2026-06-08 (Phase 2 — backup/restore session — **DONE; restore round-trip
+PROVEN**). Fleshed out `scripts/backup.sh` + `scripts/restore.sh` (were empty scaffolding) and
+**stood up + verified the full backup/restore path** to the Spaces bucket
+(`ai-memory-infra-backups-chandrav`, sgp1). **Backup** = `pg_dump -Fc` (Postgres, online) + `tar`
+of the mem0 SQLite history volume (online) + an **offline** `neo4j-admin database dump` (Community
+can't dump a running DB → brief ~20–30 s `stop`/`start`; only the graph pauses, API stays up),
+uploaded as `postgres.dump` + `neo4j.dump` + `mem0-history.tar.gz` + a SHA-256 `MANIFEST.txt` under
+one timestamped prefix, self-pruned to the newest 7. **Restore** verifies checksums, asks for a
+typed `RESTORE` (`FORCE=1` skips), then `pg_restore --clean` + wipe/untar SQLite + offline neo4j
+`load --overwrite`. **Tooling:** `s3cmd` (apt, S3-compatible Spaces); creds (`SPACES_*` +
+`BACKUP_BUCKET`) added to the droplet `infra/.env` (read from local `terraform.tfvars`, never
+printed) + `.env.example`. **PROVEN round-trip:** wrote a known memory (codeword `ZEPHYR-7731`,
+user `backup-proof-20260608`) → backed up → **deleted** it (`GET` → `[]`) → `restore.sh latest` →
+the **exact record returned** (same id/timestamp/hash) and a semantic `/search` ranked it (so the
+**pgvector embeddings** restored, not just rows). Cleaned up the test memory + took a final clean
+backup. **ADR 022** written; `setup.md` Phase-2 section + BACKLOG (cron/restore-drill = P2) updated.
+**Next: Phase 3 — Chrome extension fork.**
+
+**Prior update:** 2026-06-08 (P1-security session — **secret-scan gate DONE; `.env`-strip
 consciously DEFERRED to a post-burn-in cleanup pass**). Added **gitleaks v8.30.1** as a second
 pre-commit gate (after the Tenet-11 repo-health gate) in `scripts/hooks/pre-commit`: it runs
 `gitleaks git --staged` against a versioned `.gitleaks.toml` and **blocks the commit** on any
@@ -16,7 +34,7 @@ session** — the operator is keeping the admin-UI login note handy through ~1 w
 it's parked in BACKLOG with a trigger (~2026-06-15) under the new **tenet 18 (burn-in before
 hardening)**. Safe to hold: `.env` is gitignored *and* the new gitleaks gate stops it ever
 reaching git (the active risk — secrets in history — is closed). **Added tenet 18** to
-`tenets.md` + the `AGENTS.md` summary. **Next: Phase 2 — backup/restore.**
+`tenets.md` + the `AGENTS.md` summary.
 
 **Prior update:** 2026-06-08 (reproducible-deploy session — **step 5 DONE; Phase 1 fully
 reproducible**). Rebuilt `mem0-api-server:local` on the droplet from the patched
@@ -97,11 +115,19 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
    one through. So "no secrets in git" is now enforced by a machine, not just a rule we try to
    remember.
 6. ⏸️ **Tidy the leftover password note in the config file** — ON PURPOSE, LATER. There's a
-   plaintext note (the admin login for the graph/dashboard pages) sitting in the server's
-   config file. It's already safe in Bitwarden, but you asked to keep it handy for ~a week of
-   real use before we delete it. It's parked with a reminder (~Jun 15) and it's safe to leave:
-   that config file never goes to git, and the new scanner above would block it anyway. This is
-   the new "burn-in, then clean up" rule (tenet 18).
+plaintext note (the admin login for the graph/dashboard pages) sitting in the server's
+config file. It's already safe in Bitwarden, but you asked to keep it handy for ~a week of
+real use before we delete it. It's parked with a reminder (~Jun 15) and it's safe to leave:
+that config file never goes to git, and the new scanner above would block it anyway. This is
+the new "burn-in, then clean up" rule (tenet 18).
+7. ✅ **Set up backups + prove we can get your memories back** — DONE (2026-06-08). The server
+   now has a one-command **backup** that copies all three places your data lives (the memory
+   database, the knowledge graph, and the edit-history file) into the cloud backup bucket, and a
+   one-command **restore** that pulls them back. We didn't just write it — we **proved** it: we
+   saved a test memory (a codeword), backed up, **deleted** the memory, ran restore, and the
+   codeword came back exactly — and search found it again. So if the server ever dies, your
+   memories are recoverable. (Backups are run by hand for now; auto-scheduling is a parked
+   follow-up.) **Phase 2 is done; next is Phase 3 — the Chrome browser extension.**
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -118,13 +144,21 @@ key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 
 Ask for **concierge mode** (one step at a time, plain English, no jargon).
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action: Phase 2 — backup/restore. Stand up + verify the backup/restore path (scripts/backup.sh + scripts/restore.sh already exist as scaffolding): back up Postgres/pgvector + Neo4j + the mem0 SQLite history to the Spaces bucket (ai-memory-infra-backups-chandrav), then prove a restore round-trips a known memory. Concierge mode, one step at a time, plain English. Context: Phase 1 is DEPLOYED, usable, REPRODUCIBLE, and now SECURED — the gitleaks secret-scan pre-commit gate is live ("no secrets in git" is deterministic; tested both ways). The one remaining P1 item — stripping the plaintext admin-UI login note from infra/.env (local + droplet /opt/ai-memory-infra/infra/.env) — is CONSCIOUSLY DEFERRED to a post-burn-in cleanup pass (tenet 18, trigger ~2026-06-15); it's safe because .env is gitignored AND gitleaks blocks it from git. Do NOT strip it early unless asked. ADR 020 (make bootstrap = locked dead end) still stands. ADMIN_API_KEY custody gate CLOSED. SSH key is in ssh-agent; secrets read from server .env, never printed.
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action: Phase 3 — Chrome extension fork. Concierge mode, one step at a time, plain English. Context: Phases 1 + 2 are DONE. Phase 1 is DEPLOYED, usable, REPRODUCIBLE, and SECURED (gitleaks secret-scan pre-commit gate live). Phase 2 backup/restore is DONE and PROVEN: scripts/backup.sh + scripts/restore.sh back up Postgres/pgvector + Neo4j (offline dump) + mem0 SQLite history to the Spaces bucket (ai-memory-infra-backups-chandrav), and a write→backup→delete→restore round-trip of a known memory (codeword ZEPHYR-7731) was verified end-to-end incl. vector search (ADR 022). Backups are MANUAL today — cron scheduling + a restore drill are parked (BACKLOG P2). Two consciously-deferred P1 items still open: (a) strip the plaintext admin-UI login note from infra/.env (local + droplet) — DEFERRED to a post-burn-in pass (tenet 18, ~2026-06-15), safe because .env is gitignored AND gitleaks blocks it from git; do NOT strip early unless asked. ADR 020 (make bootstrap = locked dead end) still stands. ADMIN_API_KEY custody gate CLOSED. SSH key is in ssh-agent; secrets read from server .env, never printed.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
 needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
+
+**Phase 2 — backup/restore → DONE & PROVEN.** `scripts/backup.sh` + `scripts/restore.sh` are
+live: backup = online `pg_dump -Fc` + online `tar` of the mem0 SQLite history + **offline**
+`neo4j-admin database dump` (brief graph-only stop/start), uploaded with a SHA-256 manifest to
+`s3://ai-memory-infra-backups-chandrav/backups/<UTC>/` (newest-7 retention); restore verifies
+checksums, confirms, then `pg_restore --clean` + SQLite untar + offline neo4j `load`. **Restore
+round-trip verified end-to-end** (write→backup→delete→restore→memory + vector search returned;
+ADR 022). Backups are **manual** today (cron + restore drill = BACKLOG P2).
 
 **Phase 1 — Infrastructure as Code → DEPLOYED.** `tf-init`/`plan`/`apply` all run:
 9 resources created (droplet `s-2vcpu-4gb` BLR1 `168.144.145.29`, firewall 22/80/443,
@@ -136,8 +170,8 @@ usable** (admin key works, models verified, round-trip persists), **reproducible
 (`bootstrap.sh` builds the image from pinned source; step 5 done), **and secured** (gitleaks
 secret-scan pre-commit gate live — "no secrets in git" is deterministic). The one remaining
 P1 item (strip the plaintext admin-UI note from `infra/.env`, local + droplet) is consciously
-deferred to a post-burn-in cleanup pass (tenet 18, ~2026-06-15). **Next: Phase 2
-(backup/restore).**
+deferred to a post-burn-in cleanup pass (tenet 18, ~2026-06-15). **Next: Phase 3 (Chrome
+extension fork).**
 
 ## Done this session (2026-06-07, session-resume #3 — DEPLOY)
 
@@ -245,6 +279,22 @@ deferred to a post-burn-in cleanup pass (tenet 18, ~2026-06-15). **Next: Phase 2
   + `AGENTS.md`; depersonalized TCO footnote in public `architecture.md`). Re-baselined
   every line: **true steady-state ~₹3,800/mo landed** (was ₹2,920 list). Parked a
   zero-forex card as a *personal* finance call (≈₹1.2k/yr saving; off the critical path).
+
+## Last decisions (2026-06-08, backup/restore session)
+
+- **ADR 022 — backup/restore design.** One timestamped Spaces prefix per backup holding
+  `postgres.dump` + `neo4j.dump` + `mem0-history.tar.gz` + a SHA-256 `MANIFEST.txt`.
+  **Per-store method = consistency with minimum downtime:** Postgres `pg_dump -Fc` online
+  (transactionally consistent, zero downtime); mem0 SQLite history `tar`'d online (WAL-included =
+  crash-consistent); **Neo4j offline `neo4j-admin dump`/`load`** because Community can only
+  dump a *stopped* DB (online backup is Enterprise — verified vs the 5.26 manual) → a brief
+  ~20–30 s graph-only stop/start, API stays up. **Tooling = `s3cmd` (apt)** over aws-cli/rclone
+  (tenet 7 — one package); Spaces creds reuse the gitignored+gitleaks-gated `infra/.env`
+  (not a new file). **Restore is whole-DB destructive** with a checksum gate + typed `RESTORE`
+  confirm (`FORCE=1` skips). **No new vendor** (Spaces adopted in Phase 1), so no tenet-12
+  deliberation — reversible dev tooling. **Proven:** codeword `ZEPHYR-7731` round-tripped
+  write→backup→delete→restore incl. vector `/search`. Cron scheduling + a periodic restore
+  drill are parked (BACKLOG P2).
 
 ## Last decisions (2026-06-08, P1-security session)
 
@@ -421,9 +471,10 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 1 is DEPLOYED, usable, REPRODUCIBLE, and SECURED (gitleaks gate
-> live). Next is Phase 2 (backup/restore). One P1 item (`.env` plaintext-note strip) is
-> consciously deferred to a post-burn-in pass (tenet 18, ~2026-06-15).**
+> **RESUME HERE — Phases 1 + 2 are DONE. Phase 1 DEPLOYED/usable/REPRODUCIBLE/SECURED;
+> Phase 2 backup/restore DONE & PROVEN (ADR 022). Next is Phase 3 (Chrome extension fork).
+> One P1 item (`.env` plaintext-note strip) is consciously deferred to a post-burn-in pass
+> (tenet 18, ~2026-06-15). Backups are manual — cron/restore-drill parked at BACKLOG P2.**
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
@@ -456,10 +507,20 @@ pre-commit is now DONE** (gitleaks gate).
    gitignored AND gitleaks now blocks it from git. (b) ✅ **DONE** — gitleaks secret-scan
    pre-commit gate added + tested (blocks secrets, passes clean); `install-hooks.ps1` ensures
    gitleaks is installed. "No secrets in git" is now deterministic.
-7. **← NEXT — Phase 2: backup/restore.** Stand up + verify the backup/restore path
-   (`scripts/backup.sh` + `scripts/restore.sh` already exist as scaffolding): back up
-   Postgres/pgvector + Neo4j + the mem0 SQLite history to the Spaces bucket
-   (`ai-memory-infra-backups-chandrav`), then prove a restore round-trips a known memory.
+7. ✅ **Phase 2: backup/restore — DONE & PROVEN (2026-06-08).** Fleshed out
+   `scripts/backup.sh` + `scripts/restore.sh`: backup = online `pg_dump -Fc` + online `tar` of
+   the mem0 SQLite history + **offline** `neo4j-admin database dump` (brief graph stop/start),
+   to `s3://ai-memory-infra-backups-chandrav/backups/<UTC>/` with a SHA-256 manifest, newest-7
+   retention; restore verifies checksums + typed-`RESTORE` confirm, then `pg_restore --clean` +
+   SQLite untar + offline neo4j `load`. **Round-trip proven:** wrote codeword `ZEPHYR-7731`
+   (user `backup-proof-20260608`) → backup → delete (`GET`→`[]`) → `restore.sh latest` → exact
+   record + `/search` returned (vectors restored). `s3cmd` (apt); `SPACES_*`+`BACKUP_BUCKET`
+   added to droplet `.env` (from `tfvars`, never printed) + `.env.example`. ADR 022; `setup.md`
+   Phase-2 section; BACKLOG P2 = cron + restore drill.
+8. **← NEXT — Phase 3: Chrome extension fork.** Per build phases (AGENTS.md): fork/adapt a
+   Chrome extension so the memory layer reaches the browser (desktop / ChromeOS). Web-verify
+   the current extension landscape before committing (tenet 8); Android is best-effort only
+   (Kiwi archived, ADR 004); keep it an MCP/REST client of the live API.
 
 **Connection details:** droplet `168.144.145.29` (SSH `root@`, key passphrase in
 Bitwarden); API `https://memory.chandrav.dev` (`/docs` open); Neo4j browser

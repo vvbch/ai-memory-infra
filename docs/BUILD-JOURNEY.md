@@ -232,3 +232,39 @@ the functional milestone that makes the stack *usable*, not just *up*.
 - **Reversible-first** — proved the fix on the running service (a throwaway,
   restart-surviving in-place patch) *before* committing to the durable image rebuild,
   keeping a clean revert path the whole way.
+
+## 2026-06-08 — Backups that we actually proved we can restore
+
+**Focus:** make the data survivable — back up all three datastores off-box, and
+*prove* a restore brings a real memory back (not just assume it would).
+
+**Milestones**
+- **Backup pipeline live:** one command snapshots the memory database, the
+  knowledge graph, and the edit-history file into cloud object storage under a
+  timestamped folder with checksums, keeping the most recent few.
+- **Restore proven, not assumed:** saved a known memory (a codeword), backed up,
+  **deleted** it, ran the restore, and the exact memory came back — and a semantic
+  search found it again, confirming the embeddings (not just the rows) restored.
+- One destructive command, two safety rails: it verifies checksums against the
+  backup's manifest and requires a typed confirmation before overwriting anything.
+
+**Decisions**
+- **ADR 022 — backup/restore design.** Each store gets the method that's
+  consistent with the least downtime: the relational DB and the edit-log are copied
+  live; the graph DB's free edition can only be dumped while stopped, so the script
+  briefly pauses just the graph (~20–30 s) while the rest of the service stays up.
+  Picked the smallest standard tool that does the job over heavier alternatives
+  (fewer moving parts), and reused the server's existing secret store for the
+  storage credentials rather than inventing a new one.
+
+**Engineering notes**
+- **Run it for real.** Two failures only showed up on the live box, not in a syntax
+  check: a read-only mount tripped the database image's startup ownership step, and a
+  database literally named "neo4j" made a "rename" become a no-op that aborted the run.
+  Both were one-line fixes — but only visible by actually executing the path.
+- **Prove restores destructively but safely.** Take the snapshot first, delete only
+  the known test record, restore, verify the *exact* record and a search result, then
+  clean up. A backup you've never restored is a hope, not a backup.
+- **Secrets via files, never the command line.** Moving the storage keys onto the
+  server went through a temporary file that was shredded afterward; only key *lengths*
+  were ever printed.

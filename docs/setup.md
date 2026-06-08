@@ -213,9 +213,54 @@ Phase 8.
 ### Done when
 API answers over HTTPS, dashboard + Neo4j Browser load behind basic auth, and a
 test `POST /memories` round-trips. Then update `STATUS.md`, commit, open the PR
-(CI runs), merge → CD deploys. That closes Phase 1; Phase 2 is backup/restore.
+(CI runs), merge → CD deploys. That closes Phase 1.
 
 > **Turning it off again.** Everything you stand up here can be cleanly torn down:
 > `docs/decommission.md` covers rollback, pause (stop the bill), and full
 > decommission (close every billable account) — `python scripts/teardown.py` does
 > the automated part.
+
+---
+
+## Phase 2 — backups (`scripts/backup.sh` / `scripts/restore.sh`)
+
+### What this gives you
+Off-box copies of all three datastores in the Spaces bucket, and a proven way to
+get them back. Design + trade-offs: **ADR 022**.
+
+### One-time prerequisite — Spaces creds in the droplet `.env`
+The scripts read the bucket + Spaces keys from `infra/.env`. Add these (the same
+Spaces pair as `terraform.tfvars`; see `.env.example`) — **never** commit them:
+
+```bash
+BACKUP_BUCKET=ai-memory-infra-backups-chandrav
+SPACES_REGION=sgp1
+SPACES_ACCESS_KEY=...      # DO console → API → Spaces Keys
+SPACES_SECRET_KEY=...
+```
+
+### Take a backup  **[on the droplet]**
+```bash
+sudo bash /opt/ai-memory-infra/scripts/backup.sh
+```
+> **Deeper:** installs `s3cmd` on first run, then: `pg_dump -Fc` (Postgres,
+> online) + `tar` of the mem0 SQLite history (online) + an **offline** Neo4j dump
+> (briefly stops/starts neo4j — Community Edition can't dump a running DB; only
+> the graph pauses ~20–30 s, the API stays up). Uploads all three + a SHA-256
+> `MANIFEST.txt` to `s3://$BACKUP_BUCKET/backups/<UTC-timestamp>/`, then prunes to
+> the newest 7. Backups are **manual today** — cron scheduling is BACKLOG P2.
+
+### Restore  **[on the droplet — DESTRUCTIVE]**
+```bash
+sudo bash /opt/ai-memory-infra/scripts/restore.sh            # newest backup
+sudo bash /opt/ai-memory-infra/scripts/restore.sh 20260608T062241Z   # a specific one
+```
+> **Deeper:** downloads the prefix, **verifies checksums against the manifest**,
+> then asks you to type `RESTORE` (set `FORCE=1` to skip for automation). It stops
+> mem0, `pg_restore --clean`s Postgres, wipes+untars the SQLite volume, and does an
+> offline Neo4j `load --overwrite`, then brings everything back. Give Neo4j ~30 s
+> to warm up, then verify with a `/search`.
+
+### Done when
+`backup.sh` lands four files in the bucket, and a restore round-trips a known
+memory (verified 2026-06-08, ADR 022). Phase 3 is the Chrome extension fork.
