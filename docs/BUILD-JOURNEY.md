@@ -9,6 +9,33 @@
 
 ---
 
+## 2026-06-08 — Control-plane: stateless, checkpointed agent sessions
+
+**Focus:** a governance fix, no build state changed. A long-lived AI-agent session had
+burned through a month's tooling-credit budget in about half a day; root-caused and fixed
+the operating model rather than just buying more credits.
+
+**Milestones**
+- New **tenet: sessions are stateless and disposable** — one task per session, state
+  checkpointed to the repo after every step, and **every response ends with a copy-paste
+  "resume" token** so a fresh session reconstructs full context with zero loss. The repo is
+  the durable backing store; the chat is disposable compute (the Twelve-Factor
+  stateless-process pattern applied to agent sessions).
+- **Blameless COE** recorded: an LLM agent re-sends the whole conversation transcript each
+  turn, so a long session's token cost grows **~quadratically** with its length
+  (*context-window amplification*) — the mechanism behind the credit burn.
+
+**Decisions**
+- Treat the **agent session itself as a metered, usage-based resource** and bound it — the
+  tooling analog of the project's "cap variable cost" tenet. The cost discipline had only ever
+  been aimed at cloud/LLM-API spend; this extends it to the build tooling.
+
+**Engineering notes**
+- Named the **pattern** (stateless single-task sessions + checkpoint/restore + continuation
+  token) and the **anti-pattern** (monolithic long-lived session) in standard terms so the
+  lesson transfers. Control plane fixed first (tenet + working model + Definition of Done),
+  then the practice adopted — detection of future overruns parked as a backlog item.
+
 ## 2026-06-07 — Accounts, domain & secrets for Phase-1 deploy
 
 **Focus:** stand up the external accounts, domain, and secrets needed before

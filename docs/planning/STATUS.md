@@ -4,20 +4,88 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-07 (session-resume #2. **5 of 5 secrets gathered** — OpenAI
-billing + key done: $10 prepaid, **auto-recharge OFF**, org budget $10 w/ 80%/100%
-alerts, key in Bitwarden. New this session: **landed-cost discipline (×1.3 for GST +
-forex)** codified + every cost re-baselined (true outflow ~₹3,800/mo landed, not
-₹2,920). **Next: assemble tfvars/.env from Bitwarden, then `tf-plan` → `tf-apply` → deploy.**)
+**Last updated:** 2026-06-08 (control-plane session — **tenet 16: stateless, disposable
+sessions**. Codified after a long-lived Cursor session burned a month's $60 plan credits in
+half a day (context-window amplification, COE 2026-06-08): one task per chat, checkpoint
+`STATUS.md` per step, end every response with a Resume prompt. No deploy state changed —
+**Next action is unchanged** (create admin + API key). Prior header retained below.)
+
+**Prior update:** 2026-06-07 (session-resume #3 — **PHASE 1 DEPLOYED**. `tf-apply`
+created the droplet (BLR1, `168.144.145.29`) + firewall + Cloudflare DNS + Spaces
+bucket; the droplet was bootstrapped and the Compose stack is **live and healthy over
+HTTPS**: `memory.chandrav.dev/docs` → 200 w/ valid Let's Encrypt cert; Caddy basic-auth
+active on `graph.`. Hit + fixed 4 deploy-time issues (Mem0 image is arm64-only → built
+from source for amd64 w/ graph + psycopg[binary] deps; SQLite history volume; auth-DB
+name; dashboard has no published image → deferred behind a compose profile). **Next:
+create admin/API key + verify model config, then a `POST /memories` round-trip; commit
+the uncommitted infra changes.**)
+
+## Plain English — where we are (resume here)
+
+**The server is up and the website works.** Open
+[https://memory.chandrav.dev/docs](https://memory.chandrav.dev/docs) in a browser — you
+should see the API documentation page. That means: cloud box running in Bangalore,
+password-protected lock on the front door (HTTPS), and the memory app installed.
+
+**What you pay for now:** ~₹2,600/mo for the cloud box (droplet). Full stack when
+everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
+`scripts/teardown.py` if income gets tight.
+
+**What's NOT done yet (next session):**
+1. **Save our work to GitHub** — 5 files changed on your laptop but not committed yet.
+2. **Create a login for the API** — the app has a lock on it; nobody can add memories
+   until we create an admin account + API key on the server (one-time setup).
+3. **Test it** — add one test memory, read it back, confirm it stuck.
+4. **Make reinstall repeatable** — if we had to rebuild the server from scratch today,
+   the install script would need a manual fix (we built the app image by hand this
+   session). Parked in BACKLOG.
+
+**How to talk to the next agent:** paste the line in the box below into a **new chat**.
+Ask for **concierge mode** (one step at a time, plain English, no jargon).
+
+```
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 2: create admin + API key. Concierge mode, one step at a time.
+```
+
+**Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
+needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 1 — Infrastructure as Code.** IaC is written, **`terraform fmt`-clean +
-`terraform validate`-pass** with **Cloudflare DNS** (ADR 016; supersedes ADR 012).
-Providers: `digitalocean ~> 2.0` + `cloudflare ~> 5.0`. **Not yet `plan`'d or
-applied** — but the prerequisites are now met: ✅ domain registered, ✅ all 5 secrets
-gathered. Remaining: transcribe secrets into `tfvars`/`.env`, then `plan` → `apply`
-(see Next action). Tenet 11 repo-health instrumentation is live (below).
+**Phase 1 — Infrastructure as Code → DEPLOYED.** `tf-init`/`plan`/`apply` all run:
+9 resources created (droplet `s-2vcpu-4gb` BLR1 `168.144.145.29`, firewall 22/80/443,
+5 Cloudflare A records, Spaces bucket `ai-memory-infra-backups-chandrav`). Droplet
+bootstrapped (Docker + Compose + UFW). **Core stack live & healthy**: Caddy + Mem0
+(built from source, `mem0-api-server:local`) + Postgres/pgvector + Neo4j. RAM ~1.6G/3.9G
+used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert. To
+*use* the API still needs admin/API-key setup + model-config verification (blockers below).
+
+## Done this session (2026-06-07, session-resume #3 — DEPLOY)
+
+- **`tf-apply` succeeded** — 9 resources. Outputs: `droplet_ipv4 168.144.145.29`,
+  `cloudflare_zone_id 1766c7ea…`, bucket `…-chandrav` (sgp1). Plan validated all creds.
+- **Config assembled** from Bitwarden into `terraform.tfvars` + `infra/.env` (both
+  gitignored; LF endings forced for the Linux box). `.env` secrets generated locally
+  (Python `secrets` + bcrypt); stored in Bitwarden.
+- **Droplet bootstrapped** via `ssh-add`-cached key (agent ran `scp` + `bootstrap.sh`).
+- **4 deploy-time fixes (all were flagged "verify at deploy"):**
+  1. **`mem0/mem0-api-server:latest` is arm64-only** (no amd64) → built from the
+     `mem0ai/mem0` `server/` source for amd64 via new **`infra/mem0-server.Dockerfile`**,
+     adding `psycopg[binary,pool]` (stock req omits libpq) + `mem0ai[graph]` +
+     `langchain-neo4j` + `rank-bm25` (Neo4j graph deps the stock req omits).
+  2. **Mem0 SQLite history** (`/app/history`, `HISTORY_DB_PATH`) → added named volume
+     `mem0_history`.
+  3. **Auth DB** (`db.py` `APP_DB_NAME`, default `mem0_app`, never created) →
+     consolidated onto the `mem0` DB via `APP_DB_NAME=mem0` (tenet 7).
+  4. **`mem0/mem0-dashboard` has no published image** → gated behind compose profile
+     `dashboard`; deferred (build-from-source follow-up).
+- **Verified:** API 200 over HTTPS w/ valid Let's Encrypt cert; `graph.` basic-auth
+  returns 401 (bcrypt hash works; the `wdqOTNUqJsh` Compose warning is harmless noise).
+- **Gmail filters** (3) set up for infra mail (DO/OpenAI/Bitwarden/LE visible+important;
+  Cloudflare visible; GitHub auto-archived) under label `ai-memory-infra`.
+- **Uncommitted** (review + commit): `infra/mem0-server.Dockerfile` (new),
+  `infra/docker-compose.yml` (image→local, `APP_DB_NAME`, `mem0_history`, dashboard
+  profile), `docs/planning/BACKLOG.md`, this `STATUS.md`.
 
 ## Done this session (2026-06-07, Path B — Cloudflare registrar + DNS)
 
@@ -99,6 +167,26 @@ gathered. Remaining: transcribe secrets into `tfvars`/`.env`, then `plan` → `a
   every line: **true steady-state ~₹3,800/mo landed** (was ₹2,920 list). Parked a
   zero-forex card as a *personal* finance call (≈₹1.2k/yr saving; off the critical path).
 
+## Last decisions (2026-06-08, control-plane session)
+
+- **Tenet 16 added — stateless, disposable, single-task sessions.** State lives in the
+  **repo, not the chat**: checkpoint `STATUS.md` after *every* step and **end every response
+  with a copy-paste Resume prompt**, so a fresh chat resumes with zero loss. In `tenets.md` +
+  `AGENTS.md` (Working model rewritten: "single session" → one *surface*, many short
+  *sessions*) + a DoD gate. Twelve-Factor stateless-process + backing-store; reinforces
+  tenets 1, 13, 15.
+- **COE 2026-06-08 — credit exhaustion.** A long-lived stateful session re-sends its whole
+  transcript each turn → ~quadratic token cost (*context-window amplification*); one half-day
+  session exhausted the **$60/mo Cursor plan credits**. Root cause: the agent session was
+  never modelled as a metered, usage-based resource, so the cost discipline (tenets 6/15) was
+  never pointed at the tooling itself. Fix = control plane first (tenet 16). Detect-layer
+  follow-up parked in BACKLOG (P2 `[finops]`).
+- **Tenet 17 added — minimize operator cognitive load; act on reversible (two-way-door)
+  decisions, deliberate only on one-way doors.** Bias for action bounded by reversibility:
+  the agent just does + reports easily-reversible work (incl. **commit every session, never
+  leave changes hanging**) and reserves the operator's attention for one-way doors (spend,
+  lock-in, deletion, scope). In `tenets.md` + `AGENTS.md`.
+
 ## Last clarification (2026-06-07, session-resume)
 
 - **Bitwarden secrets must live in an individual-vault Folder, not a Families
@@ -125,15 +213,31 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Open blockers / risks
 
-- **Domain not bought yet.** Register `chandrav.dev` at Cloudflare Registrar
-  (setup Step 0b) before `terraform apply` — the zone must exist.
+- ✅ **`chandrav.dev` registered** at Cloudflare (2026-06-07, Active, 10-yr prepay).
 - **Local tooling:** `docker` + `make` still not installed (Compose stack runs on
   VPS; optional locally). `terraform` v1.15.5 works.
-- ✅ **All 5 secrets gathered** (DO API token, DO Spaces keys, Cloudflare API token,
-  SSH keypair, OpenAI key) — all in the Bitwarden `ai-memory-infra` folder. Remaining:
-  *transcribe* them into `terraform.tfvars` + `infra/.env` (next action, step 4).
-- **Verify at deploy:** Mem0 image tags, `gpt-5-mini` on pinned server version,
-  GHCR package visibility (unchanged from prior STATUS).
+- ✅ **All 5 secrets gathered** and transcribed into `terraform.tfvars` + `infra/.env`
+  (both gitignored, on laptop + droplet).
+- ✅ **"Verify at deploy" items resolved** (Mem0 image arch/tags, graph + psycopg deps,
+  dashboard image) — see "Done this session #3" for what each turned into.
+- **API not yet usable (auth on, no admin).** Auth is on by default (PR #4837); a fresh
+  install has no admin/API key, so protected routes 401 (`/docs` is open → 200). Create
+  an admin + API key (server `make bootstrap`/CLI on the droplet, or the setup wizard —
+  but the wizard needs the dashboard, which is deferred). **Blocks a `POST /memories` test.**
+- **Model config unverified.** The `MEM0_DEFAULT_LLM_MODEL`/`_EMBEDDER_MODEL` env vars are
+  **not** in the server's documented env table — model selection is likely via the server
+  config/wizard, not those vars. Confirm `gpt-5-mini` + `text-embedding-3-small` are
+  actually in effect once an admin exists (Configuration page / `/configure`).
+- **Deploy not yet fully reproducible.** A fresh `bootstrap.sh` would fail at
+  `docker compose pull` (it can't pull the locally-built `mem0-api-server:local`, and the
+  dashboard image 404s). The image was built by hand this session. Fold the
+  clone-mem0-src + `docker build` step into `bootstrap.sh` (or push the image to GHCR) and
+  update `setup.md` — see BACKLOG P1.
+- **Cosmetic:** Compose prints `"wdqOTNUqJsh" variable is not set` (the bcrypt `$` in
+  `BASIC_AUTH_HASH`). Harmless (Caddy gets the right hash via `env_file`); silence by
+  escaping `$`→`$$` in `.env` if desired.
+- **apex `chandrav.dev`** TLS didn't verify from a Windows client (subdomains fine);
+  likely apex cert not yet provisioned. Low priority (apex is a placeholder).
 - **Operator income change risk (end-June 2026).** Possibly between jobs soon →
   once deployed, recurring spend (**~₹3,800/mo landed**, ~₹2,920 list) must stay
   **pause-able**. The pause path (`decommission.md` §2 → `teardown.py`) drops the
@@ -148,29 +252,27 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Next action
 
-> **RESUME HERE — all 5 secrets gathered. Assemble config from Bitwarden, then deploy
-> (step 4).** Steps 0–3 below are ✅ done; jump to step 4.
+> **RESUME HERE — stack is DEPLOYED & healthy over HTTPS. Make it *usable*, then commit.**
 
-0. ✅ Cloudflare password rotated. ✅ Bitwarden account + **Families** plan taken.
-1. ✅ **Bitwarden setup done:** Folder `ai-memory-infra` in the **individual vault**;
-   Cloudflare login stored; elder son (`rkrishv14@gmail.com`) invited as **Takeover**
-   contact (7-day wait). **Follow-ups:** (a) son must *accept* the invite, then YOU
-   *confirm* him (Invited→Accepted→Confirmed) — not live until then; (b) secondary
-   pass: add **wife** as a 2nd Takeover contact (8-yo can't — Bitwarden is 13+).
-2. ✅ **`chandrav.dev` registered** at Cloudflare 2026-06-07 — **Active**, expiry
-   2036-06-07, auto-renew ON, **10-yr prepay** ($122.20, eyes-open; see
-   `financial-decisions.md`). Personal registrant + WHOIS redaction (on by default).
-   ✅ **Public WHOIS verified redacted** (no name/email/phone/street — only State+Country).
-3. ✅ **[gather secrets] — 5 of 5 done**, all in the Bitwarden `ai-memory-infra` folder:
-   ✅ DO API token (`terraform-ai-memory`, Full Access) · ✅ Cloudflare API token
-   (`terraform-ai-memory-dns`, zone-scoped to chandrav.dev) · ✅ DO Spaces key
-   (`ai-memory-spaces`, Full access) · ✅ SSH keypair (`~/.ssh/id_ed25519`(.pub),
-   passphrase in Bitwarden) · ✅ **OpenAI** key `ai-memory-prod` (project `ai-memory`;
-   $10 prepaid, **auto-recharge OFF**, org budget $10 w/ 80%/100% alerts).
-4. **← RESUME HERE — [assemble config + deploy].** Fill `infra/terraform/terraform.tfvars` (do_token,
-   cloudflare_api_token, spaces access id/secret, ssh_public_key from
-   `~/.ssh/id_ed25519.pub`, domain_name=`chandrav.dev`, backup_bucket_name) and
-   `infra/.env` (secrets + OPENAI_API_KEY + DOMAIN/ACME_EMAIL) — both **gitignored**,
-   values pulled from Bitwarden. Then `docs/setup.md` Steps 1–7: `tf-init` →
-   `tf-plan` → **`tf-apply`** → `bootstrap.sh` → health-check `memory.chandrav.dev/docs`.
-   (Mind the income-change risk above when picking deploy timing.)
+1. **Commit the deploy changes** (tenet 1/11 — don't batch): `infra/mem0-server.Dockerfile`
+   (new), `infra/docker-compose.yml`, `docs/planning/BACKLOG.md`, `docs/planning/STATUS.md`.
+   Run `check-repo-health` first. (`infra/.env` + `terraform.tfvars` stay gitignored.)
+2. **Create an admin + API key** so the API is usable (auth is on; protected routes 401).
+   On the droplet: try `cd /opt/mem0-src/server && make bootstrap` (PR #4837 generates a
+   random admin password) or the server CLI; store the admin creds + API key in Bitwarden.
+3. **Verify model config** — confirm `gpt-5-mini` (extraction) + `text-embedding-3-small`
+   (embeddings) are actually in effect (the `MEM0_DEFAULT_*` env vars may be ignored; check
+   the server's Configuration/`/configure`). Re-set via config if needed (ADR 013/011).
+4. **Functional test:** `POST /memories` round-trip with the API key (the setup.md
+   "Done when" gate), then `GET`/search to confirm it persisted.
+5. **Make the deploy reproducible** (BACKLOG P1): fold the mem0-source build into
+   `bootstrap.sh` (or push `mem0-api-server` to GHCR) so a clean `bootstrap.sh` works;
+   update `setup.md` (Step 6 + prereqs) to match the from-source build. Currently a fresh
+   bootstrap fails at `docker compose pull`.
+
+**Connection details:** droplet `168.144.145.29` (SSH `root@`, key passphrase in
+Bitwarden); API `https://memory.chandrav.dev` (`/docs` open); Neo4j browser
+`https://graph.chandrav.dev` (basic-auth `admin` / pwd in Bitwarden). Stack:
+`docker compose -f docker-compose.yml -f docker-compose.prod.yml …` in
+`/opt/ai-memory-infra/infra`. Pause/stop the bill anytime: `scripts/teardown.py`
+(income-change risk above). The mem0 source is cloned at `/opt/mem0-src` for rebuilds.

@@ -106,6 +106,22 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     **hard spend cap + billing alerts** on anything that must be usage-based (LLM
     APIs); set billing alerts on every paying account. Diverge only if the saving is
     *vast*, documented in an ADR, and still capped. Sharpens tenet 6.
+16. **Stateless, disposable sessions — checkpoint to the repo, don't accumulate
+    context.** One task per session (the STATUS "Next action"), single-shot — not a
+    marathon thread. State lives in **files, not chat**: checkpoint `STATUS.md` after
+    *every* step, and **end every response with a copy-paste Resume prompt** so a fresh
+    chat resumes with zero loss. *Why:* a long-lived stateful session re-sends its whole
+    transcript each turn → ~quadratic token cost (*context-window amplification*); one
+    half-day session burned a month's Cursor credits. Bounded sessions cap that blast
+    radius (agent-tooling analog of tenet 15). Twelve-Factor stateless-process + backing
+    store. See COE 2026-06-08.
+17. **Minimize operator cognitive load — act on reversible (two-way-door) decisions;
+    deliberate only on one-way doors.** For easily-reversible work the agent **just does it
+    and reports the call** (commit every session — never leave changes hanging; pick
+    reasonable defaults; proceed); a clean `git revert` is the safety net. Reserve the
+    operator's attention for **one-way doors** (spend, lock-in, deletion, scope change —
+    tenet 12/15 class) and genuine matters of taste. **Bias for action, bounded by
+    reversibility.** Sharpens "lead, don't quiz"; attention-corollary of tenet 7.
 
 ## Architecture (summary)
 
@@ -159,15 +175,18 @@ Full diagram: `docs/architecture.md`.
 
 ## Working model (sessions, tooling, governance)
 
-- **Everything runs in a single Cursor session (this one).** Planning,
-  decisions, fact-verification, doc upkeep, **and execution/build** all happen
-  here — there is no longer a separate CONTROL vs BUILD session. The earlier
-  Claude.ai control surface and the parallel build session are both **retired**.
-  One session owns the whole repo (public `docs/` + `infra/` + `src/` and the
-  private companion repo).
-- If a second Cursor session is ever opened in parallel, the rule still holds:
-  sessions share **files, not chat memory** — **re-read a file before acting**,
-  and never edit the same file from two sessions at once.
+- **One surface (Cursor), but sessions are short-lived and disposable (tenet 16).**
+  Planning, decisions, fact-verification, doc upkeep, **and execution/build** all happen
+  in Cursor — there is no separate CONTROL vs BUILD *surface* (the earlier Claude.ai
+  control surface + the parallel build session are both **retired**). But a session is
+  **one task, single-shot**, not a marathon thread: a long-lived chat re-sends its whole
+  transcript every turn (≈quadratic token cost — *context-window amplification*) and once
+  burned a month's Cursor plan credits in half a day (COE 2026-06-08). So **state lives in
+  files, not chat** — checkpoint `STATUS.md` after *each* step, and **end every response
+  with a copy-paste Resume prompt** so the operator can start a fresh chat at any point
+  with zero loss. Prefer a new chat over a long follow-up thread.
+- Sessions (sequential *or* parallel) share **files, not chat memory** — **re-read a file
+  before acting**, and never edit the same file from two sessions at once.
 - **The safeguard against agent error is the Definition-of-Done verification
   gate below — not a second tool.** Trust comes from the DoD + tests + ADRs +
   no-drift check, applied every change, not from which editor is open.
@@ -194,6 +213,7 @@ docs to update:
 | Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
 | Create / obtain any account, API token, key, or secret | Store it **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault |
 | End of any working session | (1) `docs/planning/STATUS.md` — overwrite: current phase, last decisions, open blockers, next action. (2) **Append** a session entry to the private `docs/planning/BUILD-LOG.md` (steps · gotchas/micro-lessons · time: wall-clock + rough human/agent split) and a curated, no-personal-detail summary to public `docs/BUILD-JOURNEY.md` (keep them in agreement, tenet 10) |
+| Every step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each step boundary — not just at session end — so the file is always resume-ready. End **every** response with a copy-paste **Resume prompt** reflecting the latest checkpoint (read `STATUS.md` + `AGENTS.md` → repo-health → Next action) so a fresh chat resumes with zero loss |
 
 **Done means:** code tests green (if code) · the trigger row's docs updated · an
 ADR exists for any major choice · `STATUS.md` refreshed · PR checklist ticked ·

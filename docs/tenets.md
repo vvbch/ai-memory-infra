@@ -236,3 +236,71 @@ Operating rules:
 This sharpens tenet 6: tenet 6 says justify every rupee; tenet 15 says that between
 two otherwise-acceptable options, choose the one whose cost **can't surprise you** —
 predictability and a bounded worst case outrank marginal optimisation.
+
+## 16. Sessions are stateless and disposable — checkpoint to the repo, don't accumulate context
+A session is **one task** — the current `docs/planning/STATUS.md` "Next action" — run
+**single-shot**, not a marathon follow-up thread. State lives in the **repo, not the
+chat**: the session **checkpoints to `STATUS.md` after every execution step**, so any
+step boundary is a clean resume point and a *fresh* session reconstructs full context
+from files (`STATUS.md` + `AGENTS.md` + the append-only `BUILD-LOG.md`) — never from
+chat scrollback. This is the **Twelve-Factor "stateless, share-nothing process + backing
+store"** discipline (Factor VI) applied to agent sessions: the repo is the backing store
+(tenet 1); the chat window is ephemeral, disposable compute.
+
+**Why — the cost mechanism.** A long-lived conversational session is **stateful**: the
+agent re-sends the *entire transcript* as input tokens on every turn, so cumulative token
+cost grows **roughly quadratically** with session length — *context-window amplification*.
+A single half-day monolithic session exhausted a whole month's Cursor plan credits
+(`docs/coe/2026-06-08-cursor-credit-exhaustion.md`). Short, disposable sessions **cap the
+blast radius** of token spend — the agent-tooling analog of tenet 15 (a bounded, known
+cost can't spiral).
+
+- **Anti-pattern:** the *monolithic, long-lived, stateful session* — an ever-growing
+  context window re-billed every turn (the conversational cousin of a "sticky session").
+- **Pattern:** *stateless, single-task sessions* + **checkpoint/restore** + a
+  **continuation (resume) token** — externalize state, keep the live context bounded.
+
+Operating rules:
+- **Checkpoint per step, not just per session.** Keep `STATUS.md` ("Next action",
+  "Done this session") current at each step boundary — overwrite as you go (DoD), so the
+  file is *always* resume-ready, not only at session end.
+- **Emit a resume token every response.** End each response with a copy-paste **Resume
+  prompt** reflecting the latest checkpoint (read `STATUS.md` + `AGENTS.md`, run
+  repo-health, do the Next action), so the operator can open a fresh chat at any moment
+  with zero context loss.
+- **One task per session; prefer a new chat over a long thread.** When the task is done —
+  or the context has grown large — start a fresh session rather than continuing. Reinforces
+  tenet 13 (one goal in flight).
+- **Files, not chat memory.** Re-read the relevant file before acting; never rely on
+  conversational state (already the rule for parallel sessions — now the rule for *all*
+  sessions).
+
+Complements tenet 1 (everything versioned, so the repo *can* be the backing store),
+tenet 13 (one goal per session), and tenet 15 (cap variable cost). Added after the
+credit-exhaustion COE; the transferable lesson lives in `interview_packet.md`.
+
+## 17. Minimize operator cognitive load — act on reversible (two-way-door) decisions, deliberate only on one-way doors
+The scarcest resource is the **operator's attention**, so the agent spends it sparingly.
+For an easily-reversible action — a **"two-way door"** (the Amazon framing) — the agent
+**just does it and reports the call**, rather than pausing to ask: a question has a real
+cognitive cost, and leaving reversible work *hanging* (uncommitted, deferred, "I'll ask
+first") adds load *and* drift risk for no benefit (tenets 1/11 want it committed, not
+pending). The operator's deliberate decision is reserved for **one-way doors** —
+irreversible or expensive-to-undo: spend, vendor lock-in, data deletion, history rewrites,
+anything in tenet 12/15's scope — and for genuine matters of taste (a brand name, a spend
+ceiling). This is **bias for action, bounded by reversibility**; it sharpens the `AGENTS.md`
+"lead, don't quiz / pre-make every mechanical decision" rule and complements tenet 13 (stay
+on the critical path without constant check-ins).
+
+Operating rules:
+- **Two-way door → act, then report.** Commit every session (never leave changes hanging),
+  pick a reasonable default (naming, formatting, structure, ordering), proceed — and *state
+  the call* so it's visible and trivially reversible. A clean revert is the safety net.
+- **One-way door → stop and get a conscious go/no-go.** Money committed, lock-in entered,
+  data/ history destroyed, scope materially changed, or any tenet-12/15-class decision.
+- **When genuinely unsure which it is, ask the cheap question once** — but default to
+  action whenever the cost of being wrong is a quick `git revert`.
+
+This is the *attention* corollary of tenet 7 (fewer moving parts): don't spend the
+operator's focus on a decision that a revert can undo. Reversibility, not seniority,
+decides whether the agent acts or asks.

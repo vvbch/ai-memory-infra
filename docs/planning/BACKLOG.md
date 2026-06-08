@@ -10,11 +10,40 @@
 
 ## P1 — do at the start of Phase-1 CI work
 
-- **Secret-scan pre-commit (e.g. gitleaks).** Make "no secrets in git" a
+- **`[security]` Strip the plaintext secrets block from `infra/.env`.** The
+  generated dash/graph admin password (and copy-to-Bitwarden reminder) currently
+  live as a comment block at the top of `infra/.env` — both locally and, after
+  deploy, on the droplet. The values are already safe in Bitwarden, so delete the
+  block from both copies; nothing plaintext should sit at rest. Consciously
+  deferred 2026-06-07. Ties: AGENTS.md secrets rule, ADR 017, tenet 14.
+- **`[security]` Secret-scan pre-commit (e.g. gitleaks).** Make "no secrets in git" a
   *deterministic gate*, not just a prose rule — relevant now that we handle DO /
   Cloudflare / OpenAI tokens. Ties: AGENTS.md secrets rule, tenet 14 (Detect layer).
 
+- **`[deploy]` Make the deploy reproducible end-to-end.** The Mem0 API image is built
+  by hand this session (`infra/mem0-server.Dockerfile` against `/opt/mem0-src/server`,
+  tagged `mem0-api-server:local`) because the published image is arm64-only. A fresh
+  `bootstrap.sh` would fail at `docker compose pull` (can't pull a local-only image; the
+  dashboard image 404s). Fix: fold `git clone mem0ai/mem0` + `docker build` into
+  `bootstrap.sh` (or build + push `mem0-api-server` to GHCR and reference that), make the
+  `pull` step tolerant, and **update `setup.md`** (prereqs + Step 6) to match (tenet 10).
+- **`[deploy]` Stand up admin/API-key + confirm model config.** Auth is on; create an
+  admin + API key (server `make bootstrap`/CLI on the droplet) and store in Bitwarden, so
+  the API is usable. Verify `gpt-5-mini`/`text-embedding-3-small` are actually in effect
+  (the `MEM0_DEFAULT_*` env vars aren't in the server's documented env table). Then run a
+  `POST /memories` round-trip (setup.md "Done when").
+
 ## P2 — governance & quality hardening (fold into CI / eval phases)
+
+- **`[deploy]` Build & re-enable the Mem0 dashboard.** No published `mem0/mem0-dashboard`
+  image exists; it's gated behind the compose `dashboard` profile and deferred. Build it
+  from the mem0 repo's `server/dashboard` context (Next.js, needs a node build), then
+  `docker compose --profile dashboard up -d` and confirm `dash.chandrav.dev` works
+  (the Caddy route + DNS already exist). The `/setup` wizard lives here too.
+- **`[cosmetic]` Silence the bcrypt Compose warning.** `BASIC_AUTH_HASH` (bcrypt, full of
+  `$`) makes Compose log `"…" variable is not set`. Harmless (Caddy gets the right hash via
+  `env_file`); escape `$`→`$$` in `infra/.env` to quiet it. Also: apex `chandrav.dev` TLS
+  didn't verify from a Windows client — confirm Caddy issued the apex cert.
 
 - **Policy-as-code for pointer files (ADR 018 enforcement).** Either *generate*
   `.cursor/rules/*` + `CLAUDE.md` from `AGENTS.md` (propagation by definition →
@@ -23,6 +52,12 @@
   (`docs/coe/2026-06-07-cursor-rule-drift.md`).
 - **Behavioural tenets as eval/CI checks** where feasible — codify rules that have
   teeth as tests that block on regression (tenet 14).
+- **`[finops]` Context-budget / session-cost signal (tenet 16 Detect layer).** Detection
+  for the credit-exhaustion COE (`docs/coe/2026-06-08-cursor-credit-exhaustion.md`): a
+  proactive "this session is getting expensive → checkpoint & restart" cue, rather than
+  finding out via a depleted Cursor balance. Cheapest version: operator watches the usage
+  meter + a periodic context-size check-in; richer version: an automated context-budget
+  alert. Closes the COE's human-catch detection gap.
 
 ## P3 — valuable, non-blocking / personal
 
