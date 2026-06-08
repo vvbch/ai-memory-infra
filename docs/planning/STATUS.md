@@ -4,8 +4,25 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 16: package-repo handoff fixed + COE
-opened**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
+**Last updated:** 2026-06-08 (**Phase 3 — session 17: ChatGPT OpenMemory save/search
+proven; inline modal parked as polish; next = MCP reach**). Phase 2 is closed; Phase 3
+browser reach is sufficiently proven for the seamless path. Session 17 ran repo-health
+green for `ai-memory-infra` + `ai-memory-infra-private`, then proved ChatGPT-side
+OpenMemory behavior against the live server: baseline `/search` for codeword
+`PHASE3-OM-20260608-2339-RIVER` had **0 exact matches**; operator sent a ChatGPT message
+asking it to remember the codeword; live `GET /memories?user_id=chrome-extension-user`
+then returned the new memory with the exact codeword; live `/search` for "What is my
+OpenMemory Phase 3 verification codeword?" returned **3 memories including the exact
+codeword**. The real extension sidebar also showed **Total Memories = 3** and included the
+codeword memory, proving visible retrieval from the plugin. The inline ChatGPT composer
+OpenMemory icon is present but its dark modal appears off-screen/mostly invisible; tried a
+local viewport-clamp patch in `ai-memory-extension/src/chatgpt/content.ts`, ran `npm run
+type-check` green and `npm run build` green, reloaded the unpacked extension, but the
+visible behavior did not improve, so the ineffective code change was not retained. Operator
+correctly called this noncritical for the product goal: seamless capture/retrieval should not
+depend on manual modal clicks. Parked
+the inline composer modal as P2 extension polish; next critical item is Phase 4 Claude +
+Cursor/VS Code MCP client reach. Session 8 created
 private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
 MIT `mem0ai/mem0-chrome-extension` history, installed Node.js LTS on Windows, verified the raw
 upstream build, then rewrote the extension in commit **`7ac3011`**: default server
@@ -361,15 +378,20 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 3 — Chrome extension fork → IN PROGRESS (session 14).** Decision made (**ADR 024**): fork
+**Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
 self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source now
 lives in private repo **`vvbch/ai-memory-extension`**. Upstream baseline builds green, and the
 self-hosted rewrite is committed in that repo (`7ac3011`): `memory.chandrav.dev`, `X-API-Key`,
 `/memories`, `/search`, local settings, no mem0 cloud login, no PostHog. `dist/` is now loaded in
 Chrome and **OpenMemory** appears on `chrome://extensions`; after the background-relay fix, the
-ChatGPT sidebar now opens and loads Recent Memories from the live server. **Next: prove ChatGPT-side
-save/search behavior against the live server, then close Phase 3 browser-reach docs.**
+ChatGPT sidebar now opens and loads Recent Memories from the live server. ChatGPT-side automatic save
+is proven by a fresh codeword memory written from a ChatGPT prompt and observed via live
+`GET /memories`; semantic `/search` for the matching question returns the codeword memory; the
+extension sidebar visibly shows that memory in Recent Memories. The inline composer modal remains a
+nonblocking P2 polish bug because it opens off-screen/mostly invisible even after a local
+viewport-clamp attempt that was not retained. **Next: Phase 4 — connect Claude + Cursor/VS Code
+through MCP to the live server.**
 
 **Phase 2 — backup/restore → COMPLETE.** Scripts DONE & PROVEN; automation §1–§4 all built &
 verified; the drill's 2nd healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is now **wired & verified
@@ -749,9 +771,11 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; self-hosted
-> rewrite is committed; unpacked extension load is done; background-relay fix is built; Chrome reload
-> + ChatGPT sidebar Recent Memories are verified green.** Session 8 (2026-06-08): created private GitHub repo
+> **RESUME HERE — Phase 4 (Claude + Cursor/VS Code MCP) is next. Phase 3 browser reach is proven
+> enough for the seamless path.** Private extension repo exists; self-hosted rewrite is committed;
+> unpacked extension load is done; background-relay fix is built; Chrome reload + ChatGPT sidebar
+> Recent Memories are verified green; ChatGPT automatic save + live search are verified against the
+> live server. Session 8 (2026-06-08): created private GitHub repo
 > **`vvbch/ai-memory-extension`**,
 > imported upstream MIT history, verified the raw upstream baseline, then rewrote and committed the
 > self-hosted fork (`7ac3011`). Session 9: operator loaded `ai-memory-extension/dist` as an unpacked
@@ -792,16 +816,25 @@ pre-commit is now DONE** (gitleaks gate).
 >    `https://chatgpt.com/`, and verified the OpenMemory sidebar renders live Recent Memories:
 >    **Total Memories = 1**, with Copy/View actions on the loaded memory card. The prior visible
 >    `TypeError: Failed to fetch` sidebar state did not recur after the background relay.
-> 10. **NEXT ACTION:** prove ChatGPT-side save/search behavior against the live server. Use the real
->    Chrome profile with OpenMemory already loaded; if it fails, inspect the OpenMemory service-worker
->    console plus the ChatGPT page console for background-relay errors.
-> 11. **Handoff rule reminder:** when the next reversible session step is done and verified, update
+> 10. ✅ **ChatGPT-side save/search proven against the live server.** Baseline search for
+>    `PHASE3-OM-20260608-2339-RIVER` had 0 exact matches; operator sent a ChatGPT prompt asking it to
+>    remember the codeword; live `GET /memories?user_id=chrome-extension-user` returned the new exact
+>    codeword memory; live `/search` for "What is my OpenMemory Phase 3 verification codeword?" returned
+>    3 memories including the codeword; the real extension sidebar showed **Total Memories = 3** and
+>    displayed the codeword memory. The inline composer modal still opens off-screen/mostly invisible
+>    after a local viewport-clamp attempt and rebuild; the ineffective code change was not retained, and
+>    this is parked as P2 extension polish because seamless
+>    memory capture/retrieval does not depend on manual modal clicks.
+> 11. **NEXT ACTION:** Phase 4 — connect Claude + Cursor/VS Code through MCP to the live server. Start
+>    by reading current MCP connector docs / Mem0 OpenAPI shape, then prove one client can read/search
+>    live memories without copying secrets into chat.
+> 12. **Handoff rule reminder:** when the next reversible session step is done and verified, update
 >    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
 >    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos
 >    such as `ai-memory-extension`. This is already authorized by the project control plane; do not leave
 >    completed work uncommitted or merely local/ahead. Final answer must name each touched repo's latest
 >    pushed commit.
-> 12. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 13. Keep every client a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly

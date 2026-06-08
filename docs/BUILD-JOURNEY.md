@@ -666,3 +666,26 @@ and pushed.
 **Next**
 - Continue Phase 3 with ChatGPT-side save/search verification. Final response must report the latest
   pushed commit for every repo touched in that session.
+
+## 2026-06-08 — Proved ChatGPT OpenMemory save/search
+
+**Focus:** prove the browser extension's ChatGPT path against the live self-hosted server.
+
+**Milestones**
+- **Automatic ChatGPT save is proven.** A fresh verification codeword was absent from live search, then
+  a normal ChatGPT prompt asking to remember it caused the live server to store a new memory for the
+  extension user.
+- **Live search is proven.** A semantic `/search` for the matching question returned three memories,
+  including the exact codeword memory.
+- **Visible plugin retrieval is proven.** The OpenMemory sidebar in the real Chrome profile showed
+  **Total Memories = 3** and displayed the newly saved codeword memory in Recent Memories.
+
+**Decision**
+- **Parked the inline composer modal as polish.** The ChatGPT composer icon is present, but the inline
+  dark modal opens off-screen or mostly invisible in the current layout. This does not block the product
+  goal: memory capture and retrieval are already seamless without manual modal clicks. The issue is
+  tracked for a later extension polish pass.
+
+**Next**
+- Move to MCP client reach: connect Claude and Cursor/VS Code as thin clients of the same live memory
+  server.

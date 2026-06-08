@@ -72,6 +72,14 @@
   from the mem0 repo's `server/dashboard` context (Next.js, needs a node build), then
   `docker compose --profile dashboard up -d` and confirm `dash.chandrav.dev` works
   (the Caddy route + DNS already exist). The `/setup` wizard lives here too.
+- **`[extension]` Fix the ChatGPT inline composer modal placement.** The OpenMemory icon is visible
+  inside the ChatGPT composer and the modal appears to be created, but in the current ChatGPT layout
+  it opens off-screen/mostly invisible. A local viewport-clamp attempt in
+  `src/chatgpt/content.ts` built green but did not fix the visible behavior after extension reload,
+  so the ineffective code change was not retained.
+  Nonblocking: automatic ChatGPT save, live `/search`, and sidebar Recent Memories are proven, and
+  seamless memory should not depend on a manual modal click. Fold this into a later extension polish
+  pass if inline manual injection becomes useful.
 - **`[cosmetic]` Silence the bcrypt Compose warning.** `BASIC_AUTH_HASH` (bcrypt, full of
   `$`) makes Compose log `"…" variable is not set`. Harmless (Caddy gets the right hash via
   `env_file`); escape `$`→`$$` in `infra/.env` to quiet it. Also: apex `chandrav.dev` TLS
