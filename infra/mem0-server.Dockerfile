@@ -19,6 +19,16 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt \
     && pip install --no-cache-dir "psycopg[binary,pool]" "mem0ai[graph]" rank-bm25 langchain-neo4j neo4j
 
+# Patch mem0ai's GPT-5 detection (bug as of mem0ai 2.0.4): _is_reasoning_model()
+# lists "gpt-5o-mini" but NOT "gpt-5-mini", so our configured `gpt-5-mini` is
+# treated as a regular model and sent `max_tokens`, which every real GPT-5 model
+# rejects (400 unsupported_parameter) -> LLM fact-extraction silently fails and
+# every `add` returns 0 memories. We mark the whole gpt-5* family as reasoning so
+# the unsupported params (max_tokens/temperature) are dropped. The `assert` fails
+# the build loudly if a future mem0 version restructures this code (so we notice
+# and drop the patch instead of silently no-op'ing). See STATUS.md / ADR.
+RUN python -c "import mem0.llms.base as b, pathlib; p=pathlib.Path(b.__file__); s=p.read_text(); marker='# mem0-gpt5-patch'; anchor='if base_model in reasoning_models:\n            return True\n'; q=chr(39); ins=anchor+'\n        '+marker+'\n        if base_model.startswith('+q+'gpt-5'+q+'):\n            return True\n'; assert marker in s or anchor in s, 'mem0 base.py gpt-5 patch anchor not found - review _is_reasoning_model'; p.write_text(s if marker in s else s.replace(anchor, ins, 1))"
+
 COPY . .
 
 EXPOSE 8000

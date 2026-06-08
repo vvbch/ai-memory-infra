@@ -130,3 +130,36 @@ the operating model rather than just buying more credits.
   console flow) and turned recurring questions into durable tenets/ADRs.
 - Held the critical path through a payment rabbit hole — parked a marginal
   card-optimization as a separate decision rather than letting it delay the deploy.
+
+## 2026-06-08 — First memory stored end-to-end (round-trip working)
+
+**Focus:** prove the deployed memory API actually stores and retrieves a memory —
+the functional milestone that makes the stack *usable*, not just *up*.
+
+**Milestones**
+- **Round-trip verified:** writing a message to the API now extracts structured
+  facts, persists them, and returns them on a later read and a semantic search.
+- Cleared **two stacked blockers** behind one symptom: a model-provider
+  permission setting, then a library bug — neither visible without reading the
+  service logs and testing the provider directly.
+
+**Decisions**
+- **ADR 021** — patched the memory library's model-family detection so the chosen
+  extraction model is sent only the parameters it accepts (the newer model family
+  rejects an older token-limit parameter the library still sent). Kept the chosen
+  model; this is an upstream-bug compatibility patch, not a model change. The fix is
+  in the image build with a **build-time assertion** so a future library upgrade
+  fails loudly instead of silently reverting the workaround.
+
+**Engineering notes**
+- **A `200 OK` can be a silent failure** — the API returned success while storing
+  zero memories because fact-extraction threw and was swallowed. Lesson: assert on
+  the *effect* (the fact comes back on read/search), never on the status code; the
+  service logs were the only place the real error surfaced.
+- **Tool-fit over brute force** — debugging through nested shells corrupted both a
+  secret header and the diagnostic output; switching to a small script that reads
+  secrets from the process environment (no shell expansion) removed a whole class of
+  quoting bugs.
+- **Reversible-first** — proved the fix on the running service (a throwaway,
+  restart-surviving in-place patch) *before* committing to the durable image rebuild,
+  keeping a clean revert path the whole way.

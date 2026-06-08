@@ -4,19 +4,21 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (usable-API session — **steps 1 & 2 closed**. Step 1 (commit
-deploy changes) was already done in the prior session (`3d1db74` + `b6ffa2d`); STATUS text
-was stale, now corrected. Step 2 (admin + API key): the `ADMIN_API_KEY` was already in the
-droplet `.env` from deploy — **verified working** (`X-API-Key` → 200, no key → 401), so the
-API is now usable with **zero** extra moving parts (tenet 7; no `make bootstrap`/dashboard).
-**step 3 done** (model config verified: live container = `gpt-5-mini` + `text-embedding-3-small`;
-the earlier "env vars ignored" note was wrong — `main.py` reads them; fallback LLM is
-`gpt-4.1-nano`, so keep the var set). **step 4 BLOCKED on an OpenAI permission, not our stack:**
-`X-API-Key` auth works (200), but the OpenAI project `ai-memory` (`proj_BBdR6Ru…`) is restricted
-to **only `gpt-5-mini`** — `text-embedding-3-small` → **403 model_not_found**, which mem0 surfaces
-as `provider_auth_failed` (502) on every `add` (it needs embeddings). **Fix = grant the project
-access to `text-embedding-3-small` in the OpenAI dashboard, then re-run the round-trip** (no
-redeploy/restart needed; key unchanged). Open custody TODO: confirm `ADMIN_API_KEY` in Bitwarden.)
+**Last updated:** 2026-06-08 (round-trip session — **step 4 round-trip CLOSED; only the
+Bitwarden custody gate remains**). The OpenAI embeddings 403 is fixed (operator set the
+`ai-memory` project to "allow all models" — `text-embedding-3-small` → 200). Re-running the
+round-trip then surfaced a **second, different blocker**: extraction to `gpt-5-mini` 400'd with
+*"Unsupported parameter: 'max_tokens' … use 'max_completion_tokens'"* — a **bug in `mem0ai`
+2.0.4**: `_is_reasoning_model()` lists `gpt-5o-mini` but not `gpt-5-mini`, so our model got sent
+`max_tokens` (which every real GPT-5 model rejects) and extraction **silently** failed (`add`
+returned `200` with 0 memories). **Fixed (ADR 021):** patch `_is_reasoning_model()` to treat the
+whole `gpt-5*` family as reasoning models. Patched the **live container** (writable layer) to
+prove it + baked the patch into `infra/mem0-server.Dockerfile` for rebuilds. **Round-trip now
+verified end-to-end:** `POST /memories` extracted 2 facts (Python / Bangalore); `GET /memories`
++ `POST /search` returned them (user_id `diag-roundtrip-20260608`). **Caveat:** the live
+container's in-place patch survives restart/reboot but **not** a `compose up --force-recreate`;
+the image must be rebuilt from the Dockerfile before the next redeploy (BACKLOG P1). **Only open
+step-1–4 item: confirm `ADMIN_API_KEY` is in Bitwarden (custody gate) — needs the operator.**)
 
 **Prior update:** 2026-06-08 (control-plane session — **tenet 16: stateless, disposable
 sessions**. Codified after a long-lived Cursor session burned a month's $60 plan credits in
@@ -51,23 +53,34 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
    into the server's `.env` at deploy time; verified working this session (a protected
    route returns 401 with no key, **200 with the `X-API-Key` header**). Still TODO:
    confirm the key is saved in Bitwarden (custody gate).
-3. **Test it** — add one test memory, read it back, confirm it stuck. **IN PROGRESS /
-   BLOCKED on an OpenAI setting, not our server.** The save needs OpenAI to do "embeddings"
-   (`text-embedding-3-small`), but the OpenAI **project `ai-memory` is restricted to only
-   `gpt-5-mini`** so embeddings return 403. The fix is in *your* OpenAI dashboard: set the
-   `ai-memory` project's **model limits to "Allow all models"** (the per-model allow-list UI
-   is currently buggy on OpenAI's side — it lists the model but won't actually grant it).
-   Your key, our server, and the bill are all fine. After you change it, the next chat re-runs
-   the test. (Cost cap is unaffected — it's the $10 budget + auto-recharge OFF, not this list.)
+3. ✅ **Test it** — DONE. Added a test memory, read it back, searched it — **it stuck.**
+   This took two fixes: (a) your OpenAI "allow all models" change cleared the embeddings
+   error; (b) we then hit a *separate* bug in the memory software (it sent OpenAI an old
+   setting name that the new `gpt-5-mini` model rejects) — fixed it (ADR 021). The server
+   now correctly saved "favorite language = Python" and "lives in Bangalore" and found them
+   on search. **One small chore left: confirm your master API key is saved in Bitwarden**
+   (see "How to do the Bitwarden check" below — this is the only thing left from steps 1–4).
 4. **Make reinstall repeatable** — if we had to rebuild the server from scratch today,
    the install script would need a manual fix (we built the app image by hand this
-   session). Parked in BACKLOG.
+   session, and the `gpt-5-mini` bug-fix patch must be rebuilt into the image before the
+   next redeploy). Parked in BACKLOG P1.
+
+**How to do the Bitwarden check (the only thing left from steps 1–4):** the master API
+key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
+*also* be in your password vault so it's never lost. To confirm it's there:
+1. Open Bitwarden (app or [vault.bitwarden.com](https://vault.bitwarden.com)) and unlock.
+2. Open the **`ai-memory-infra`** folder.
+3. Look for an item named like **"ADMIN_API_KEY"** / **"mem0 admin key"** with a 43-character
+   value. If it exists → done, nothing more to do.
+4. If it's **missing**: in the next chat, ask the agent to read it from the server `.env` and
+   show it **once** so you can paste it into a new Bitwarden login item in that folder (the
+   agent never stores secrets in chat history beyond that one-time display).
 
 **How to talk to the next agent:** paste the line in the box below into a **new chat**.
 Ask for **concierge mode** (one step at a time, plain English, no jargon).
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 4: re-run the POST /memories round-trip with the API key now that OpenAI project model access is fixed (verify it persists via GET + /search), then confirm the ADMIN_API_KEY is saved in Bitwarden (custody gate). Concierge mode, one step at a time, plain English. Context: steps 1–3 done (model config verified = gpt-5-mini + text-embedding-3-small; make bootstrap is a locked dead end, ADR 020 — don't revisit). Step 4 was blocked because the OpenAI project ai-memory only allowed gpt-5-mini (embeddings 403); operator was switching it to "allow all models". The authenticated round-trip runs ON the droplet (key read from server .env, never printed): SSH key is in ssh-agent; test user_id diag-roundtrip-20260608.
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 5: make the deploy reproducible (BACKLOG P1) — rebuild the mem0 image from infra/mem0-server.Dockerfile (now carries the ADR 021 gpt-5-mini patch) on the droplet so a clean bootstrap.sh works, and fold the from-source build into bootstrap.sh; update setup.md. Concierge mode, one step at a time, plain English. Context: steps 1–4 DONE — the POST /memories round-trip persists end-to-end (user_id diag-roundtrip-20260608; verified via GET + /search). Two blockers were cleared: OpenAI embeddings 403 (operator set project to "allow all models") and a mem0ai 2.0.4 bug where gpt-5-mini was sent max_tokens (ADR 021 — patched live container + Dockerfile). CAVEAT: the live container's patch is in its writable layer only; it survives restart/reboot but a `compose up --force-recreate`/redeploy from the un-rebuilt image reverts the bug — rebuild the image first. ADR 020 (make bootstrap = locked dead end) still stands. If the ADMIN_API_KEY-in-Bitwarden custody gate is still open, close it first. SSH key is in ssh-agent; secrets read from server .env, never printed.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
@@ -190,6 +203,18 @@ used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert.
   every line: **true steady-state ~₹3,800/mo landed** (was ₹2,920 list). Parked a
   zero-forex card as a *personal* finance call (≈₹1.2k/yr saving; off the critical path).
 
+## Last decisions (2026-06-08, round-trip session)
+
+- **ADR 021 — patch mem0ai's GPT-5 detection so `gpt-5-mini` extraction works.** mem0ai 2.0.4's
+  `_is_reasoning_model()` lists `gpt-5o-mini` but not `gpt-5-mini`, so our model was sent
+  `max_tokens` (rejected by every real GPT-5 model → 400), and `add` silently stored 0 memories.
+  Patched `_is_reasoning_model()` to cover the `gpt-5*` family (drops the unsupported params);
+  applied to the live container + baked into `infra/mem0-server.Dockerfile` (idempotent, with a
+  build-time `assert` so a future mem0 restructure fails loudly instead of no-op'ing). Kept
+  `gpt-5-mini` (ADR 013 unchanged) — this is an upstream-bug patch, not a model change.
+  **Control-plane debt:** the live container's patch is writable-layer-only; rebuild the image
+  from the Dockerfile before the next redeploy (BACKLOG P1).
+
 ## Last decisions (2026-06-08, usable-API session)
 
 - **ADR 020 — built-in `ADMIN_API_KEY`, not `make bootstrap` (LOCKED).** Verified against
@@ -259,20 +284,21 @@ displaces the Phase-1 deploy (tenet 13).
   **200 with** `X-API-Key`. No `make bootstrap` / dashboard needed (tenet 7 — fewer moving
   parts). Per-user `m0sk_` keys + the `/setup` wizard remain available if we add the
   dashboard later. **Custody TODO:** confirm `ADMIN_API_KEY` is stored in Bitwarden.
-- 🚧 **Step-4 round-trip BLOCKED — OpenAI project model access (not our stack).** `POST
-  /memories` → 502 `provider_auth_failed`; root-caused on the droplet: the OpenAI project
-  `ai-memory` (`proj_BBdR6RuERcssScuTgCBjCnht`) is restricted to **only `gpt-5-mini`**.
-  Direct OpenAI tests with the live key: `gpt-5-mini` chat → **200**; `text-embedding-3-small`
-  → **403 model_not_found** ("Project does not have access to model"); mem0 needs embeddings on
-  every `add`, so the whole call fails. The key itself is valid (`sk-proj-…`, len 164, clean).
-  Operator added the model in the dashboard (it now appears in `/v1/models`) **but inference
-  still 403s after ~7 min** — matches a **known OpenAI dashboard bug** (Feb 2026: the project
-  model allow-list lists models but the save doesn't apply / "Project not found"). **Fix:** set
-  the project model limits to **"Allow all models"** (cost cap is the $10 budget + auto-recharge
-  OFF, not this list). **Plan B if the UI won't save:** OpenAI **Admin API** `POST
-  /v1/organization/projects/{id}/model_permissions` (mode `allow_list`/`deny_list`) — needs an
-  **org Admin key** (`sk-admin-…`, store in Bitwarden). After the fix, **no redeploy needed** —
-  just re-run the round-trip (key unchanged).
+- ✅ **Step-4 round-trip DONE — persists end-to-end** (2026-06-08). Cleared **two** blockers:
+  **(1) OpenAI embeddings 403** — the project `ai-memory` (`proj_BBdR6RuERcssScuTgCBjCnht`)
+  was restricted to only `gpt-5-mini`; operator set it to **"Allow all models"** →
+  `text-embedding-3-small` now 200 (verified directly on the droplet). **(2) mem0ai 2.0.4
+  `gpt-5-mini` bug** — extraction 400'd (`max_tokens` unsupported on GPT-5; needs
+  `max_completion_tokens`) because `_is_reasoning_model()` omits `gpt-5-mini`; `add` returned
+  `200` with **0 memories** (silent). Fixed by patching `_is_reasoning_model()` to cover the
+  `gpt-5*` family (**ADR 021**) — applied to the live container (writable layer) + baked into
+  `infra/mem0-server.Dockerfile`. **Verified:** `POST /memories` (user_id
+  `diag-roundtrip-20260608`) extracted 2 facts (Python / Bangalore, event `ADD`); `GET
+  /memories?user_id=…` + `POST /search "favorite programming language"` returned them ranked.
+  **⚠️ Caveat (control-plane debt):** the live patch is in the container's writable layer — it
+  survives `docker restart` + droplet reboot but **not** a `compose up --force-recreate` /
+  redeploy from the un-rebuilt image. **Rebuild the image from the patched Dockerfile before
+  the next redeploy** (BACKLOG P1). **Remaining step-1–4 item: the Bitwarden custody gate.**
 - ✅ **Model config VERIFIED (2026-06-08, step 3).** Earlier note was **wrong** — the
   server source *does* read these env vars: `main.py` L115-116 `DEFAULT_LLM_MODEL =
   os.environ.get("MEM0_DEFAULT_LLM_MODEL", "gpt-4.1-nano-2025-04-14")` /
@@ -321,18 +347,18 @@ displaces the Phase-1 deploy (tenet 13).
    `text-embedding-3-small`; `main.py` *does* read `MEM0_DEFAULT_*` (earlier note corrected).
    See the model-config blocker entry above for the source lines + the `gpt-4.1-nano` fallback
    risk.
-4. **← NEXT (BLOCKED on operator OpenAI fix): `POST /memories` round-trip.** The OpenAI
-   project `ai-memory` must allow `text-embedding-3-small` — set its model limits to **"Allow
-   all models"** (the per-model allow-list UI is buggy; Plan B = Admin API, see blocker above).
-   Then re-run the round-trip **on the droplet** (key from server `.env`, never printed; SSH key
-   is in ssh-agent): `POST /memories` (user_id `diag-roundtrip-20260608`) → `GET
-   /memories?user_id=…` + `POST /search` to confirm it persisted (setup.md "Done when").
-   **Then the custody gate:** confirm `ADMIN_API_KEY` is saved in Bitwarden (`ai-memory-infra`
-   folder) — the only open item from steps 1–3.
-5. **Make the deploy reproducible** (BACKLOG P1): fold the mem0-source build into
-   `bootstrap.sh` (or push `mem0-api-server` to GHCR) so a clean `bootstrap.sh` works;
-   update `setup.md` (Step 6 + prereqs) to match the from-source build. Currently a fresh
-   bootstrap fails at `docker compose pull`.
+4. ✅ **`POST /memories` round-trip — DONE (2026-06-08), persists end-to-end.** Both blockers
+   cleared (OpenAI "allow all models"; mem0ai gpt-5-mini patch, ADR 021). Verified on the
+   droplet: `POST /memories` (user_id `diag-roundtrip-20260608`) extracted 2 facts → `GET
+   /memories?user_id=…` + `POST /search` returned them (setup.md "Done when" met). **Only open
+   item from steps 1–4: the custody gate** — confirm `ADMIN_API_KEY` is saved in Bitwarden
+   (`ai-memory-infra` folder). Operator-only (agent can't reach the vault); guide click-by-click.
+5. **← NEXT — Make the deploy reproducible** (BACKLOG P1): the live container's ADR-021 patch is
+   in its writable layer only, so a redeploy from the un-rebuilt image reverts the gpt-5-mini
+   bug. **Rebuild `mem0-api-server:local` from the patched `infra/mem0-server.Dockerfile`** on
+   the droplet, then fold the clone-mem0-src + `docker build` step into `bootstrap.sh` (or push
+   the image to GHCR) so a clean `bootstrap.sh` works; update `setup.md` (Step 6 + prereqs).
+   Currently a fresh bootstrap fails at `docker compose pull`.
 
 **Connection details:** droplet `168.144.145.29` (SSH `root@`, key passphrase in
 Bitwarden); API `https://memory.chandrav.dev` (`/docs` open); Neo4j browser
