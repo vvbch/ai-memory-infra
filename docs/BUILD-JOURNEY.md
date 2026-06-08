@@ -462,3 +462,34 @@ recover-button still works, run safely so it can never harm the live data.
 - One 3-minute setup click for the owner: create a second free watchdog check so a failed or missed
   monthly drill sends an email. After that, the backup system is fully done — every layer scheduled,
   self-monitoring, deletion-resistant, and now drill-tested.
+
+## 2026-06-08 — The backup system is fully closed (drill watchdog is live)
+
+**Focus:** the very last piece — give the monthly restore drill its own watchdog, then verify the
+whole thing with a real run. Short concierge session.
+
+**Milestones**
+- **The monthly drill now has its own independent watchdog.** We created a second free monitoring
+  check (separate from the nightly-backup one), set it to expect a ping on the drill's monthly
+  schedule, and wired the server to send it. A passing nightly backup and a passing monthly drill are
+  *different* guarantees, so each gets its own alarm.
+- **Verified for real, end-to-end.** We ran the drill on the server — it restored the latest backup
+  into a throwaway copy, confirmed the canary memory came back with its search-vector, the
+  knowledge-graph file reloaded, and the edit-history was valid — then sent its "OK" ping, and the new
+  watchdog flipped to **green**. The owner confirmed it on the dashboard.
+- **Phase 2 (backup & restore) is now fully closed.** Every layer is scheduled, self-monitoring,
+  resistant to accidental deletion, and proven recoverable — with both the nightly backup and the
+  monthly drill independently watched. Nothing operator-side remains.
+
+**Engineering notes**
+- **Wire the value as a literal on the server side.** Adding the watchdog link to the server's config
+  was done as a single self-contained command on the server, sidestepping a recurring
+  Windows-to-Linux line-ending gotcha entirely, then verified byte-for-byte that the line landed
+  clean.
+- **Verify before assuming work is needed.** A standing reminder said the server might need
+  re-syncing to the source-of-truth; a one-command check showed it was already in sync, so no
+  destructive reset was run. Checking is cheaper than assuming.
+
+**Next**
+- **Phase 3 — the Chrome browser extension**, so the memory layer reaches the browser. First step is
+  to survey what already exists before building.

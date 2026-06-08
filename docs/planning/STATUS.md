@@ -4,7 +4,21 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 2 automation — session 5: ADR 023 §4 restore DRILL
+**Last updated:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
+WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
+operator click-by-click to create the **drill's own (second) healthchecks.io check** ("ai-memory
+restore drill", cron `30 19 1 * *` UTC = 01:00 IST on the 1st, **2 h grace**, email notification
+on), saved its ping URL in Bitwarden (ADR 017), then **appended `DRILL_HEALTHCHECK_URL=…` to the
+droplet `/opt/ai-memory-infra/infra/.env`** cleanly (verified with `cat -A` — line ends at `$`,
+**no trailing CR**; the readers `tr -d '\r'` anyway). **Verified end-to-end (tenet 17):** ran
+`bash scripts/restore-drill.sh` on the droplet → **DRILL PASSED** (`20260608T151504Z`; scratch
+Postgres canary+embedding restored, 257.8 MB Neo4j dump loaded clean, mem0 history valid SQLite,
+scratch torn down) → its success ping fired → **operator confirmed the check went green**. Droplet
+was already at GitHub truth (clean tree, `0 ahead / 0 behind` — session-5's `restore-drill.sh` +
+drill units were already committed + pulled), so no reset was needed. **Phase 2 DoD now FULLY MET
+— no operator steps remain. Next: Phase 3 (Chrome extension fork).**
+
+**Prior update:** 2026-06-08 (**Phase 2 automation — session 5: ADR 023 §4 restore DRILL
 DONE & VERIFIED → Phase 2 COMPLETE bar one operator console step**). Built a **monthly,
 lightweight, isolated restore drill** that proves the restore path still works **without
 touching live data**: new `scripts/restore-drill.sh` restores the latest backup into
@@ -250,10 +264,12 @@ the new "burn-in, then clean up" rule (tenet 18).
    **disposable scratch copy** (never your live data), checks that a planted "canary" memory comes
    back **with its search-vector intact**, that the knowledge-graph file reloads cleanly, and that the
    edit-history file is a valid database — then throws the scratch copy away. We ran it end-to-end and
-   it passed. So we now *know* the recover-button keeps working, not just hope so. **One small thing
-   left for you:** make a second free watchdog (healthchecks.io) check so you get emailed if a monthly
-   drill ever fails or stops running — I'll walk you through it click-by-click. **After that, Phase 2
-   is fully closed and we move to Phase 3 — the Chrome browser extension.**
+   it passed. So we now *know* the recover-button keeps working, not just hope so. **✅ NOW DONE TOO
+   (2026-06-08):** the monthly drill has its **own second watchdog** — we created a second free
+   healthchecks.io check, wired the server to ping it, ran a real drill, and **watched the check go
+   green**. So you'll now get **emailed if a monthly drill ever fails or stops running**, exactly like
+   the nightly backup. **Phase 2 is now fully closed — nothing left for you to do here. Next we move to
+   Phase 3 — the Chrome browser extension.**
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -285,9 +301,9 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 2 — backup/restore → COMPLETE (bar one operator console step).** Scripts DONE & PROVEN;
-automation §1–§4 all built & verified. Only the drill's 2nd healthchecks.io check
-(`DRILL_HEALTHCHECK_URL`) remains — a concierge console step. Detail below.
+**Phase 2 — backup/restore → COMPLETE.** Scripts DONE & PROVEN; automation §1–§4 all built &
+verified; the drill's 2nd healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is now **wired & verified
+green** (session 6). **DoD fully met — no operator steps remain. Next: Phase 3 (Chrome extension).**
 
 **Phase 2 — backup/restore → (history) REOPENED (scripts DONE & PROVEN; automation IN PROGRESS).**
 `scripts/backup.sh` + `scripts/restore.sh` are live and proven: backup = online `pg_dump -Fc` +
@@ -663,34 +679,31 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 2 is COMPLETE bar one operator console step; then Phase 3.** Session 5
-> (2026-06-08) built & verified **§4 the restore drill** (ADR 023 §4): `scripts/restore-drill.sh`
-> restores `latest` into **throwaway scratch** (a scratch `pgvector` container + throwaway Neo4j
-> volume — **never live data**), asserts a planted **canary** (`user_id=drill-canary`, codeword
-> `DRILLCANARY7Q4Z9`, from the committed `scripts/plant-drill-canary.sh`) round-trips **with its
-> pgvector embedding**, that the Neo4j dump `neo4j-admin load`s clean, and the mem0 history is valid
-> SQLite — then tears the scratch down (EXIT trap). Monthly `systemd` units (`*-*-01 19:30 UTC` =
-> 01:00 IST, `Persistent=true`, `OnFailure` marker) + a **separate** drill heartbeat
-> (`DRILL_HEALTHCHECK_URL`, no-op until set); `bootstrap.sh` installs/enables them. **Drill PASSED on
-> the droplet** (scratch `total=6, canary-with-embedding=2`; 258 MB graph dump loaded; mem0 history
-> valid; scratch cleaned up; live stack untouched). Canary is planted in live data + included in a
-> fresh backup.
+> **RESUME HERE — Phase 2 is COMPLETE; start Phase 3 (Chrome extension fork).** Session 6
+> (2026-06-08) closed the last Phase-2 step: wired the **drill's own (second) healthchecks.io check**
+> (`DRILL_HEALTHCHECK_URL` appended to the droplet `/opt/ai-memory-infra/infra/.env`, clean/no-CR),
+> ran `restore-drill.sh` on the droplet → **DRILL PASSED** (`20260608T151504Z`) → operator confirmed
+> the check went **green**. The droplet was already at GitHub truth (clean, 0 ahead/behind). **Phase 2
+> DoD is fully met: backups run on a nightly timer, both the nightly backup *and* the monthly drill
+> have live dead-man's-switch alerting (both green), the backup store is delete/overwrite-resistant
+> with a least-privilege key, restore takes a pre-snapshot, and the restore drill is built + proven.**
 >
-> **NEXT ACTION = wire the drill's dead-man's-switch (concierge, ~3 min, the ONLY thing between us
-> and Phase 3):** walk the operator click-by-click to create a **second healthchecks.io check** for
-> the drill (suggest: name "ai-memory restore drill", **period ~35 days, grace ~2 h**, schedule cron
-> `30 19 1 * *` UTC), save its ping URL in Bitwarden (ADR 017), then append
-> `DRILL_HEALTHCHECK_URL=<url>` to the droplet `/opt/ai-memory-infra/infra/.env` — **strip the
-> trailing CR** (the readers already `tr -d '\r'`, but keep the line clean), and confirm by running
-> `bash scripts/restore-drill.sh` once and checking the check goes green. **THEN Phase 3 — Chrome
-> extension fork** (web-verify the extension landscape first, tenet 8; keep it an MCP/REST client of
-> the live API; Android best-effort only, ADR 004).
+> **NEXT ACTION = Phase 3 — Chrome extension fork.** Per build phases (AGENTS.md): fork/adapt a
+> Chrome extension so the memory layer reaches the browser (desktop / ChromeOS). **Start by
+> web-verifying the current extension landscape (tenet 8)** — what open-source mem0/AI-memory browser
+> extensions exist now, their license/fork-ability, and how they talk to a backend — *before*
+> committing to one (tenet 12 if it pulls in any new dependency/vendor). Keep the extension a thin
+> **MCP/REST client of the live API** (`https://memory.chandrav.dev`, `X-API-Key`), not a second
+> brain. Android is **best-effort only** (Kiwi archived Jan 2025, ADR 004); iOS non-Claude LLMs are a
+> known gap. Surface the fork/build-vs-adapt call to the operator (one recommended default + the
+> trade-off) before writing code.
 >
-> **Reminders:** the droplet's `/opt/ai-memory-infra` must be brought to GitHub truth
-> (`git fetch && git diff --stat origin/main` then `git reset --hard origin/main`) **after this
-> session's commit/push** so it carries `restore-drill.sh` + the drill units (I scp'd them for the
-> verification run; the canary + a fresh backup are already on the box). Nightly backup timer stays
-> live (18:30 UTC ≈ 00:00 IST). P1 `.env` plaintext-note strip stays deferred (tenet 18, ~2026-06-15).
+> **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
+> drill timer live (`30 19 1 * *` UTC ≈ 01:00 IST on the 1st), both watched by healthchecks.io. The
+> permanent drill **canary** (`user_id=drill-canary`) is planted in live data — leave it. P1 `.env`
+> plaintext-note strip stays **deferred** (tenet 18, trigger ~2026-06-15). Droplet sync, if ever
+> needed: `git fetch && git diff --stat origin/main` then `git reset --hard origin/main` (`.env`
+> gitignored, untouched by reset).
 
 **§3(b) console flow (web-verified 2026-06-08, DO docs — for the next step):** DO **Per-Bucket Access
 Keys** are GA. Console → **Spaces Object Storage** → **Access Keys** tab → **Create Access Key** →
@@ -773,8 +786,10 @@ with `PutBucketPolicy`. Then swap `SPACES_ACCESS_KEY`/`SPACES_SECRET_KEY` in the
    pgvector embedding, the Neo4j dump loads clean, and mem0 history is valid SQLite; never touches
    live data; **drill PASSED on the droplet**. **Done when** = all five met: backups run on the timer,
    success/failure reaches the operator, the store is delete/overwrite-resistant, restore pre-snapshots,
-   and a drill cadence exists. **Only the drill's own healthchecks.io check (`DRILL_HEALTHCHECK_URL`)
-   is left to wire** (operator console step — see Next action above), then Phase 3.
+   and a drill cadence exists. ✅ **The drill's own healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is
+   now WIRED & VERIFIED GREEN (2026-06-08, session 6)** — 2nd check created (cron `30 19 1 * *` UTC,
+   2 h grace, email on), URL in Bitwarden, appended to the droplet `.env` (clean/no-CR), drill re-run →
+   **PASSED** → check green. **Phase 2 is fully closed; next is Phase 3.**
 9. **THEN — Phase 3: Chrome extension fork.** Per build phases (AGENTS.md): fork/adapt a
    Chrome extension so the memory layer reaches the browser (desktop / ChromeOS). Web-verify
    the current extension landscape before committing (tenet 8); Android is best-effort only
