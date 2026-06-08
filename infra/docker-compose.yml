@@ -35,10 +35,11 @@ services:
       - mem0_network
 
   mem0:
-    # Published API image. Pin a real tag at deploy and confirm it still bundles
-    # psycopg + langchain-neo4j (older images need a patch Dockerfile — see the
-    # mem0 self-host guide). Verify: `docker run --rm mem0/mem0-api-server:latest pip show mem0ai`
-    image: mem0/mem0-api-server:latest
+    # Built from source for linux/amd64 — the published mem0/mem0-api-server image
+    # is arm64-only (no amd64 manifest), and the stock requirements omit the Neo4j
+    # graph extras we need. See infra/mem0-server.Dockerfile. Build on the host:
+    #   docker build -f infra/mem0-server.Dockerfile -t mem0-api-server:local <mem0-src>/server
+    image: mem0-api-server:local
     restart: unless-stopped
     env_file:
       - .env
@@ -50,6 +51,11 @@ services:
       - POSTGRES_USER=${POSTGRES_USER:-mem0}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
       - POSTGRES_COLLECTION_NAME=memories
+      # Auth/admin tables (users/api_keys/request_logs) — the server defaults to a
+      # separate "mem0_app" DB (db.py APP_DB_NAME). We consolidate into the same
+      # `mem0` database (different tables, no conflict) to avoid a 2nd DB + init
+      # script (tenet 7). Set APP_DB_NAME=mem0_app + create that DB to split later.
+      - APP_DB_NAME=${POSTGRES_DB:-mem0}
       - NEO4J_URI=bolt://neo4j:7687
       - NEO4J_USERNAME=neo4j
       - NEO4J_PASSWORD=${NEO4J_PASSWORD}
@@ -59,6 +65,11 @@ services:
       - AUTH_DISABLED=${AUTH_DISABLED:-false}
       - DASHBOARD_URL=${DASHBOARD_URL:-http://localhost:3000}
       # --- models / providers come from .env (LLM + embedder) ---
+    volumes:
+      # Mem0 keeps a SQLite "history" DB at /app/history (HISTORY_DB_PATH default).
+      # The dir doesn't exist in the image, so mount a named volume — this both
+      # creates it (writable) and persists edit history across container recreates.
+      - mem0_history:/app/history
     depends_on:
       postgres:
         condition: service_healthy
@@ -115,9 +126,12 @@ services:
       - mem0_network
 
   mem0-dashboard:
-    # Next.js admin UI. Confirm the published image/tag at deploy; if none is
-    # published, build from the mem0 repo's server/dashboard context instead.
+    # Next.js admin UI. No published image exists — it must be built from the mem0
+    # repo's server/dashboard context. Deferred for Phase 1 and gated behind a
+    # compose profile so the default `up` skips it (enable later with
+    # `docker compose --profile dashboard ...` once an image is built).
     image: mem0/mem0-dashboard:latest
+    profiles: ["dashboard"]
     restart: unless-stopped
     environment:
       - NEXT_PUBLIC_API_URL=${DASHBOARD_API_URL:-http://localhost:8888}
@@ -138,6 +152,7 @@ volumes:
   neo4j_data:
   caddy_data:
   caddy_config:
+  mem0_history:
 
 networks:
   mem0_network:
