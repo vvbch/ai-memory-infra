@@ -617,10 +617,19 @@ pre-commit is now DONE** (gitleaks gate).
 > backup use. **THEN §4 restore drill** (monthly; restore latest into a throwaway target, assert a
 > codeword round-trips), then Phase 3 (Chrome extension). **⚠ Tenet 17 — the key swap + any
 > delete/overwrite still needs care; verify backup works on the new key before retiring the old.**
-> **⚠ Droplet still has the OLD `backup.sh` (with the prune + pre-CR-fix) until synced** —
-> `git fetch && git diff --stat origin/main` then `git reset --hard origin/main` on the droplet
-> (`/opt/ai-memory-infra`) to pick up this session's script changes. P1 `.env` plaintext-note strip
-> stays deferred (tenet 18, ~2026-06-15).**
+> **✅ Droplet ALREADY SYNCED this session** to `2e7b72c` (`git reset --hard origin/main`; working
+> tree clean, no live-only loss, `bash -n` OK) — so tonight's nightly timer runs the hardened
+> `backup.sh` (no client-side prune, CR-safe). P1 `.env` plaintext-note strip stays deferred
+> (tenet 18, ~2026-06-15).**
+
+**§3(b) console flow (web-verified 2026-06-08, DO docs — for the next step):** DO **Per-Bucket Access
+Keys** are GA. Console → **Spaces Object Storage** → **Access Keys** tab → **Create Access Key** →
+scope **Limited access** → tick **only** `ai-memory-infra-backups-chandrav` → permission
+**Read/Write/Delete** (DO has no write-without-delete tier) → name it (e.g. `ai-memory-backup-only`) →
+**copy the secret once** → Bitwarden (ADR 017, never in chat). Note: a *limited* key can't change
+bucket config (lifecycle/versioning stays under the full Terraform key — good) and is incompatible
+with `PutBucketPolicy`. Then swap `SPACES_ACCESS_KEY`/`SPACES_SECRET_KEY` in the droplet
+`/opt/ai-memory-infra/infra/.env`, run `backup.sh` to confirm, then retire the shared key's backup use.
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
