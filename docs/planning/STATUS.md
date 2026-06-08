@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (round-trip session — **step 4 round-trip CLOSED; only the
-Bitwarden custody gate remains**). The OpenAI embeddings 403 is fixed (operator set the
+**Last updated:** 2026-06-08 (round-trip session — **steps 1–4 ALL CLOSED**; next is step 5
+(reproducible deploy)). The OpenAI embeddings 403 is fixed (operator set the
 `ai-memory` project to "allow all models" — `text-embedding-3-small` → 200). Re-running the
 round-trip then surfaced a **second, different blocker**: extraction to `gpt-5-mini` 400'd with
 *"Unsupported parameter: 'max_tokens' … use 'max_completion_tokens'"* — a **bug in `mem0ai`
@@ -17,8 +17,10 @@ prove it + baked the patch into `infra/mem0-server.Dockerfile` for rebuilds. **R
 verified end-to-end:** `POST /memories` extracted 2 facts (Python / Bangalore); `GET /memories`
 + `POST /search` returned them (user_id `diag-roundtrip-20260608`). **Caveat:** the live
 container's in-place patch survives restart/reboot but **not** a `compose up --force-recreate`;
-the image must be rebuilt from the Dockerfile before the next redeploy (BACKLOG P1). **Only open
-step-1–4 item: confirm `ADMIN_API_KEY` is in Bitwarden (custody gate) — needs the operator.**)
+the image must be rebuilt from the Dockerfile before the next redeploy (BACKLOG P1). **Custody
+gate CLOSED:** `ADMIN_API_KEY` (43-char) copied from the droplet `.env` → operator's clipboard
+(never shown in chat) → saved to Bitwarden `ai-memory-infra` as "ADMIN_API_KEY (mem0)".
+**Steps 1–4 are all DONE; next is step 5 (reproducible deploy, BACKLOG P1).**)
 
 **Prior update:** 2026-06-08 (control-plane session — **tenet 16: stateless, disposable
 sessions**. Codified after a long-lived Cursor session burned a month's $60 plan credits in
@@ -51,21 +53,21 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
    session: `3d1db74` infra + `b6ffa2d` docs; both repos clean, `0 ahead/0 behind`).
 2. ✅ **Create a login for the API** — DONE. The admin API key was already generated
    into the server's `.env` at deploy time; verified working this session (a protected
-   route returns 401 with no key, **200 with the `X-API-Key` header**). Still TODO:
-   confirm the key is saved in Bitwarden (custody gate).
+   route returns 401 with no key, **200 with the `X-API-Key` header**). ✅ Custody gate now
+   closed too — the key is saved in Bitwarden (2026-06-08).
 3. ✅ **Test it** — DONE. Added a test memory, read it back, searched it — **it stuck.**
    This took two fixes: (a) your OpenAI "allow all models" change cleared the embeddings
    error; (b) we then hit a *separate* bug in the memory software (it sent OpenAI an old
    setting name that the new `gpt-5-mini` model rejects) — fixed it (ADR 021). The server
    now correctly saved "favorite language = Python" and "lives in Bangalore" and found them
-   on search. **One small chore left: confirm your master API key is saved in Bitwarden**
-   (see "How to do the Bitwarden check" below — this is the only thing left from steps 1–4).
+   on search. ✅ **And your master API key is now saved in Bitwarden** (custody gate closed —
+   copied server→clipboard→vault, never shown in chat). **Steps 1–4 are all done.**
 4. **Make reinstall repeatable** — if we had to rebuild the server from scratch today,
    the install script would need a manual fix (we built the app image by hand this
    session, and the `gpt-5-mini` bug-fix patch must be rebuilt into the image before the
    next redeploy). Parked in BACKLOG P1.
 
-**How to do the Bitwarden check (the only thing left from steps 1–4):** the master API
+**How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
 *also* be in your password vault so it's never lost. To confirm it's there:
 1. Open Bitwarden (app or [vault.bitwarden.com](https://vault.bitwarden.com)) and unlock.
@@ -80,7 +82,7 @@ key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 
 Ask for **concierge mode** (one step at a time, plain English, no jargon).
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 5: make the deploy reproducible (BACKLOG P1) — rebuild the mem0 image from infra/mem0-server.Dockerfile (now carries the ADR 021 gpt-5-mini patch) on the droplet so a clean bootstrap.sh works, and fold the from-source build into bootstrap.sh; update setup.md. Concierge mode, one step at a time, plain English. Context: steps 1–4 DONE — the POST /memories round-trip persists end-to-end (user_id diag-roundtrip-20260608; verified via GET + /search). Two blockers were cleared: OpenAI embeddings 403 (operator set project to "allow all models") and a mem0ai 2.0.4 bug where gpt-5-mini was sent max_tokens (ADR 021 — patched live container + Dockerfile). CAVEAT: the live container's patch is in its writable layer only; it survives restart/reboot but a `compose up --force-recreate`/redeploy from the un-rebuilt image reverts the bug — rebuild the image first. ADR 020 (make bootstrap = locked dead end) still stands. If the ADMIN_API_KEY-in-Bitwarden custody gate is still open, close it first. SSH key is in ssh-agent; secrets read from server .env, never printed.
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 5: make the deploy reproducible (BACKLOG P1) — rebuild the mem0 image from infra/mem0-server.Dockerfile (now carries the ADR 021 gpt-5-mini patch) on the droplet so a clean bootstrap.sh works, and fold the from-source build into bootstrap.sh; update setup.md. Concierge mode, one step at a time, plain English. Context: steps 1–4 DONE — the POST /memories round-trip persists end-to-end (user_id diag-roundtrip-20260608; verified via GET + /search). Two blockers were cleared: OpenAI embeddings 403 (operator set project to "allow all models") and a mem0ai 2.0.4 bug where gpt-5-mini was sent max_tokens (ADR 021 — patched live container + Dockerfile). CAVEAT: the live container's patch is in its writable layer only; it survives restart/reboot but a `compose up --force-recreate`/redeploy from the un-rebuilt image reverts the bug — rebuild the image first. ADR 020 (make bootstrap = locked dead end) still stands. The ADMIN_API_KEY Bitwarden custody gate is CLOSED (steps 1–4 all done). SSH key is in ssh-agent; secrets read from server .env, never printed.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
@@ -283,7 +285,8 @@ displaces the Phase-1 deploy (tenet 13).
   deploy time; verified 2026-06-08: `GET /memories?user_id=diag` → **401 without** the key,
   **200 with** `X-API-Key`. No `make bootstrap` / dashboard needed (tenet 7 — fewer moving
   parts). Per-user `m0sk_` keys + the `/setup` wizard remain available if we add the
-  dashboard later. **Custody TODO:** confirm `ADMIN_API_KEY` is stored in Bitwarden.
+  dashboard later. ✅ **Custody DONE (2026-06-08):** `ADMIN_API_KEY` saved in Bitwarden
+  `ai-memory-infra` (copied server→clipboard→vault, never shown in chat).
 - ✅ **Step-4 round-trip DONE — persists end-to-end** (2026-06-08). Cleared **two** blockers:
   **(1) OpenAI embeddings 403** — the project `ai-memory` (`proj_BBdR6RuERcssScuTgCBjCnht`)
   was restricted to only `gpt-5-mini`; operator set it to **"Allow all models"** →
@@ -298,7 +301,7 @@ displaces the Phase-1 deploy (tenet 13).
   **⚠️ Caveat (control-plane debt):** the live patch is in the container's writable layer — it
   survives `docker restart` + droplet reboot but **not** a `compose up --force-recreate` /
   redeploy from the un-rebuilt image. **Rebuild the image from the patched Dockerfile before
-  the next redeploy** (BACKLOG P1). **Remaining step-1–4 item: the Bitwarden custody gate.**
+  the next redeploy** (BACKLOG P1). ✅ **Steps 1–4 all done** (Bitwarden custody gate closed).
 - ✅ **Model config VERIFIED (2026-06-08, step 3).** Earlier note was **wrong** — the
   server source *does* read these env vars: `main.py` L115-116 `DEFAULT_LLM_MODEL =
   os.environ.get("MEM0_DEFAULT_LLM_MODEL", "gpt-4.1-nano-2025-04-14")` /
@@ -339,8 +342,8 @@ displaces the Phase-1 deploy (tenet 13).
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
 2. ✅ **Create an admin + API key** — DONE (2026-06-08). The `ADMIN_API_KEY` was already in
    the droplet `.env` (legacy admin mode, tenet 7 — no `make bootstrap`/dashboard needed);
-   verified working (`X-API-Key` → 200, no key → 401). **Custody TODO:** confirm the key is
-   in Bitwarden. **`make bootstrap` is a locked dead end (ADR 020)** — it would spin up mem0's
+   verified working (`X-API-Key` → 200, no key → 401). ✅ **Custody DONE (2026-06-08):** the key
+   is in Bitwarden. **`make bootstrap` is a locked dead end (ADR 020)** — it would spin up mem0's
    *own* conflicting compose/DB stack; our stack runs from `/opt/ai-memory-infra/infra`. Do
    not revisit.
 3. ✅ **Verify model config** — DONE (2026-06-08). Live container runs `gpt-5-mini` +
@@ -350,9 +353,9 @@ displaces the Phase-1 deploy (tenet 13).
 4. ✅ **`POST /memories` round-trip — DONE (2026-06-08), persists end-to-end.** Both blockers
    cleared (OpenAI "allow all models"; mem0ai gpt-5-mini patch, ADR 021). Verified on the
    droplet: `POST /memories` (user_id `diag-roundtrip-20260608`) extracted 2 facts → `GET
-   /memories?user_id=…` + `POST /search` returned them (setup.md "Done when" met). **Only open
-   item from steps 1–4: the custody gate** — confirm `ADMIN_API_KEY` is saved in Bitwarden
-   (`ai-memory-infra` folder). Operator-only (agent can't reach the vault); guide click-by-click.
+   /memories?user_id=…` + `POST /search` returned them (setup.md "Done when" met). ✅ **Custody
+   gate closed (2026-06-08):** `ADMIN_API_KEY` saved in Bitwarden `ai-memory-infra` (copied
+   server→clipboard→vault, never shown in chat). **Steps 1–4 are all complete.**
 5. **← NEXT — Make the deploy reproducible** (BACKLOG P1): the live container's ADR-021 patch is
    in its writable layer only, so a redeploy from the un-rebuilt image reverts the gpt-5-mini
    bug. **Rebuild `mem0-api-server:local` from the patched `infra/mem0-server.Dockerfile`** on
