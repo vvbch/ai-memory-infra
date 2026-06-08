@@ -41,6 +41,10 @@ operator-action and final-response mechanism.
   updating `STATUS.md`, build logs, or committing/pushing a checkpoint.
 - `2026-06-09 00:25 IST` — Operator detected the regression and requested COEs,
   updates to prior COEs, and industry benchmarking.
+- `2026-06-09 00:38 IST` — After the correction was committed, operator confirmed
+  Cursor listed the workspace `ai-memory` MCP server and caught one more edge case:
+  the final answer still printed a resume prompt while waiting on an operator UI
+  action in the same active flow.
 
 ## Detection
 
@@ -92,6 +96,7 @@ Detect actions were not strong enough or were left too low-priority.
 | Add an `Industry benchmark` section to the COE template and retrofit all existing COEs | Prevent / Detect | Cursor agent | 2026-06-09 | Done |
 | Update `AGENTS.md` and `docs/tenets.md`: operator-delegated actions must use a concierge action format (purpose, exact UI/command, visible success, wait) | Prevent | Cursor agent | 2026-06-09 | Done |
 | Update `AGENTS.md` and `docs/tenets.md`: a resume prompt is valid only after a logical checkpoint is written; mid-step responses must say no resume prompt is available yet | Prevent | Cursor agent | 2026-06-09 | Done |
+| Tighten `AGENTS.md` and `docs/tenets.md`: no resume prompt while waiting on Chandra to perform the next action in the same active flow, even if the checkpoint is current | Prevent | Cursor agent | 2026-06-09 | Done |
 | Promote the final all-repo handoff verifier from P2 to P1 because the failure repeated after a COE | Detect | Cursor agent | 2026-06-09 | Done |
 | Update `STATUS.md`, public build journey, and private build log, then run repo-health, commit, and push touched repos | Mitigate | Cursor agent | 2026-06-09 | Done |
 

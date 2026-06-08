@@ -271,11 +271,12 @@ Operating rules:
 - **Checkpoint per step, not just per session.** Keep `STATUS.md` ("Next action",
   "Done this session") current at each step boundary — overwrite as you go (DoD), so the
   file is *always* resume-ready, not only at session end.
-- **Emit a resume token only after a real checkpoint.** A copy-paste **Resume prompt**
-  is valid only when `STATUS.md` reflects a logical handoff point (read `STATUS.md` +
-  `AGENTS.md`, run repo-health, do the Next action). If the session is mid-step and no
-  safe checkpoint has been written yet, say that plainly and do not print a false resume
-  token.
+- **Emit a resume token only after a real checkpoint and only for a true handoff.** A
+  copy-paste **Resume prompt** is valid only when `STATUS.md` reflects a logical handoff
+  point (read `STATUS.md` + `AGENTS.md`, run repo-health, do the Next action) **and** the
+  response is not waiting on Chandra to do the next click/command in the same flow. If the
+  session is mid-step or awaiting an operator action, say that plainly and do not print a
+  false resume token.
 - **One task per session; prefer a new chat over a long thread.** When the task is done —
   or the context has grown large — start a fresh session rather than continuing. Reinforces
   tenet 13 (one goal in flight).

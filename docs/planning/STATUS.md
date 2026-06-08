@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Phase 4 — session 19 correction: concierge + handoff
-regression fixed in the control plane; next = one Cursor MCP UI check**). Parent
+**Last updated:** 2026-06-09 (**Phase 4 — session 19: Cursor MCP server visible; next =
+agent definitions before skills**). Parent
 workspace `ai-memory` now has a root `AGENTS.md` plus `.cursor/rules/00-workspace-control-plane.mdc`,
 both thin pointers that route future agents directly to `ai-memory-infra` as the control
 plane before they spend time rediscovering the folder layout. Live OpenAPI showed
@@ -33,7 +33,11 @@ prompt before checkpointing. Opened COE
 template and all existing COEs, updated `AGENTS.md` + `docs/tenets.md` so operator-delegated
 actions require purpose + exact UI/command + visible success + wait point, changed resume
 prompts to be valid only after a logical checkpoint, and promoted the final all-repo handoff
-verifier from P2 to P1. Phase 2 is closed; Phase 3
+verifier from P2 to P1. Operator then confirmed Cursor lists a **workspace MCP server** named
+`ai-memory`, proving the Cursor-side MCP registration is visible. A final rule refinement was
+added after another operator catch: do **not** print a resume prompt while waiting on Chandra to
+perform the next step in the same active flow, even if `STATUS.md` is current. Phase 2 is closed;
+Phase 3
 browser reach is sufficiently proven for the seamless path. Session 17 ran repo-health
 green for `ai-memory-infra` + `ai-memory-infra-private`, then proved ChatGPT-side
 OpenMemory behavior against the live server: baseline `/search` for codeword
@@ -410,12 +414,14 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 enough for the seamless path. The local stdio MCP proxy (`ai-memory-mcp`) is built and proven
 against the live REST API; Cursor/VS Code/Claude Code project configs are present at the parent
 workspace root; the persistent `AI_MEMORY_API_KEY` user env var is already set; and the operator has
-reloaded Cursor. The current correction tightened concierge/handoff rules after the agent gave a
-vague MCP-check instruction and emitted an uncheckpointed resume prompt.
-**Next:** one operator UI check: in Cursor, open **Settings → Tools & MCP** and look for an
-`ai-memory` server entry. Older Cursor builds may show **Settings → Features → Model Context
-Protocol** instead. Success condition: `ai-memory` is listed and enabled; if not, check **Output →
-MCP Logs**.
+reloaded Cursor. Cursor now lists a workspace MCP server named `ai-memory`, so Cursor-side local
+MCP visibility is proven. The current correction tightened concierge/handoff rules after the agent
+gave a vague MCP-check instruction and emitted resume prompts while operator action was pending.
+**Next:** move to **agent definitions before skills**. First define the small set of agents/personas
+that will use the memory layer (for example: coding agent, research/strategy agent, personal
+operator assistant), their boundaries, and what each should store/retrieve. Then add skills/tools
+under those agents. Reason: skills without agent definitions become a bag of commands with no owner
+or success criteria.
 
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our

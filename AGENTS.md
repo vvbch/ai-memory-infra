@@ -42,6 +42,9 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     command, (3) visible success condition, and (4) "tell me what you see." If any
     of those four are unknown, verify first; do not hand him a vague "confirm it"
     instruction.
+  - **No resume prompt while waiting on Chandra.** If the response asks Chandra to do
+    the next step in the current flow, it is not a fresh-session handoff, even if
+    `STATUS.md` is current. End with the single requested action and wait.
   - **Web-verify volatile UI steps before prompting.** Browser and SaaS console
     layouts drift; check current official docs or the live UI immediately before
     giving click-by-click instructions. State the exact artifact to pick (e.g.,
@@ -216,9 +219,11 @@ Full diagram: `docs/architecture.md`.
   transcript every turn (≈quadratic token cost — *context-window amplification*) and once
   burned a month's Cursor plan credits in half a day (COE 2026-06-08). So **state lives in
   files, not chat** — checkpoint `STATUS.md` after *each logical step*. A copy-paste
-  Resume prompt is allowed only after that checkpoint is current; if the session is
-  mid-step and not safely resumable, say so plainly and do **not** print a false
-  resume token. Prefer a new chat over a long follow-up thread once a checkpoint exists.
+  Resume prompt is allowed only after that checkpoint is current **and** the response is
+  a true handoff/closeout, not while waiting for Chandra to perform the next action in
+  the same flow. If the session is mid-step or awaiting an operator action, say so plainly
+  and do **not** print a false resume token. Prefer a new chat over a long follow-up
+  thread once a checkpoint exists.
 - **Workspace/root discipline:** the root operating surface is the parent `ai-memory`
   workspace containing the three sibling repos. Treat `ai-memory-infra` as the
   **control plane** for cross-package planning, rules, docs, STATUS, and orchestration,
@@ -257,7 +262,7 @@ Full diagram: `docs/architecture.md`.
   checkpoint; (3) the answer either ends with a copy-paste **Resume prompt** that tells the
   next fresh chat to read `docs/planning/STATUS.md` + `AGENTS.md`, run repo-health, and do
   the latest Next action, or explicitly says no resume prompt is valid because the work is
-  mid-step. Missing any item is a COE-class handoff failure.
+  mid-step or awaiting an operator action. Missing any item is a COE-class handoff failure.
 
 ## Documentation discipline / Definition of Done
 

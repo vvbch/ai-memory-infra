@@ -26,11 +26,14 @@
 
 **Decisions**
 - **Resume prompts are checkpoint-gated.** A fresh-session prompt is valid only when
-  `STATUS.md` and required logs are current at a logical handoff point.
+  `STATUS.md` and required logs are current at a logical handoff point, and not while the
+  assistant is waiting on an operator action in the same flow.
 - **Operator-delegated steps now use a fixed concierge format:** purpose, exact UI path or
   command, visible success condition, and a wait point.
 - **The final all-repo handoff verifier is now P1**, not P2, because repeated human-caught
   handoff failures show that prose gates are insufficient.
+- **Cursor MCP visibility is proven.** After reload, Cursor listed a workspace MCP server named
+  `ai-memory`.
 
 ## 2026-06-08 — Made "no secrets in git" a machine-enforced gate
 
