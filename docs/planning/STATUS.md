@@ -4,21 +4,27 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 8: private extension repo CREATED; upstream
-baseline BUILD GREEN; commit-policy gate clarified**). Phase 2 is closed; Phase 3 browser reach is
-active. Ran repo-health (both repos green; both had `1 ahead / 0 behind` reminders from the prior
-checkpoint). Created private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
-MIT `mem0ai/mem0-chrome-extension` history, cloned it locally beside the infra repo, and pushed the
-baseline to the private origin. Installed normal Node.js tooling on Windows (`winget`
+**Last updated:** 2026-06-08 (**Phase 3 — session 8: private extension repo CREATED; self-hosted
+rewrite COMMITTED; build green; browser verification next**). Phase 2 is closed; Phase 3 browser
+reach is active. Ran repo-health (both infra repos green; both had `1 ahead / 0 behind` reminders
+from the prior checkpoint). Created private GitHub repo **`vvbch/ai-memory-extension`**, imported
+the upstream MIT `mem0ai/mem0-chrome-extension` history, cloned it locally beside the infra repo, and
+pushed the baseline to the private origin. Installed normal Node.js tooling on Windows (`winget`
 `OpenJS.NodeJS.LTS`; use `C:\Program Files\nodejs\npm.cmd` because PowerShell blocks `npm.ps1`),
-then ran **`npm install` + `npm run build` successfully** against the raw upstream baseline. npm
-reported **11 inherited audit findings** (4 moderate, 7 high); parked for the rewrite rather than
-running `npm audit fix` before understanding upstream compatibility. Updated tenet 17 in
-`AGENTS.md` + `docs/tenets.md`: agents should not add "operator will inspect/commit" gates for
-routine reversible code; the operator reviews **decisions and outcomes**, while the agent owns
-reversible implementation, verification, and commits. **Next: in `ai-memory-extension`, rewire the
-transport/auth layer to `https://memory.chandrav.dev` + `X-API-Key`, remove mem0 cloud login and
-PostHog telemetry, then verify the API shapes.**
+then ran **`npm install` + `npm run build` successfully** against the raw upstream baseline. Rewrote
+the extension in commit **`7ac3011`**: default server `https://memory.chandrav.dev`; local popup
+settings for server URL + API key + user id; `X-API-Key` helper; `/memories` + `/search` paths; mem0
+cloud login/session-scraper removed; mem0 cloud host permissions removed; PostHog/mem0 extension
+telemetry no-op/removed; README updated. Verification: OpenAPI fetched from live server and confirmed
+`/memories`, `/search`, and `X-API-Key`; repo search shows **no `api.mem0.ai`, `app.mem0.ai`,
+PostHog, or live `Authorization` headers**; `npm run type-check` green; `npm run build` green. npm
+reported **11 inherited audit findings** (4 moderate, 7 high); `lint:check` / `format:check` still
+fail on upstream-wide Prettier/CRLF noise, including untouched files, so not fixed in this rewrite.
+Updated tenet 17 in `AGENTS.md` + `docs/tenets.md`: agents should not add "operator will
+inspect/commit" gates for routine reversible code; the operator reviews **decisions and outcomes**,
+while the agent owns reversible implementation, verification, and commits. **Next: load `dist/` as an
+unpacked Chrome extension, enter the Bitwarden `ADMIN_API_KEY`, and verify add/search/get memories
+from the browser.**
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -320,10 +326,10 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 **Phase 3 — Chrome extension fork → IN PROGRESS (session 8).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
 self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source now
-lives in private repo **`vvbch/ai-memory-extension`**. Upstream baseline is cloned locally and
-**builds green**. **Next: rewire the transport/auth layer there** (base URL →
-`memory.chandrav.dev`; `Authorization: Bearer/Token` → `X-API-Key`; drop Google sign-in; strip
-PostHog telemetry; verify `/memories` + `/search` shapes).
+lives in private repo **`vvbch/ai-memory-extension`**. Upstream baseline builds green, and the
+self-hosted rewrite is committed in that repo (`7ac3011`): `memory.chandrav.dev`, `X-API-Key`,
+`/memories`, `/search`, local settings, no mem0 cloud login, no PostHog. **Next: browser-load `dist/`
+and prove add/search/get against the live server with the real API key.**
 
 **Phase 2 — backup/restore → COMPLETE.** Scripts DONE & PROVEN; automation §1–§4 all built &
 verified; the drill's 2nd healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is now **wired & verified
@@ -703,25 +709,27 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; upstream baseline
-> builds; next is the self-hosted rewrite.** Session 8 (2026-06-08): ran repo-health (green), created
-> private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream MIT
-> `mem0ai/mem0-chrome-extension` history, cloned it locally, and verified the raw upstream baseline
-> with `npm install` + `npm run build` (green). Node.js LTS was installed with `winget`; on this
-> Windows PowerShell use `C:\Program Files\nodejs\npm.cmd` because `npm.ps1` is blocked by execution
-> policy. npm reported 11 inherited audit findings; do not run `npm audit fix` blindly before the
-> rewrite. Commit-policy gate clarified in `AGENTS.md` + `docs/tenets.md`: agents commit reversible
-> work; operator reviews decisions and outcomes.
+> **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; self-hosted
+> rewrite is committed; next is browser verification.** Session 8 (2026-06-08): ran repo-health
+> (green), created private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream MIT
+> `mem0ai/mem0-chrome-extension` history, cloned it locally, verified the raw upstream baseline, then
+> rewrote and committed the self-hosted fork (`7ac3011`). Node.js LTS was installed with `winget`; on
+> this Windows PowerShell use `C:\Program Files\nodejs\npm.cmd` because `npm.ps1` is blocked by
+> execution policy. npm reported 11 inherited audit findings; do not run `npm audit fix` blindly.
+> Commit-policy gate clarified in `AGENTS.md` + `docs/tenets.md`: agents commit reversible work;
+> operator reviews decisions and outcomes.
 >
 > **NEXT ACTION (next session, one step at a time):**
 > 1. ✅ Create private GitHub repo **`ai-memory-extension`** and preserve upstream history/attribution.
 > 2. ✅ Move the working surface to that repo and verify the raw upstream baseline (`npm install`,
 >    `npm run build`) before changing code.
-> 3. Rewire the transport/auth layer there: centralize `https://api.mem0.ai`; point default server to
->    `https://memory.chandrav.dev`; replace `Authorization: Bearer/Token` with **`X-API-Key`**; replace
->    Google sign-in with settings (server URL + API key + user id); strip PostHog telemetry; verify
->    `/memories`, `/search`, and `GET /memories?user_id=` against the running server from the browser.
-> 4. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 3. ✅ Rewire the transport/auth layer: `https://api.mem0.ai` gone; default server
+>    `https://memory.chandrav.dev`; `Authorization: Bearer/Token` gone; **`X-API-Key`** helper; Google
+>    sign-in replaced with local settings (server URL + API key + user id); PostHog/mem0 telemetry
+>    removed/no-op. `npm run type-check` + `npm run build` green.
+> 4. Load `ai-memory-extension/dist` as an unpacked Chrome extension, enter the real API key from
+>    Bitwarden, then verify `/memories`, `/search`, and `GET /memories?user_id=` from the browser.
+> 5. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly

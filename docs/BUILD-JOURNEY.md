@@ -540,3 +540,29 @@ still builds before changing it.
 - Rewire the extension in `ai-memory-extension`: server URL to `memory.chandrav.dev`, auth to
   `X-API-Key`, replace mem0 cloud login with local settings, remove telemetry, then verify the REST
   shapes against the live server.
+
+## 2026-06-08 — Extension rewritten for self-hosted Mem0
+
+**Focus:** remove mem0 cloud coupling and make the extension talk to the live self-hosted server.
+
+**Milestones**
+- **Cloud auth removed.** The extension no longer scrapes `app.mem0.ai` sessions, asks for Google/mem0
+  sign-in, or sends `Authorization: Bearer/Token`. The popup now stores local settings: server URL,
+  API key, and user id.
+- **Self-hosted API wired.** Memory writes and searches now target the live server shape:
+  `https://memory.chandrav.dev`, `X-API-Key`, `/memories`, and `/search`.
+- **Telemetry stripped.** The mem0 extension telemetry path is removed/no-op, and the manifest no
+  longer grants host permissions to `api.mem0.ai` or `app.mem0.ai`.
+- **Build is green.** The rewritten extension passes TypeScript and production build. Code search shows
+  no remaining mem0 cloud URLs, PostHog references, or live `Authorization` headers.
+
+**Engineering notes**
+- **The live OpenAPI was the source of truth.** We fetched `https://memory.chandrav.dev/openapi.json`
+  before changing paths, confirming `/memories`, `/search`, and `X-API-Key`.
+- **Lint/format are upstream-noisy.** The imported repo fails `lint:check` / `format:check` on
+  Prettier/CRLF issues across many untouched files. We did not reformat the whole fork in the same
+  behavioral rewrite.
+
+**Next**
+- Load `ai-memory-extension/dist` as an unpacked Chrome extension, enter the real API key from
+  Bitwarden, then prove add/search/get from the browser against the running server.
