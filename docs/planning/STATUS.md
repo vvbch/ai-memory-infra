@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 15: completion gate corrected;
-commit+push required at handoff**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
+**Last updated:** 2026-06-08 (**Phase 3 — session 16: package-repo handoff fixed + COE
+opened**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
 private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
 MIT `mem0ai/mem0-chrome-extension` history, installed Node.js LTS on Windows, verified the raw
 upstream build, then rewrote the extension in commit **`7ac3011`**: default server
@@ -55,7 +55,14 @@ and close the extension browser-reach milestone. Session 15: operator caught tha
 without committing/pushing, violating the repo's completion gate and atomic-session handoff model.
 Sharpened `AGENTS.md`: reading `AGENTS.md`/`STATUS.md` and continuing the next action is the standing
 operator authorization to commit+push reversible completed work in this repo; do not wait for a second
-commit prompt unless blocked, one-way-door, secret, destructive, or explicitly paused.
+commit prompt unless blocked, one-way-door, secret, destructive, or explicitly paused. Session 16:
+operator caught that the first correction still missed the package repo. `ai-memory-extension` was
+`ahead 3` with uncommitted background-relay source changes. Ran `npm run type-check` + `npm run build`
+green (same duplicate-icon warnings), committed the relay fix as **`97530f8`** and pushed
+`ai-memory-extension` to `origin/main`. Opened COE
+`docs/coe/2026-06-08-atomic-handoff-failure.md`; updated `AGENTS.md` so completion gate explicitly
+covers **every touched repo**, including package repos like `ai-memory-extension` and private docs repos;
+parked a P2 final all-repo handoff verifier in `BACKLOG.md`.
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -789,8 +796,11 @@ pre-commit is now DONE** (gitleaks gate).
 >    Chrome profile with OpenMemory already loaded; if it fails, inspect the OpenMemory service-worker
 >    console plus the ChatGPT page console for background-relay errors.
 > 11. **Handoff rule reminder:** when the next reversible session step is done and verified, update
->    `STATUS.md`/logs, run repo-health, then commit and push every touched repo before final response.
->    This is already authorized by the project control plane; do not leave completed work uncommitted.
+>    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
+>    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos
+>    such as `ai-memory-extension`. This is already authorized by the project control plane; do not leave
+>    completed work uncommitted or merely local/ahead. Final answer must name each touched repo's latest
+>    pushed commit.
 > 12. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >

@@ -90,6 +90,13 @@
   finding out via a depleted Cursor balance. Cheapest version: operator watches the usage
   meter + a periodic context-size check-in; richer version: an automated context-budget
   alert. Closes the COE's human-catch detection gap.
+- **`[governance]` Final all-repo handoff verifier.** Detection for the atomic-handoff
+  COE (`docs/coe/2026-06-08-atomic-handoff-failure.md`): before final response, enumerate
+  every touched workspace repo and fail/report if any repo is dirty, ahead, behind, or not
+  pushed to `origin/main`. Cheapest version: a documented final checklist in `STATUS.md`;
+  better version: a script that checks `ai-memory-infra`, `ai-memory-infra-private`,
+  `ai-memory-extension`, and any future package repos, then prints the latest pushed commit
+  per touched repo.
 
 ## P3 — valuable, non-blocking / personal
 

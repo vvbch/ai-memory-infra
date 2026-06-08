@@ -29,3 +29,4 @@
 |---|---|---|---|
 | 2026-06-07 | `2026-06-07-cursor-rule-drift.md` | A Cursor rules file drifted into a duplicated rules summary (tenets 2/10) | ADR 018 + tenet 2 boundary + DoD row |
 | 2026-06-08 | `2026-06-08-cursor-credit-exhaustion.md` | A long-lived stateful Cursor session burned a month's plan credits in half a day (context-window amplification) | tenet 16 (stateless/checkpointed sessions) + AGENTS Working model + DoD resume-token gate |
+| 2026-06-08 | `2026-06-08-atomic-handoff-failure.md` | Completed Phase 3 work was documented locally but not atomically committed/pushed across every touched repo | AGENTS completion gate now explicitly covers every touched repo incl. package repos; final all-repo handoff check parked |

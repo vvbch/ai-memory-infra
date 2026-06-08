@@ -212,10 +212,12 @@ Full diagram: `docs/architecture.md`.
   with zero loss. Prefer a new chat over a long follow-up thread.
 - **Workspace/root discipline:** the root operating surface is the parent `ai-memory`
   workspace containing the three sibling repos. Treat `ai-memory-infra` as the
-  **control plane** for cross-package planning, rules, docs, STATUS, and orchestration.
-  Do **not** move the agent/chat root into `ai-memory-extension` or another package repo
-  just to gain context; use package repos only as targeted data-plane workspaces for the
-  files being edited. If a package needs changes, make the package edits deliberately,
+  **control plane** for cross-package planning, rules, docs, STATUS, and orchestration,
+  while `ai-memory-extension` and other package repos are first-class touched repos when
+  they carry implementation changes. Do **not** move the agent/chat root into
+  `ai-memory-extension` or another package repo just to gain context; use package repos
+  only as targeted data-plane workspaces for the files being edited. If a package needs
+  changes, make the package edits deliberately, verify in that repo, commit+push that repo,
   then return the checkpoint/control-plane updates to `ai-memory-infra`.
 - Sessions (sequential *or* parallel) share **files, not chat memory** — **re-read a file
   before acting**, and never edit the same file from two sessions at once.
@@ -227,12 +229,14 @@ Full diagram: `docs/architecture.md`.
   (The hard layers are the git pre-commit hook + the daily scheduled run; this
   line is the human/agent reminder so a missing hook never means a missing check.)
 - **Completion gate:** when a reversible work item is done and verified, commit the
-  relevant changes and push the touched repo(s) to remote in the same session. Do **not**
-  leave a routine "operator will commit/push" gate. Pause before commit/push only for
-  one-way-door effects (spend, lock-in, deletion, data overwrite/retention policy),
-  secrets, destructive operations, or an explicit operator pause.
+  relevant changes and push **every touched repo** to remote in the same session, including
+  package repos such as `ai-memory-extension` and private docs repos such as
+  `ai-memory-infra-private`. Do **not** leave a routine "operator will commit/push" gate
+  or push only the control-plane docs while package code remains local/ahead. Pause before
+  commit/push only for one-way-door effects (spend, lock-in, deletion, data overwrite/
+  retention policy), secrets, destructive operations, or an explicit operator pause.
   The instruction to read `AGENTS.md`/`STATUS.md` and continue the next action is the
-  standing operator authorization for this repo's reversible completion commit+push;
+  standing operator authorization for this workspace's reversible completion commit+push;
   do not require a second "please commit" prompt. If a higher-level tool policy or a
   real blocker prevents commit/push, say that before the final answer and leave the
   repo in a clearly documented handoff state.

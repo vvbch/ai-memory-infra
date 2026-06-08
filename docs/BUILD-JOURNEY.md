@@ -649,3 +649,20 @@ and pushed.
 **Next**
 - Continue Phase 3 with ChatGPT-side save/search verification, and commit+push every touched repo before
   ending the session.
+
+## 2026-06-08 — Package repo handoff fixed; COE opened
+
+**Focus:** close the second handoff miss: the extension package itself had not been pushed.
+
+**Milestones**
+- **Extension repo pushed.** `ai-memory-extension` had local commits and uncommitted background-relay
+  source changes. The package now passes `type-check` and `build`, and the relay fix is pushed as
+  `97530f8`.
+- **COE opened.** `docs/coe/2026-06-08-atomic-handoff-failure.md` records the repeated atomic-handoff
+  failure, impact, detection gap, 5-whys, and corrective actions.
+- **Control plane sharpened again.** Completion now explicitly means every touched repo: control plane,
+  private logs, and package repos. A P2 final all-repo handoff verifier is parked.
+
+**Next**
+- Continue Phase 3 with ChatGPT-side save/search verification. Final response must report the latest
+  pushed commit for every repo touched in that session.
