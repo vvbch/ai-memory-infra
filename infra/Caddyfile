@@ -26,7 +26,7 @@
 	}
 }
 
-# --- Mem0 REST API + MCP ---------------------------------------------------
+# --- Mem0 REST API ---------------------------------------------------------
 memory.{$DOMAIN} {
 	import security_headers
 	encode gzip

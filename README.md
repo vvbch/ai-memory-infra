@@ -6,12 +6,14 @@ context across every LLM, on any device.
 
 ## What it is
 
-- **Memory layer**: Mem0 (FastAPI REST + MCP) over PostgreSQL/pgvector.
+- **Memory layer**: Mem0 REST API over PostgreSQL/pgvector, with a local MCP
+  proxy for Claude Code, Cursor, and VS Code (ADR 025).
 - **Knowledge graph**: Neo4j, dual namespace - Mem0's auto-managed semantic
   graph + LifeGraph (people, ventures, skills, decisions, milestones).
-- **Reach**: Chrome extension (desktop / ChromeOS) + Claude MCP connector
-  (iOS, Claude Code) + Cursor/VS Code as MCP clients. Android extension
-  coverage is best-effort only (see ADR 004). Native LLM UIs unchanged.
+- **Reach**: Chrome extension (desktop / ChromeOS) + local MCP proxy for
+  Claude Code, Cursor, and VS Code. Claude mobile needs a later remote HTTP MCP
+  endpoint. Android extension coverage is best-effort only (see ADR 004). Native
+  LLM UIs unchanged.
 - **Models**: OpenAI `gpt-5-mini` extraction (Mem0's default; chosen for
   structured-output reliability) + `text-embedding-3-small` embeddings (single
   provider, swappable; ~Rs.105/mo). See ADR 013.

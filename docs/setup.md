@@ -298,3 +298,62 @@ sudo bash /opt/ai-memory-infra/scripts/restore-drill.sh
 (verified 2026-06-08, ADR 022), and the monthly restore **drill** passes against a
 throwaway target (verified 2026-06-08, ADR 023 §4). That closes Phase 2; Phase 3 is
 the Chrome extension fork.
+
+## Phase 4 — MCP clients
+
+The deployed Mem0 server currently exposes REST (`/memories`, `/search`) but not
+an MCP endpoint. Phase 4 therefore starts with a local stdio MCP proxy
+(`ai-memory-mcp`) that calls the live REST API with `X-API-Key` (ADR 025).
+
+### Local environment
+
+Set these on the machine that starts the MCP client:
+
+```powershell
+$env:AI_MEMORY_BASE_URL = "https://memory.chandrav.dev"
+$env:AI_MEMORY_USER_ID = "chrome-extension-user"
+$env:AI_MEMORY_API_KEY = "<from Bitwarden: ai-memory-infra ADMIN_API_KEY>"
+```
+
+Do not commit the key. `AI_MEMORY_BASE_URL` and `AI_MEMORY_USER_ID` have those
+defaults in code; only `AI_MEMORY_API_KEY` is required.
+
+### Cursor / VS Code MCP config
+
+Use a stdio server that runs the installed entrypoint:
+
+```json
+{
+  "mcpServers": {
+    "ai-memory": {
+      "type": "stdio",
+      "command": "ai-memory-mcp",
+      "env": {
+        "AI_MEMORY_BASE_URL": "https://memory.chandrav.dev",
+        "AI_MEMORY_USER_ID": "chrome-extension-user",
+        "AI_MEMORY_API_KEY": "${env:AI_MEMORY_API_KEY}"
+      }
+    }
+  }
+}
+```
+
+### Claude Code
+
+The parent workspace has a checked-in `.mcp.json` for Claude Code. After
+`AI_MEMORY_API_KEY` is set in the shell that launches Claude Code, open Claude
+Code from the parent `ai-memory` workspace and approve the project MCP server if
+prompted.
+
+If adding manually:
+
+```powershell
+claude mcp add ai-memory -- ai-memory-mcp
+```
+
+### Done when
+
+At least one MCP client lists `search_memories`, `add_memory`, and `list_memories`,
+then successfully searches for a known live memory without pasting the API key in
+chat. Claude mobile/iOS remains a later step because it needs a remote HTTP MCP
+endpoint, not a local stdio process.

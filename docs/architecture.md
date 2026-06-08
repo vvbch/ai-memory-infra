@@ -12,15 +12,15 @@ flowchart TB
     subgraph Devices["Devices — native LLM UIs, unchanged"]
         D1["Desktop / ChromeOS Chromium<br/>OpenMemory extension — FULL coverage"]
         D2["Android<br/>best-effort (Kiwi archived Jan-2025;<br/>Edge Canary / Quetta) — see ADR 004"]
-        D3["iOS<br/>Claude app via MCP only;<br/>other LLMs = known gap"]
-        D4["Claude Code / Cursor / VS Code<br/>via MCP"]
+        D3["iOS<br/>Claude app remote MCP<br/>(future HTTP endpoint)"]
+        D4["Claude Code / Cursor / VS Code<br/>local MCP proxy"]
         D5["Future tools<br/>via REST API"]
     end
 
     subgraph VPS["VPS — Bangalore (DO BLR1)"]
         CADDY["Caddy<br/>auto-HTTPS reverse proxy"]
         subgraph Compose["Docker Compose"]
-            API["mem0-api<br/>FastAPI: REST + MCP"]
+            API["mem0-api<br/>FastAPI REST"]
             PG[("PostgreSQL 16<br/>+ pgvector")]
             NEO[("Neo4j<br/>dual namespace:<br/>Mem0 graph + LifeGraph")]
             DASH["mem0-dash"]
@@ -35,7 +35,10 @@ flowchart TB
         EMB["text-embedding-3-small<br/>embeddings (Mem0 default)<br/>→ future: Ollama on Alienware"]
     end
 
-    D1 & D2 & D3 & D4 & D5 --> CADDY
+    D1 & D2 & D5 --> CADDY
+    D4 --> MCPPROXY["local ai-memory MCP proxy"]
+    MCPPROXY --> CADDY
+    D3 -.future remote MCP.-> CADDY
     CADDY --> API
     API --> PG
     API --> NEO
@@ -102,7 +105,7 @@ Neo4j moves local — projected ~₹1,000/mo. See `docs/planning/setup-prompt.md
 
 | Subdomain | Service | Notes |
 |---|---|---|
-| `memory.{domain}` | Mem0 API (REST + MCP) | JWT auth; CORS allowlist |
+| `memory.{domain}` | Mem0 REST API | JWT auth; CORS allowlist |
 | `dash.{domain}`   | Mem0 dashboard | basic auth |
 | `graph.{domain}`  | Neo4j Browser | basic auth |
 | `monitor.{domain}`| Grafana | basic auth |
@@ -116,9 +119,9 @@ Docker internal network (ADR 009).
 |---|---|---|
 | Desktop / ChromeOS | OpenMemory Chrome extension | Full |
 | Android | Edge Canary / Quetta + extension | Best-effort (ADR 004) |
-| iOS — Claude | Remote MCP connector | Full |
+| iOS — Claude | Remote MCP connector | Future HTTP MCP endpoint needed |
 | iOS — ChatGPT/Gemini/DeepSeek | none | Known gap |
-| Claude Code / Cursor / VS Code | MCP client | Full |
+| Claude Code / Cursor / VS Code | Local stdio MCP proxy to live REST API | Full |
 | Any future tool | REST API | Full |
 
 ## Degradation

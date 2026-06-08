@@ -150,10 +150,12 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 
 ## Architecture (summary)
 
-Caddy (auto-HTTPS) → Mem0 (FastAPI REST + MCP) over PostgreSQL/pgvector, plus
-Neo4j (dual namespace: Mem0 auto-managed graph + LifeGraph). Prometheus +
-Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
-Claude MCP connector (iOS, Claude Code) + Cursor/VS Code as MCP clients.
+Caddy (auto-HTTPS) → Mem0 (FastAPI REST) over PostgreSQL/pgvector, plus
+Neo4j (dual namespace: Mem0 auto-managed graph + LifeGraph). A local stdio MCP
+proxy (ADR 025) lets Claude Code, Cursor, and VS Code call the live REST API.
+Prometheus + Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
+Claude remote MCP connector still needs a later HTTP endpoint for iOS; Claude Code +
+Cursor/VS Code use the local MCP proxy.
 Android extension coverage is best-effort only (Kiwi archived Jan 2025; see
 ADR 004) and iOS non-Claude LLMs are a known gap.
 Models: single OpenAI provider — `gpt-5-mini` (extraction, Mem0's current
@@ -213,6 +215,8 @@ Full diagram: `docs/architecture.md`.
 - **Workspace/root discipline:** the root operating surface is the parent `ai-memory`
   workspace containing the three sibling repos. Treat `ai-memory-infra` as the
   **control plane** for cross-package planning, rules, docs, STATUS, and orchestration,
+  with the parent workspace `AGENTS.md` and `.cursor/rules/00-workspace-control-plane.mdc`
+  kept as thin pointers into this repo.
   while `ai-memory-extension` and other package repos are first-class touched repos when
   they carry implementation changes. Do **not** move the agent/chat root into
   `ai-memory-extension` or another package repo just to gain context; use package repos
@@ -240,6 +244,11 @@ Full diagram: `docs/architecture.md`.
   do not require a second "please commit" prompt. If a higher-level tool policy or a
   real blocker prevents commit/push, say that before the final answer and leave the
   repo in a clearly documented handoff state.
+- **Final response gate:** before any final answer, explicitly verify and satisfy both
+  handoff requirements: (1) every touched git repo is committed and pushed, or the blocker
+  is named plainly; (2) the answer ends with a copy-paste **Resume prompt** that tells the
+  next fresh chat to read `docs/planning/STATUS.md` + `AGENTS.md`, run repo-health, and do
+  the latest Next action. Missing either item is a COE-class handoff failure.
 
 ## Documentation discipline / Definition of Done
 

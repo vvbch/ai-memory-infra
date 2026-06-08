@@ -2,7 +2,7 @@
 #
 # Topology (verified against mem0ai/mem0 server/docker-compose.yaml on main):
 #   caddy           reverse proxy + auto-HTTPS (only thing that faces the net)
-#   mem0            FastAPI REST + MCP; built-in JWT auth (AUTH_DISABLED=false)
+#   mem0            FastAPI REST; built-in JWT auth (AUTH_DISABLED=false)
 #   postgres        PostgreSQL + pgvector (vector store)
 #   neo4j           knowledge graph (Mem0 graph + LifeGraph), APOC enabled
 #   mem0-dashboard  Next.js admin UI (ships in the OSS server compose)

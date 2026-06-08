@@ -4,8 +4,26 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 17: ChatGPT OpenMemory save/search
-proven; inline modal parked as polish; next = MCP reach**). Phase 2 is closed; Phase 3
+**Last updated:** 2026-06-09 (**Phase 4 — session 18 correction: local MCP proxy built,
+verified, COE opened for missed handoff, next = operator set env/reload clients**). Parent
+workspace `ai-memory` now has a root `AGENTS.md` plus `.cursor/rules/00-workspace-control-plane.mdc`,
+both thin pointers that route future agents directly to `ai-memory-infra` as the control
+plane before they spend time rediscovering the folder layout. Live OpenAPI showed
+`/memories` + `/search` only, and direct probes to likely `/mcp` routes returned 404, so
+ADR 025 accepts a local stdio MCP proxy (`ai-memory-mcp`) that calls the live REST API with
+`X-API-Key` from `AI_MEMORY_API_KEY`. Added project configs for Cursor
+(`.cursor/mcp.json`), VS Code (`.vscode/mcp.json`), and Claude Code (`.mcp.json`) at the
+parent workspace root, all using environment-variable interpolation and no committed
+secret. Installed the project with dev deps; `ai-memory-mcp` resolves locally. Verification:
+Python MCP client initialized the stdio server, listed tools
+`add_memory,list_memories,search_memories`, then called `search_memories` against live
+`https://memory.chandrav.dev` and found exact codeword
+`PHASE3-OM-20260608-2339-RIVER` without printing the key. Claude CLI is **not installed** on
+this machine, so Claude Code registration was done by checked-in project `.mcp.json`, not by
+`claude mcp add`. Correction after operator catch: the prior final response incorrectly left
+verified work uncommitted/unpushed and omitted the fresh-session resume prompt; opened COE
+`docs/coe/2026-06-09-session-handoff-omission.md` and sharpened `AGENTS.md` final-response
+gate. Phase 2 is closed; Phase 3
 browser reach is sufficiently proven for the seamless path. Session 17 ran repo-health
 green for `ai-memory-infra` + `ai-memory-infra-private`, then proved ChatGPT-side
 OpenMemory behavior against the live server: baseline `/search` for codeword
@@ -377,6 +395,14 @@ Resume ai-memory-infra — read docs/planning/STATUS.md (Plain English + Next ac
 needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
+
+**Phase 4 — Claude + Cursor/VS Code MCP reach (session 18).** Phase 3 browser reach is proven
+enough for the seamless path. This session added parent-workspace context pointers, discovered the
+live Mem0 build does **not** expose MCP routes, documented ADR 025, built a local stdio MCP proxy
+(`ai-memory-mcp`) over the live REST API, added Cursor/VS Code/Claude Code project configs at the
+parent workspace root, and proved an MCP client can search live memories without printing secrets.
+**Next:** operator sets `AI_MEMORY_API_KEY` in the user environment from Bitwarden, then reloads
+Cursor and confirms the `ai-memory` MCP server appears.
 
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
@@ -825,9 +851,16 @@ pre-commit is now DONE** (gitleaks gate).
 >    after a local viewport-clamp attempt and rebuild; the ineffective code change was not retained, and
 >    this is parked as P2 extension polish because seamless
 >    memory capture/retrieval does not depend on manual modal clicks.
-> 11. **NEXT ACTION:** Phase 4 — connect Claude + Cursor/VS Code through MCP to the live server. Start
->    by reading current MCP connector docs / Mem0 OpenAPI shape, then prove one client can read/search
->    live memories without copying secrets into chat.
+> 11. ✅ **Phase 4 local MCP proxy built and proven.** Live OpenAPI showed no `/mcp` routes and direct
+>    probes returned 404, so ADR 025 adds `ai-memory-mcp`: a local stdio MCP proxy that calls the live
+>    REST API. Added parent workspace configs: `.cursor/mcp.json` (Cursor), `.vscode/mcp.json` (VS Code),
+>    and `.mcp.json` (Claude Code). Verified with a Python MCP client: tools
+>    `add_memory,list_memories,search_memories` listed; `search_memories` found exact live codeword
+>    `PHASE3-OM-20260608-2339-RIVER` without printing the API key.
+>    **NEXT ACTION:** operator sets persistent user env var `AI_MEMORY_API_KEY` from Bitwarden, then
+>    reloads Cursor and confirms the `ai-memory` MCP server appears. Claude Code CLI is not installed
+>    on this machine; when installed, open it from parent workspace `ai-memory` and approve the project
+>    `.mcp.json` server.
 > 12. **Handoff rule reminder:** when the next reversible session step is done and verified, update
 >    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
 >    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos

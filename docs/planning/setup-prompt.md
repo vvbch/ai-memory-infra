@@ -43,11 +43,11 @@ DEVICES (no change to daily workflow — native LLM interfaces)
 │   └── Same as desktop — full memory coverage
 │
 ├── iOS
-│   └── Claude app only (via remote MCP connector)
+│   └── Claude app only after a future remote HTTP MCP endpoint
 │       Non-Claude LLMs on iOS = their own siloed memory. Known gap.
 │
 ├── Claude Code (terminal)
-│   └── Mem0 MCP server for auto-capture + recall
+│   └── Local ai-memory MCP proxy for auto-capture + recall
 │
 └── Any future tool (Hermes Agent, OpenClaw, custom scripts)
     └── REST API: POST/GET to memory.{domain}
@@ -60,7 +60,7 @@ CLOUD (VPS — Bangalore/Mumbai region)
 │   └── monitor.{domain} → Grafana (:3001)
 │
 ├── Docker Compose:
-│   ├── mem0-api     (FastAPI — REST + MCP)
+│   ├── mem0-api     (FastAPI — REST)
 │   ├── postgres     (PostgreSQL 16 + pgvector)
 │   ├── neo4j        (Knowledge graph — dual namespace)
 │   │   ├── Mem0 namespace: :Entity, :Memory, :Relationship (auto-managed)
@@ -344,11 +344,12 @@ ai-memory-infra/
 4. Document fork changes in extension/README.md
 5. Commit, PR, merge
 
-#### Phase 4: Claude integrations
-1. Claude remote MCP connector: add via claude.ai Settings → Connectors (syncs to mobile)
-2. Claude Code MCP: `claude mcp add mem0 https://memory.{domain}/mcp`
-3. Test: conversation → memory stored → new session → memory recalled
-4. Document in setup guide
+#### Phase 4: MCP integrations
+1. Local stdio MCP proxy: `ai-memory-mcp` calls the live REST API.
+2. Claude Code MCP: `claude mcp add ai-memory -- ai-memory-mcp`
+3. Cursor / VS Code MCP: add a stdio server that runs `ai-memory-mcp`.
+4. Test: MCP search finds a known live memory without pasting secrets in chat.
+5. Later: remote HTTP MCP endpoint for Claude mobile/iOS.
 
 #### Phase 5: Migration pipeline (TDD)
 1. Write tests FIRST:

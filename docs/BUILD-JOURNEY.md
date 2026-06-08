@@ -689,3 +689,36 @@ and pushed.
 **Next**
 - Move to MCP client reach: connect Claude and Cursor/VS Code as thin clients of the same live memory
   server.
+
+## 2026-06-08 — Built and proved local MCP reach
+
+**Focus:** connect developer-tool MCP clients to the live self-hosted memory server.
+
+**Milestones**
+- **Fixed the workspace control-plane gap.** Added parent-workspace pointers so future agents immediately
+  know `ai-memory-infra` is the control plane.
+- **Found the real MCP shape.** The live server exposes `/memories` and `/search`, but no `/mcp` routes;
+  direct probes returned 404.
+- **Built the first MCP bridge.** Added `ai-memory-mcp`, a local stdio MCP proxy that exposes
+  `add_memory`, `list_memories`, and `search_memories` while storing all data in the live REST API.
+- **Configured clients without secrets in git.** Added Cursor, VS Code, and Claude Code project configs
+  that read `AI_MEMORY_API_KEY` from the local environment.
+- **Verified live MCP search.** A Python MCP client listed the tools and found the Phase 3 codeword through
+  `search_memories` against `https://memory.chandrav.dev`.
+
+**Next**
+- Set the persistent `AI_MEMORY_API_KEY` user environment variable from Bitwarden, reload Cursor, and
+  confirm the `ai-memory` MCP server appears.
+
+## 2026-06-09 — Corrected MCP handoff
+
+**Focus:** fix the handoff process after verified Phase 4 work was left local.
+
+**Milestones**
+- **Opened a COE.** Captured the missed commit/push and missing fresh-session prompt as a control-plane
+  failure, not a one-off typo.
+- **Tightened the final gate.** `AGENTS.md` now blocks final responses unless touched git repos are pushed
+  or blockers are named, and the answer includes a copy-paste resume prompt.
+
+**Next**
+- Commit/push the corrected control-plane and private-log changes, then continue from a fresh session.

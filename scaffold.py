@@ -212,13 +212,16 @@ context across every LLM, on any device.
 
 ## What it is
 
-- **Memory layer**: Mem0 (FastAPI REST + MCP) over PostgreSQL/pgvector.
+- **Memory layer**: Mem0 REST API over PostgreSQL/pgvector, with a local MCP
+  proxy for Claude Code, Cursor, and VS Code (ADR 025).
 - **Knowledge graph**: Neo4j, dual namespace - Mem0's auto-managed semantic
   graph + LifeGraph (people, ventures, skills, decisions, milestones).
-- **Reach**: Chrome extension (desktop / ChromeOS) + Claude MCP connector
-  (iOS, Claude Code) + Cursor/VS Code as MCP clients. Android extension
-  coverage is best-effort only (see ADR 004). Native LLM UIs unchanged.
-- **Extraction**: DeepSeek V4 Flash (OpenAI-compatible, ~Rs.30/mo).
+- **Reach**: Chrome extension (desktop / ChromeOS) + local MCP proxy for
+  Claude Code, Cursor, and VS Code. Claude mobile needs a later remote HTTP MCP
+  endpoint. Android extension coverage is best-effort only (see ADR 004). Native
+  LLM UIs unchanged.
+- **Models**: OpenAI `gpt-5-mini` extraction + `text-embedding-3-small`
+  embeddings (single provider, swappable; see ADR 013).
 
 ## Quick start
 
@@ -283,7 +286,12 @@ def main() -> None:
     print("==> test stubs (tests written FIRST per phase - TDD)")
     stub("tests/conftest.py", "shared fixtures: test mem0 client, test neo4j, sample .md")
     tests = {
-        "test_migration": ["test_import_md", "test_categorizer", "test_dedup", "test_e2e_migration"],
+        "test_migration": [
+            "test_import_md",
+            "test_categorizer",
+            "test_dedup",
+            "test_e2e_migration",
+        ],
         "test_life_graph": ["test_schema", "test_seed", "test_queries"],
         "test_eval": ["test_retrieval_eval", "test_extraction_eval", "test_reporters",
                       "test_guardrails", "test_e2e_eval"],
