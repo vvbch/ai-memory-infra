@@ -201,8 +201,12 @@ a security near-miss, or the agent not adhering to guidance — we treat it as a
 **mechanism to improve the system**, not a one-off to patch and forget (the Amazon
 "Correction of Errors" discipline). For anything beyond trivial we open a
 **structured COE** in `docs/coe/` (template + index there): *impact, timeline,
-**detection** (a human catch is itself a gap), 5-whys to a **systemic** root cause,
-and corrective actions split **Prevent / Detect / Mitigate** with owner + date.*
+**detection** (a human catch is itself a gap), industry benchmark, 5-whys to a
+**systemic** root cause, and corrective actions split **Prevent / Detect /
+Mitigate** with owner + date.* Benchmark at least against AWS/Amazon COE practice
+(blame-free 5 Whys, action ownership, recurrence prevention) and Google SRE
+postmortem practice (written impact/timeline/root cause plus actions that improve
+prevention, detection, mitigation, coordination, or communication).
 Two rules carry the most weight:
 
 1. **Fix the control plane before the data plane.** Correct the rule / spec /
@@ -267,10 +271,11 @@ Operating rules:
 - **Checkpoint per step, not just per session.** Keep `STATUS.md` ("Next action",
   "Done this session") current at each step boundary — overwrite as you go (DoD), so the
   file is *always* resume-ready, not only at session end.
-- **Emit a resume token every response.** End each response with a copy-paste **Resume
-  prompt** reflecting the latest checkpoint (read `STATUS.md` + `AGENTS.md`, run
-  repo-health, do the Next action), so the operator can open a fresh chat at any moment
-  with zero context loss.
+- **Emit a resume token only after a real checkpoint.** A copy-paste **Resume prompt**
+  is valid only when `STATUS.md` reflects a logical handoff point (read `STATUS.md` +
+  `AGENTS.md`, run repo-health, do the Next action). If the session is mid-step and no
+  safe checkpoint has been written yet, say that plainly and do not print a false resume
+  token.
 - **One task per session; prefer a new chat over a long thread.** When the task is done —
   or the context has grown large — start a fresh session rather than continuing. Reinforces
   tenet 13 (one goal in flight).

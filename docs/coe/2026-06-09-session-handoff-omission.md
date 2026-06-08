@@ -3,7 +3,7 @@
 - **Date:** 2026-06-09
 - **Author(s):** Cursor agent
 - **Severity:** Medium
-- **Status:** actions-in-progress
+- **Status:** closed
 - **Related:** Tenets 1, 14, 16, 17; `AGENTS.md`; `docs/planning/STATUS.md`
 
 ## Summary
@@ -36,6 +36,23 @@ completion gate in context, but there was no mechanical final-response checklist
 forcing it to verify pushed commits and include the fresh-session prompt before
 answering.
 
+## Industry benchmark
+
+- **AWS/Amazon COE benchmark:** identify the systemic cause with blame-free 5
+  Whys, assign owners and dates, and prevent recurrence rather than stopping at
+  "the agent forgot." This COE met the write-up standard but did not yet meet the
+  recurrence-prevention standard because the follow-up control remained mostly
+  prose.
+- **Google SRE postmortem benchmark:** document impact, timeline, root causes, and
+  action items that improve prevention, detection, mitigation, coordination, or
+  communication. This COE documented the incident and actions, but the next
+  session repeated the same final-response class of failure, proving the Detect
+  action was too weak.
+- **Benchmark gap now explicit:** a human caught the miss, and then a human caught
+  a recurrence. The response must escalate from instruction sharpening to a
+  blocking final-handoff mechanism; see
+  `2026-06-09-concierge-handoff-regression.md`.
+
 ## Root cause — 5 Whys
 
 1. Why was the work not committed/pushed? → The agent followed a generic tool-policy habit ("only commit when explicitly asked") instead of the repo-specific standing authorization already in `AGENTS.md`.
@@ -48,11 +65,11 @@ answering.
 
 | Action | Type (Prevent / Detect / Mitigate) | Owner | Due | Status |
 |---|---|---|---|---|
-| Add this COE and index it | Prevent | Cursor agent | 2026-06-09 | In progress |
-| Sharpen `AGENTS.md`: final response is blocked until touched repos are committed/pushed or blockers are named, and a copy-paste resume prompt is included | Prevent | Cursor agent | 2026-06-09 | In progress |
-| Update `STATUS.md` with the correction and next fresh-session instruction | Mitigate | Cursor agent | 2026-06-09 | In progress |
-| Commit and push `ai-memory-infra` and `ai-memory-infra-private` after repo-health | Mitigate | Cursor agent | 2026-06-09 | In progress |
-| Park/implement a final all-repo handoff verifier that detects uncommitted/unpushed touched repos and missing resume prompt | Detect | Cursor agent | Backlog P2 | Open |
+| Add this COE and index it | Prevent | Cursor agent | 2026-06-09 | Done |
+| Sharpen `AGENTS.md`: final response is blocked until touched repos are committed/pushed or blockers are named, and a copy-paste resume prompt is included | Prevent | Cursor agent | 2026-06-09 | Done; superseded by checkpoint-gated resume rule |
+| Update `STATUS.md` with the correction and next fresh-session instruction | Mitigate | Cursor agent | 2026-06-09 | Done |
+| Commit and push `ai-memory-infra` and `ai-memory-infra-private` after repo-health | Mitigate | Cursor agent | 2026-06-09 | Done |
+| Promote/implement a final all-repo handoff verifier that detects uncommitted/unpushed touched repos and missing/invalid resume prompt | Detect | Cursor agent | P1 governance hardening | Promoted after recurrence |
 
 ## Lessons learned
 
@@ -60,3 +77,8 @@ Repo-local standing authorization must override generic agent habits when the us
 has already agreed to that working model. "Done" is not just tests green; it is
 state transfer: pushed commits, documented exceptions, and a fresh-session resume
 prompt so the next chat starts cheaply and correctly.
+
+Follow-up from the same night: a resume prompt is not valid just because a
+response is ending. It is valid only when the repo has been checkpointed to a
+logical handoff point; otherwise it adds false confidence and pushes the operator
+into an unsafe context switch.

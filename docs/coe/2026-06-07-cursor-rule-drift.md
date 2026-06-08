@@ -34,6 +34,18 @@ was growing turn over turn. Confidence-in-governance impact > technical impact.
 The no-drift machinery (DoD) did not cover pointer files, so nothing flagged the
 duplication. → see the Detect action below.
 
+## Industry benchmark
+
+- **AWS/Amazon COE benchmark:** treat the issue as a mechanism failure and keep
+  asking why until the missing control is visible. This COE meets that bar: the
+  root cause is "meta-artifacts were ungoverned," not "someone copied text."
+- **Google SRE postmortem benchmark:** a useful postmortem records impact,
+  timeline, root cause, and follow-up actions that prevent recurrence. This COE
+  has those elements and pushed the prevention fix into tenet 2 / ADR 018.
+- **Benchmark gap:** the Detect action stayed parked as lint/backlog work. That
+  was acceptable for low blast radius pointer drift, but later handoff COEs show
+  that high-repeat governance failures need stronger detection priority.
+
 ## Root cause — 5 Whys
 
 1. **Why did the rules file contain duplicated content?** A "helpful summary" was

@@ -41,6 +41,20 @@ signal. There was **no token/cost guardrail, no context-size awareness, and no C
 usage alert**; the only feedback was the depleted balance. A human catch on a billing
 surprise is itself a detection gap → see the Detect action below.
 
+## Industry benchmark
+
+- **AWS/Amazon COE benchmark:** the COE should identify why the operating system
+  allowed the event, not stop at the immediate operator behavior. This COE meets
+  that bar: the root cause is the missing cost model for agent sessions, not "used
+  Cursor too long."
+- **Google SRE postmortem benchmark:** action items should improve prevention,
+  detection, mitigation, coordination, or communication and should feed back into
+  the backlog. This COE added prevention through tenet 16 and parked detection
+  work for context/cost alerts.
+- **Benchmark gap:** the mitigation introduced an over-broad "resume prompt every
+  response" rule. The 2026-06-09 recurrence showed the rule needs a checkpoint
+  precondition: a resume token is only safe after repo state is current.
+
 ## Root cause — 5 Whys
 
 1. **Why were the plan credits exhausted so fast?** The agent re-processed an
@@ -70,7 +84,7 @@ surprise is itself a detection gap → see the Detect action below.
 |---|---|---|---|---|
 | Add **tenet 16** — stateless, disposable, single-task sessions; checkpoint to the repo; resume token (the systemic control) | Prevent | agent | 2026-06-08 | ✅ done |
 | Rewrite the AGENTS **Working model** ("single session" → one surface, short disposable sessions) | Prevent | agent | 2026-06-08 | ✅ done |
-| Add a **DoD gate**: checkpoint `STATUS.md` per step + **end every response with a Resume prompt** (makes fresh-chat resume the default, not the exception) | Prevent | agent | 2026-06-08 | ✅ done |
+| Add a **DoD gate**: checkpoint `STATUS.md` per logical step + emit a Resume prompt only after the checkpoint exists | Prevent | agent | 2026-06-08 | ✅ done; tightened 2026-06-09 after over-broad wording caused a false handoff token |
 | Apply the cost model to the tooling: frame the agent session as a metered resource (tenet 16 ties to tenet 15) | Prevent | agent | 2026-06-08 | ✅ done |
 | Operator watches the Cursor usage meter; consider a periodic context-size / cost check-in | Detect | Chandra | next sessions | ⏳ |
 | Automated context-budget / "session getting expensive → checkpoint & restart" signal | Detect | Chandra+agent | backlog P2 | ⏳ backlog |

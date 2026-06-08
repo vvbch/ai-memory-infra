@@ -10,6 +10,17 @@
 
 ## P1 — do at the start of Phase-1 CI work
 
+- **`[governance]` Final all-repo handoff verifier — PROMOTED from P2 after
+  repeat handoff COEs (2026-06-09).** Before final response, enumerate every
+  touched workspace repo and fail/report if any repo is dirty, ahead, behind, or
+  not pushed to `origin/main`; also check that `STATUS.md`/logs are checkpointed
+  before a resume prompt is emitted. Cheapest version: a documented final
+  checklist in `STATUS.md`; better version: a script that checks
+  `ai-memory-infra`, `ai-memory-infra-private`, `ai-memory-extension`, and any
+  future package repos, then prints the latest pushed commit per touched repo.
+  Ties: `docs/coe/2026-06-08-atomic-handoff-failure.md`,
+  `docs/coe/2026-06-09-session-handoff-omission.md`,
+  `docs/coe/2026-06-09-concierge-handoff-regression.md`.
 - **`[security]` Strip the plaintext secrets block from `infra/.env` (post-burn-in
   cleanup).** The generated dash/graph admin password (and copy-to-Bitwarden reminder)
   live as a comment block at the top of `infra/.env` — both locally and, after deploy, on
@@ -98,13 +109,8 @@
   finding out via a depleted Cursor balance. Cheapest version: operator watches the usage
   meter + a periodic context-size check-in; richer version: an automated context-budget
   alert. Closes the COE's human-catch detection gap.
-- **`[governance]` Final all-repo handoff verifier.** Detection for the atomic-handoff
-  COE (`docs/coe/2026-06-08-atomic-handoff-failure.md`): before final response, enumerate
-  every touched workspace repo and fail/report if any repo is dirty, ahead, behind, or not
-  pushed to `origin/main`. Cheapest version: a documented final checklist in `STATUS.md`;
-  better version: a script that checks `ai-memory-infra`, `ai-memory-infra-private`,
-  `ai-memory-extension`, and any future package repos, then prints the latest pushed commit
-  per touched repo.
+- ✅ **`[governance]` Final all-repo handoff verifier — PROMOTED to P1
+  (2026-06-09).** Repeat human-caught handoff failures made this soon-blocking; see P1.
 
 ## P3 — valuable, non-blocking / personal
 

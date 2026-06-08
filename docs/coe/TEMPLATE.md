@@ -26,6 +26,15 @@ the risk was X" is a valid and useful impact statement.>
 <How was it caught — monitoring, a test, or a human? A **human catch** is itself a
 detection gap → add a Detect action below.>
 
+## Industry benchmark
+
+<Compare against external operating standards. At minimum check: AWS/Amazon COE
+practice (blame-free 5 Whys, action owners, prevent recurrence) and Google SRE
+postmortem practice (written impact/timeline/root cause, blamelessness, action
+items that improve prevention, detection, mitigation, coordination, or
+communication). State where this incident response meets the benchmark and where
+it falls short.>
+
 ## Root cause — 5 Whys
 
 1. Why …? →

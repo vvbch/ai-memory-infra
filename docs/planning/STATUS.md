@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Phase 4 — session 18 correction: local MCP proxy built,
-verified, COE opened for missed handoff, next = operator set env/reload clients**). Parent
+**Last updated:** 2026-06-09 (**Phase 4 — session 19 correction: concierge + handoff
+regression fixed in the control plane; next = one Cursor MCP UI check**). Parent
 workspace `ai-memory` now has a root `AGENTS.md` plus `.cursor/rules/00-workspace-control-plane.mdc`,
 both thin pointers that route future agents directly to `ai-memory-infra` as the control
 plane before they spend time rediscovering the folder layout. Live OpenAPI showed
@@ -23,7 +23,17 @@ this machine, so Claude Code registration was done by checked-in project `.mcp.j
 `claude mcp add`. Correction after operator catch: the prior final response incorrectly left
 verified work uncommitted/unpushed and omitted the fresh-session resume prompt; opened COE
 `docs/coe/2026-06-09-session-handoff-omission.md` and sharpened `AGENTS.md` final-response
-gate. Phase 2 is closed; Phase 3
+gate. Session 19 correction after a repeat operator catch: repo-health was green, persistent
+`AI_MEMORY_API_KEY` already existed (43 chars, not printed), `ai-memory-mcp` resolved on PATH,
+and current Cursor guidance says the server should appear under **Cursor Settings → Tools &
+MCP** (older builds: **Settings → Features → Model Context Protocol**; logs: **Output → MCP
+Logs**). The agent nevertheless gave a vague "confirm it" instruction and printed a resume
+prompt before checkpointing. Opened COE
+`docs/coe/2026-06-09-concierge-handoff-regression.md`, added **Industry benchmark** to the COE
+template and all existing COEs, updated `AGENTS.md` + `docs/tenets.md` so operator-delegated
+actions require purpose + exact UI/command + visible success + wait point, changed resume
+prompts to be valid only after a logical checkpoint, and promoted the final all-repo handoff
+verifier from P2 to P1. Phase 2 is closed; Phase 3
 browser reach is sufficiently proven for the seamless path. Session 17 ran repo-health
 green for `ai-memory-infra` + `ai-memory-infra-private`, then proved ChatGPT-side
 OpenMemory behavior against the live server: baseline `/search` for codeword
@@ -281,7 +291,7 @@ gate CLOSED:** `ADMIN_API_KEY` (43-char) copied from the droplet `.env` → oper
 **Prior update:** 2026-06-08 (control-plane session — **tenet 16: stateless, disposable
 sessions**. Codified after a long-lived Cursor session burned a month's $60 plan credits in
 half a day (context-window amplification, COE 2026-06-08): one task per chat, checkpoint
-`STATUS.md` per step, end every response with a Resume prompt.)
+`STATUS.md` per logical step, and emit a Resume prompt only after that checkpoint is current.)
 
 **Earlier update:** 2026-06-07 (session-resume #3 — **PHASE 1 DEPLOYED**. `tf-apply`
 created the droplet (BLR1, `168.144.145.29`) + firewall + Cloudflare DNS + Spaces
@@ -396,13 +406,16 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 4 — Claude + Cursor/VS Code MCP reach (session 18).** Phase 3 browser reach is proven
-enough for the seamless path. This session added parent-workspace context pointers, discovered the
-live Mem0 build does **not** expose MCP routes, documented ADR 025, built a local stdio MCP proxy
-(`ai-memory-mcp`) over the live REST API, added Cursor/VS Code/Claude Code project configs at the
-parent workspace root, and proved an MCP client can search live memories without printing secrets.
-**Next:** operator sets `AI_MEMORY_API_KEY` in the user environment from Bitwarden, then reloads
-Cursor and confirms the `ai-memory` MCP server appears.
+**Phase 4 — Claude + Cursor/VS Code MCP reach (session 19).** Phase 3 browser reach is proven
+enough for the seamless path. The local stdio MCP proxy (`ai-memory-mcp`) is built and proven
+against the live REST API; Cursor/VS Code/Claude Code project configs are present at the parent
+workspace root; the persistent `AI_MEMORY_API_KEY` user env var is already set; and the operator has
+reloaded Cursor. The current correction tightened concierge/handoff rules after the agent gave a
+vague MCP-check instruction and emitted an uncheckpointed resume prompt.
+**Next:** one operator UI check: in Cursor, open **Settings → Tools & MCP** and look for an
+`ai-memory` server entry. Older Cursor builds may show **Settings → Features → Model Context
+Protocol** instead. Success condition: `ai-memory` is listed and enabled; if not, check **Output →
+MCP Logs**.
 
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
@@ -665,8 +678,9 @@ extension fork).**
 ## Last decisions (2026-06-08, control-plane session)
 
 - **Tenet 16 added — stateless, disposable, single-task sessions.** State lives in the
-  **repo, not the chat**: checkpoint `STATUS.md` after *every* step and **end every response
-  with a copy-paste Resume prompt**, so a fresh chat resumes with zero loss. In `tenets.md` +
+  **repo, not the chat**: checkpoint `STATUS.md` after each logical step and emit a
+  copy-paste Resume prompt only after that checkpoint is current, so a fresh chat resumes
+  with zero loss. In `tenets.md` +
   `AGENTS.md` (Working model rewritten: "single session" → one *surface*, many short
   *sessions*) + a DoD gate. Twelve-Factor stateless-process + backing-store; reinforces
   tenets 1, 13, 15.
@@ -857,10 +871,14 @@ pre-commit is now DONE** (gitleaks gate).
 >    and `.mcp.json` (Claude Code). Verified with a Python MCP client: tools
 >    `add_memory,list_memories,search_memories` listed; `search_memories` found exact live codeword
 >    `PHASE3-OM-20260608-2339-RIVER` without printing the API key.
->    **NEXT ACTION:** operator sets persistent user env var `AI_MEMORY_API_KEY` from Bitwarden, then
->    reloads Cursor and confirms the `ai-memory` MCP server appears. Claude Code CLI is not installed
->    on this machine; when installed, open it from parent workspace `ai-memory` and approve the project
->    `.mcp.json` server.
+>    User env check now shows persistent `AI_MEMORY_API_KEY` is already present (43 chars, not printed),
+>    `ai-memory-mcp` resolves on PATH, and the operator has reloaded Cursor. Current Cursor guidance says
+>    the server should appear under **Cursor Settings → Tools & MCP**; older builds may show
+>    **Settings → Features → Model Context Protocol**; debug logs are under **Output → MCP Logs**.
+>    **NEXT ACTION:** one operator UI check, concierge-style: open Cursor Settings → Tools & MCP and look
+>    for an `ai-memory` server entry. Success condition: `ai-memory` is listed and enabled. Claude Code
+>    CLI is not installed on this machine; when installed, open it from parent workspace `ai-memory` and
+>    approve the project `.mcp.json` server.
 > 12. **Handoff rule reminder:** when the next reversible session step is done and verified, update
 >    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
 >    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos

@@ -14,9 +14,11 @@
 ## How
 
 1. Copy `TEMPLATE.md` → `docs/coe/YYYY-MM-DD-short-slug.md`.
-2. Fill it in: **impact, timeline, detection, 5-whys to a *systemic* root cause,**
-   and corrective actions split **Prevent / Detect / Mitigate** (owner · date ·
-   status).
+2. Fill it in: **impact, timeline, detection, industry benchmark, 5-whys to a
+   *systemic* root cause,** and corrective actions split **Prevent / Detect /
+   Mitigate** (owner · date · status). Benchmark at least against AWS/Amazon COE
+   practice and Google SRE blameless postmortem practice so we know whether the
+   response is merely documented or actually operationally strong.
 3. **Fix the control plane before the data plane** — the rule / spec / mechanism
    that *allowed* it, before the instance, or the instance regenerates.
 4. Land the systemic fix in a **tenet or ADR**; land the lesson in
@@ -31,3 +33,4 @@
 | 2026-06-08 | `2026-06-08-cursor-credit-exhaustion.md` | A long-lived stateful Cursor session burned a month's plan credits in half a day (context-window amplification) | tenet 16 (stateless/checkpointed sessions) + AGENTS Working model + DoD resume-token gate |
 | 2026-06-08 | `2026-06-08-atomic-handoff-failure.md` | Completed Phase 3 work was documented locally but not atomically committed/pushed across every touched repo | AGENTS completion gate now explicitly covers every touched repo incl. package repos; final all-repo handoff check parked |
 | 2026-06-09 | `2026-06-09-session-handoff-omission.md` | Phase 4 work was verified but final response omitted commit/push and a fresh-session resume prompt | AGENTS final-response gate sharpened: pushed commits or named blockers + copy-paste resume prompt |
+| 2026-06-09 | `2026-06-09-concierge-handoff-regression.md` | The next session repeated the handoff pattern and added cognitive load with vague MCP-check instructions plus an uncheckpointed resume prompt | Concierge action template + checkpoint-gated resume prompt + final handoff verifier promoted from P2 to P1 |

@@ -37,6 +37,11 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     he'll land on, and what to ignore (consoles push templates/upsells/wizards —
     pre-empt those: "the homepage will try to make you pick a template; skip it,
     go straight to X"). Anticipate the thing that will throw him off.
+  - **Operator-delegated action format:** before asking Chandra to click/type/run
+    anything, give exactly one action with: (1) ELI5 purpose, (2) exact UI path or
+    command, (3) visible success condition, and (4) "tell me what you see." If any
+    of those four are unknown, verify first; do not hand him a vague "confirm it"
+    instruction.
   - **Web-verify volatile UI steps before prompting.** Browser and SaaS console
     layouts drift; check current official docs or the live UI immediately before
     giving click-by-click instructions. State the exact artifact to pick (e.g.,
@@ -103,7 +108,8 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     tenet/rule violation, defect, incident, or agent non-adherence as a chance to
     improve the *system* (Amazon "Correction of Errors"). Beyond-trivial issues get
     a structured, **blameless** COE in `docs/coe/` (impact · timeline · detection ·
-    5-whys to a systemic root cause · Prevent/Detect/Mitigate actions w/ owner+date).
+    industry benchmark · 5-whys to a systemic root cause · Prevent/Detect/Mitigate
+    actions w/ owner+date).
     **Fix the control plane (rule/spec/mechanism) before the data plane (instance)**;
     capture the lesson in a tenet/ADR + `interview_packet.md`. Depth ∝ blast radius.
 15. **Fixed, capped cost beats variable — even at a mild premium.** Prefer
@@ -115,8 +121,8 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 16. **Stateless, disposable sessions — checkpoint to the repo, don't accumulate
     context.** One task per session (the STATUS "Next action"), single-shot — not a
     marathon thread. State lives in **files, not chat**: checkpoint `STATUS.md` after
-    *every* step, and **end every response with a copy-paste Resume prompt** so a fresh
-    chat resumes with zero loss. *Why:* a long-lived stateful session re-sends its whole
+    each logical step, and emit a copy-paste Resume prompt only after that checkpoint is
+    current so a fresh chat resumes with zero loss. *Why:* a long-lived stateful session re-sends its whole
     transcript each turn → ~quadratic token cost (*context-window amplification*); one
     half-day session burned a month's Cursor credits. Bounded sessions cap that blast
     radius (agent-tooling analog of tenet 15). Twelve-Factor stateless-process + backing
@@ -209,9 +215,10 @@ Full diagram: `docs/architecture.md`.
   **one task, single-shot**, not a marathon thread: a long-lived chat re-sends its whole
   transcript every turn (≈quadratic token cost — *context-window amplification*) and once
   burned a month's Cursor plan credits in half a day (COE 2026-06-08). So **state lives in
-  files, not chat** — checkpoint `STATUS.md` after *each* step, and **end every response
-  with a copy-paste Resume prompt** so the operator can start a fresh chat at any point
-  with zero loss. Prefer a new chat over a long follow-up thread.
+  files, not chat** — checkpoint `STATUS.md` after *each logical step*. A copy-paste
+  Resume prompt is allowed only after that checkpoint is current; if the session is
+  mid-step and not safely resumable, say so plainly and do **not** print a false
+  resume token. Prefer a new chat over a long follow-up thread once a checkpoint exists.
 - **Workspace/root discipline:** the root operating surface is the parent `ai-memory`
   workspace containing the three sibling repos. Treat `ai-memory-infra` as the
   **control plane** for cross-package planning, rules, docs, STATUS, and orchestration,
@@ -244,11 +251,13 @@ Full diagram: `docs/architecture.md`.
   do not require a second "please commit" prompt. If a higher-level tool policy or a
   real blocker prevents commit/push, say that before the final answer and leave the
   repo in a clearly documented handoff state.
-- **Final response gate:** before any final answer, explicitly verify and satisfy both
+- **Final response gate:** before any final answer, explicitly verify and satisfy all
   handoff requirements: (1) every touched git repo is committed and pushed, or the blocker
-  is named plainly; (2) the answer ends with a copy-paste **Resume prompt** that tells the
+  is named plainly; (2) `STATUS.md` and required logs have been updated to a logical
+  checkpoint; (3) the answer either ends with a copy-paste **Resume prompt** that tells the
   next fresh chat to read `docs/planning/STATUS.md` + `AGENTS.md`, run repo-health, and do
-  the latest Next action. Missing either item is a COE-class handoff failure.
+  the latest Next action, or explicitly says no resume prompt is valid because the work is
+  mid-step. Missing any item is a COE-class handoff failure.
 
 ## Documentation discipline / Definition of Done
 
@@ -268,7 +277,7 @@ docs to update:
 | Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
 | Create / obtain any account, API token, key, or secret | Store it **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault |
 | End of any working session | (1) `docs/planning/STATUS.md` — overwrite: current phase, last decisions, open blockers, next action. (2) **Append** a session entry to the private `docs/planning/BUILD-LOG.md` (steps · gotchas/micro-lessons · time: wall-clock + rough human/agent split) and a curated, no-personal-detail summary to public `docs/BUILD-JOURNEY.md` (keep them in agreement, tenet 10) |
-| Every step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each step boundary — not just at session end — so the file is always resume-ready. End **every** response with a copy-paste **Resume prompt** reflecting the latest checkpoint (read `STATUS.md` + `AGENTS.md` → repo-health → Next action) so a fresh chat resumes with zero loss |
+| Every logical step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each logical step boundary — not just at session end — so the file is resume-ready at real handoff points. End a response with a copy-paste **Resume prompt** only when that checkpoint exists; otherwise say the work is mid-step and keep going in the current chat |
 
 **Done means:** code tests green (if code) · the trigger row's docs updated · an
 ADR exists for any major choice · `STATUS.md` refreshed · PR checklist ticked ·

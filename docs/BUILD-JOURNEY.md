@@ -9,6 +9,29 @@
 
 ---
 
+## 2026-06-09 — Tightened COE and concierge handoff controls
+
+**Focus:** close a repeat governance failure before continuing the MCP client check.
+
+**Milestones**
+- **Verified the local MCP handoff state.** Repo-health was green, the required
+  environment variable was already present without printing its value, and the local
+  `ai-memory-mcp` command was on PATH. Current Cursor guidance places MCP servers under
+  `Settings → Tools & MCP` (older builds may use `Features → Model Context Protocol`).
+- **Opened a repeat-failure COE.** The agent had added cognitive load by asking for a vague
+  "confirm it" check and had printed a resume prompt before checkpointing repo state.
+- **Upgraded the COE standard.** The template and existing COEs now include an industry
+  benchmark section comparing the response against AWS/Amazon COE and Google SRE
+  blameless-postmortem practices.
+
+**Decisions**
+- **Resume prompts are checkpoint-gated.** A fresh-session prompt is valid only when
+  `STATUS.md` and required logs are current at a logical handoff point.
+- **Operator-delegated steps now use a fixed concierge format:** purpose, exact UI path or
+  command, visible success condition, and a wait point.
+- **The final all-repo handoff verifier is now P1**, not P2, because repeated human-caught
+  handoff failures show that prose gates are insufficient.
+
 ## 2026-06-08 — Made "no secrets in git" a machine-enforced gate
 
 **Focus:** turn the project's "never commit secrets" rule from prose into an automatic,

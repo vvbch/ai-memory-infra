@@ -47,6 +47,19 @@ extension package had also been pushed. There was no mandatory final all-repo st
 gate checking every touched repo for clean `main...origin/main`, so the agent could
 declare handoff complete with a stale package remote.
 
+## Industry benchmark
+
+- **AWS/Amazon COE benchmark:** a procedural miss gets a COE when it reveals an
+  opportunity for improvement; 5 Whys should continue past "human error" to the
+  missing check or fail-safe. This COE met that bar by naming the missing
+  touched-repo inventory, not the operator or agent as the root cause.
+- **Google SRE postmortem benchmark:** postmortems should produce action items
+  that improve detection and mitigation, not only prevention. This COE identified
+  the right Detect action: an all-repo handoff verifier.
+- **Benchmark gap:** the verifier was left as P2 backlog even though the next
+  day produced another human-caught handoff regression. After the recurrence, the
+  verifier is no longer optional polish; it is P1 governance hardening.
+
 ## Root cause — 5 Whys
 
 1. **Why was completed session work not committed and pushed?** The agent followed the
@@ -74,7 +87,7 @@ declare handoff complete with a stale package remote.
 | Sharpen `AGENTS.md`: package repos are first-class touched repos; completion gate covers every touched repo, not just control-plane docs | Prevent | agent | 2026-06-08 | ✅ done |
 | Update `STATUS.md` next-action reminder: next session must verify all touched repos clean/aligned after commit+push | Prevent | agent | 2026-06-08 | ✅ done |
 | Record this COE and index it | Prevent | agent | 2026-06-08 | ✅ done |
-| Add a final handoff checklist or script that enumerates touched repos and fails if any are dirty/ahead/behind before final response | Detect | Chandra+agent | P2 governance hardening | ⏳ backlog |
+| Add a final handoff checklist or script that enumerates touched repos and fails if any are dirty/ahead/behind before final response | Detect | Chandra+agent | P1 governance hardening | ⏳ promoted after 2026-06-09 recurrence |
 | Until automated, final response must name every touched repo and latest pushed commit | Detect/Mitigate | agent | every session | ⏳ in effect |
 
 ## Lessons learned
