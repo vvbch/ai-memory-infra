@@ -511,3 +511,32 @@ whole thing with a real run. Short concierge session.
 **Next**
 - Create the private extension repo, verify the upstream baseline builds, then do the self-hosted
   auth/URL rewrite there.
+
+## 2026-06-08 — Private extension repo created, baseline build verified
+
+**Focus:** turn the extension-fork decision into a real private repo and prove the raw upstream code
+still builds before changing it.
+
+**Milestones**
+- **Private repo created.** We created `vvbch/ai-memory-extension` as a private GitHub repo and
+  imported the upstream MIT `mem0ai/mem0-chrome-extension` history, preserving attribution while
+  keeping the raw fork out of public view during cleanup.
+- **Baseline build is green.** After installing normal Node.js tooling on Windows, the raw upstream
+  extension passed `npm install` and `npm run build`. That gives us a clean starting point: any future
+  breakage comes from our rewrite, not from an unknown imported baseline.
+- **Operating rule sharpened.** The docs now say explicitly that routine reversible implementation is
+  the agent's job to verify and commit. The owner reviews decisions and outcomes, not every mechanical
+  code diff.
+
+**Engineering notes**
+- **PowerShell detail:** the machine's bundled Cursor Node did not include npm, so we installed Node.js
+  LTS with `winget`. Use `C:\Program Files\nodejs\npm.cmd`; PowerShell blocks the `npm.ps1` shim by
+  execution policy.
+- **Inherited dependency debt:** npm reported 11 audit findings in the upstream dependency tree. We
+  did not run `npm audit fix` blindly before the self-hosted rewrite, because that could change the
+  baseline before we understand compatibility.
+
+**Next**
+- Rewire the extension in `ai-memory-extension`: server URL to `memory.chandrav.dev`, auth to
+  `X-API-Key`, replace mem0 cloud login with local settings, remove telemetry, then verify the REST
+  shapes against the live server.

@@ -310,6 +310,9 @@ Operating rules:
 - **Two-way door → act, then report.** Commit every session (never leave changes hanging),
   pick a reasonable default (naming, formatting, structure, ordering), proceed — and *state
   the call* so it's visible and trivially reversible. A clean revert is the safety net.
+  Do **not** introduce "operator will inspect/commit" gates for routine code: the operator
+  reviews decisions and outcomes, while the agent owns reversible implementation,
+  verification, and commits.
 - **One-way door → stop and get a conscious go/no-go.** Money committed, lock-in entered,
   data/ history destroyed, scope materially changed, or any tenet-12/15-class decision —
   **including data-loss semantics delivered by otherwise-reversible code** (destructive

@@ -4,21 +4,21 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 7: Chrome extension fork DECIDED; separate
-private repo chosen; infra repo checkpoint COMMITTED**). Phase 2 is closed; started Phase 3
-(browser reach). Ran repo-health (both repos green, `0 ahead/0 behind`). **Web-verified the
-extension landscape (tenet 8)** — mem0's own **`mem0ai/mem0-chrome-extension`** (MIT, archived
-2026-03; ships per-site content scripts for ChatGPT/Claude/Gemini/DeepSeek + Grok/Perplexity) vs
-3rd-party forks that ship their *own* backend (SYNQ/ArcRift — Ollama + local DBs, against tenet 7)
-vs build-from-scratch. Surfaced the call to the operator (concierge); operator chose to **fork
-mem0's MIT extension and rewire it to our self-hosted server** (ADR 024). Follow-up operator call:
-**extension gets its own GitHub repo, private for now** (avoid public confusion/licensing worry while
-the raw fork is cleaned up and rewritten). The temporarily-vendored upstream source was **not
-committed** into `ai-memory-infra`; `extension/README.md` is now only a pointer. **Scoped the
-rewiring** (read the source before cleanup): cloud coupling is isolated — calls hit hardcoded
-`https://api.mem0.ai` with `Authorization: Bearer/Token`, plus PostHog telemetry; our server uses
-`https://memory.chandrav.dev` + **`X-API-Key`**. **Next: create private `ai-memory-extension` repo
-from the upstream fork/baseline, then do cleanup + rewrite there.**
+**Last updated:** 2026-06-08 (**Phase 3 — session 8: private extension repo CREATED; upstream
+baseline BUILD GREEN; commit-policy gate clarified**). Phase 2 is closed; Phase 3 browser reach is
+active. Ran repo-health (both repos green; both had `1 ahead / 0 behind` reminders from the prior
+checkpoint). Created private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
+MIT `mem0ai/mem0-chrome-extension` history, cloned it locally beside the infra repo, and pushed the
+baseline to the private origin. Installed normal Node.js tooling on Windows (`winget`
+`OpenJS.NodeJS.LTS`; use `C:\Program Files\nodejs\npm.cmd` because PowerShell blocks `npm.ps1`),
+then ran **`npm install` + `npm run build` successfully** against the raw upstream baseline. npm
+reported **11 inherited audit findings** (4 moderate, 7 high); parked for the rewrite rather than
+running `npm audit fix` before understanding upstream compatibility. Updated tenet 17 in
+`AGENTS.md` + `docs/tenets.md`: agents should not add "operator will inspect/commit" gates for
+routine reversible code; the operator reviews **decisions and outcomes**, while the agent owns
+reversible implementation, verification, and commits. **Next: in `ai-memory-extension`, rewire the
+transport/auth layer to `https://memory.chandrav.dev` + `X-API-Key`, remove mem0 cloud login and
+PostHog telemetry, then verify the API shapes.**
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -317,12 +317,13 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 3 — Chrome extension fork → IN PROGRESS (session 7).** Decision made (**ADR 024**): fork
+**Phase 3 — Chrome extension fork → IN PROGRESS (session 8).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
-self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source lives
-in the new repo. **Next: create private `ai-memory-extension` repo, then rewire the transport/auth
-layer there** (base URL → `memory.chandrav.dev`; `Authorization: Bearer/Token` → `X-API-Key`; drop
-Google sign-in; strip PostHog telemetry; verify `/memories` + `/search` shapes).
+self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source now
+lives in private repo **`vvbch/ai-memory-extension`**. Upstream baseline is cloned locally and
+**builds green**. **Next: rewire the transport/auth layer there** (base URL →
+`memory.chandrav.dev`; `Authorization: Bearer/Token` → `X-API-Key`; drop Google sign-in; strip
+PostHog telemetry; verify `/memories` + `/search` shapes).
 
 **Phase 2 — backup/restore → COMPLETE.** Scripts DONE & PROVEN; automation §1–§4 all built &
 verified; the drill's 2nd healthchecks.io check (`DRILL_HEALTHCHECK_URL`) is now **wired & verified
@@ -702,20 +703,20 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Decision made; next is create the
-> separate private extension repo.** Session 7 (2026-06-08): ran repo-health (green), web-verified the
-> landscape (tenet 8), surfaced the call, **operator chose to fork mem0's MIT
-> `mem0-chrome-extension`** (ADR 024). Follow-up operator decision: **extension source gets its own
-> private GitHub repo for now** (not vendored into `ai-memory-infra`) while we clean up/rewrite and
-> avoid public confusion/licensing worry during the raw-fork phase. The temporary vendored source was
-> removed before commit; `ai-memory-infra/extension/README.md` is only a pointer.
+> **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; upstream baseline
+> builds; next is the self-hosted rewrite.** Session 8 (2026-06-08): ran repo-health (green), created
+> private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream MIT
+> `mem0ai/mem0-chrome-extension` history, cloned it locally, and verified the raw upstream baseline
+> with `npm install` + `npm run build` (green). Node.js LTS was installed with `winget`; on this
+> Windows PowerShell use `C:\Program Files\nodejs\npm.cmd` because `npm.ps1` is blocked by execution
+> policy. npm reported 11 inherited audit findings; do not run `npm audit fix` blindly before the
+> rewrite. Commit-policy gate clarified in `AGENTS.md` + `docs/tenets.md`: agents commit reversible
+> work; operator reviews decisions and outcomes.
 >
 > **NEXT ACTION (next session, one step at a time):**
-> 1. Create private GitHub repo **`ai-memory-extension`** (unless operator picks a different name).
->    Prefer a true fork/import of `mem0ai/mem0-chrome-extension` so upstream MIT history and attribution
->    are preserved. Keep it private initially.
-> 2. Move the working surface to that repo, then run its Node install/build once (`npm install`,
->    `npm run build`) to verify the upstream baseline before changing code.
+> 1. ✅ Create private GitHub repo **`ai-memory-extension`** and preserve upstream history/attribution.
+> 2. ✅ Move the working surface to that repo and verify the raw upstream baseline (`npm install`,
+>    `npm run build`) before changing code.
 > 3. Rewire the transport/auth layer there: centralize `https://api.mem0.ai`; point default server to
 >    `https://memory.chandrav.dev`; replace `Authorization: Bearer/Token` with **`X-API-Key`**; replace
 >    Google sign-in with settings (server URL + API key + user id); strip PostHog telemetry; verify

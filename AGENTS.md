@@ -118,8 +118,10 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 17. **Minimize operator cognitive load — act on reversible (two-way-door) decisions;
     deliberate only on one-way doors.** For easily-reversible work the agent **just does it
     and reports the call** (commit every session — never leave changes hanging; pick
-    reasonable defaults; proceed); a clean `git revert` is the safety net. Reserve the
-    operator's attention for **one-way doors** (spend, lock-in, deletion, scope change —
+    reasonable defaults; proceed); a clean `git revert` is the safety net. Do **not** add
+    "operator will inspect/commit" gates for routine code: the operator reviews decisions
+    and outcomes, while the agent owns reversible implementation, verification, and commits.
+    Reserve the operator's attention for **one-way doors** (spend, lock-in, deletion, scope change —
     tenet 12/15 class) and genuine matters of taste. **Classify by the irreversibility of
     the *effect*, not the code:** reversible code (a script/config a `git revert` removes)
     can still encode an *irreversible effect* — destructive restore, delete-on-prune
