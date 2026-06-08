@@ -210,6 +210,13 @@ Full diagram: `docs/architecture.md`.
   files, not chat** — checkpoint `STATUS.md` after *each* step, and **end every response
   with a copy-paste Resume prompt** so the operator can start a fresh chat at any point
   with zero loss. Prefer a new chat over a long follow-up thread.
+- **Workspace/root discipline:** the root operating surface is the parent `ai-memory`
+  workspace containing the three sibling repos. Treat `ai-memory-infra` as the
+  **control plane** for cross-package planning, rules, docs, STATUS, and orchestration.
+  Do **not** move the agent/chat root into `ai-memory-extension` or another package repo
+  just to gain context; use package repos only as targeted data-plane workspaces for the
+  files being edited. If a package needs changes, make the package edits deliberately,
+  then return the checkpoint/control-plane updates to `ai-memory-infra`.
 - Sessions (sequential *or* parallel) share **files, not chat memory** — **re-read a file
   before acting**, and never edit the same file from two sessions at once.
 - **The safeguard against agent error is the Definition-of-Done verification
@@ -219,6 +226,11 @@ Full diagram: `docs/architecture.md`.
   `scripts/check-repo-health.*` **at session start and before every commit**.
   (The hard layers are the git pre-commit hook + the daily scheduled run; this
   line is the human/agent reminder so a missing hook never means a missing check.)
+- **Completion gate:** when a reversible work item is done and verified, commit the
+  relevant changes and push the touched repo(s) to remote in the same session. Do **not**
+  leave a routine "operator will commit/push" gate. Pause before commit/push only for
+  one-way-door effects (spend, lock-in, deletion, data overwrite/retention policy),
+  secrets, destructive operations, or an explicit operator pause.
 
 ## Documentation discipline / Definition of Done
 

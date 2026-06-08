@@ -4,8 +4,8 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 11: browser reload still failing;
-fresh debug session next**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
+**Last updated:** 2026-06-08 (**Phase 3 — session 13: control-plane guidance corrected;
+operator reload/test still next**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
 private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
 MIT `mem0ai/mem0-chrome-extension` history, installed Node.js LTS on Windows, verified the raw
 upstream build, then rewrote the extension in commit **`7ac3011`**: default server
@@ -31,7 +31,21 @@ memories: TypeError: Failed to fetch`** at `assets/sidebar.ts-CSsZSEPr.js:126`, 
 runtime.lastError: Cannot create item with duplicate id mem0.saveSelection`**. **Next: start a fresh
 debug session; inspect the extension runtime/service-worker/content-script errors, verify whether the
 fetch failure is CORS/host-permission/service-worker-context related, and make context-menu creation
-idempotent.**
+idempotent.** Session 12: root cause verified against Chrome docs — content scripts inherit the page
+origin and cannot directly bypass CORS, even with extension host permissions; extension pages/service
+workers can fetch permitted hosts. Implemented a small background API relay for `/memories` and
+`/search`, switched the sidebar Recent Memories fetch and ChatGPT content-script search/save calls to
+use it, and made `mem0.saveSelection` context-menu creation remove/recreate idempotently on reload.
+Verification: `npm run type-check` green; `npm run build` green; `dist/` regenerated. **Next:
+operator reloads the unpacked extension
+in Chrome and tests the ChatGPT sidebar; if it still fails, inspect the extension service-worker
+console and page console for the new background-relay error.** Session 13: operator corrected the
+agent working model after root/context drift. Updated `AGENTS.md` to make explicit that the parent
+`ai-memory` workspace is the operating surface, `ai-memory-infra` is the control plane for all three
+sibling repos, package repos are targeted data-plane workspaces only, and reversible completed work
+items must be committed and pushed to remote in the same session. **Next remains:** operator reloads
+the unpacked extension in Chrome and tests the ChatGPT sidebar; if it still fails, inspect the
+extension service-worker console and page console for the new background-relay error.
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -749,11 +763,19 @@ pre-commit is now DONE** (gitleaks gate).
 > 7. ✅ Reloaded the unpacked extension in `chrome://extensions/`; browser still showed:
 >    `Error fetching memories: TypeError: Failed to fetch` on `https://chatgpt.com/`
 >    (`assets/sidebar.ts-CSsZSEPr.js:126`) and `Cannot create item with duplicate id mem0.saveSelection`.
-> 8. Fresh-session debug target: inspect the extension runtime/service-worker/content-script errors,
->    verify CORS/host-permission/request-context for `GET /memories?user_id=...`, and make context-menu
->    registration idempotent. Then rebuild, reload, and continue `/memories`, `/search`, and
->    `GET /memories?user_id=` browser verification.
-> 9. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 8. ✅ Fixed and rebuilt the two runtime errors from session 11. Chrome docs confirmed content scripts
+>    on `chatgpt.com` cannot directly bypass CORS; the extension service worker must perform permitted
+>    cross-origin API calls. Added a background API relay for `/memories` + `/search`, switched the
+>    sidebar Recent Memories fetch plus ChatGPT content-script search/save calls through that relay, and
+>    made `mem0.saveSelection` context-menu setup idempotent by remove/recreate on worker init.
+>    `npm run type-check` + `npm run build` green; `dist/` regenerated.
+> 9. **NEXT OPERATOR STEP:** in Chrome, go to `chrome://extensions/`, click **Reload** on
+>    **OpenMemory**, then open/refresh `https://chatgpt.com/` and click the OpenMemory sidebar/widget.
+>    Expected: no duplicate context-menu error, and Recent Memories loads or shows a real HTTP/auth
+>    error instead of `TypeError: Failed to fetch`.
+> 10. If it still fails, inspect the OpenMemory service-worker console plus the ChatGPT page console
+>    and continue `/memories`, `/search`, and `GET /memories?user_id=` browser verification.
+> 11. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
