@@ -8,6 +8,17 @@
 > **P2** = governance/quality hardening, fold into the relevant phase. **P3** =
 > valuable but non-blocking / personal.
 
+## Active pre-build gate — do before any more build work
+
+- **`[product-design]` Define agent/persona definitions before skills/tools.** This
+  is the next resume point even though it is not a numbered infra build phase.
+  Before implementing more skills, define the small set of agents/personas that
+  will use the memory layer, their boundaries, what each is allowed to
+  store/retrieve, and success criteria. Then skills/tools can be attached under
+  those agents. Reason: skills without agent definitions become a bag of commands
+  with no owner or success criteria. Set by operator 2026-06-09 after Cursor MCP
+  visibility was proven.
+
 ## P1 — do at the start of Phase-1 CI work
 
 - **`[governance]` Final all-repo handoff verifier — PROMOTED from P2 after

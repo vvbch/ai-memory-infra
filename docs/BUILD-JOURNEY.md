@@ -34,6 +34,8 @@
   handoff failures show that prose gates are insufficient.
 - **Cursor MCP visibility is proven.** After reload, Cursor listed a workspace MCP server named
   `ai-memory`.
+- **Next work is a pre-build product gate.** Before any more build work, define the agents/personas
+  that will use the memory layer; skills/tools come after those definitions.
 
 ## 2026-06-08 — Made "no secrets in git" a machine-enforced gate
 

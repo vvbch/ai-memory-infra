@@ -5,7 +5,7 @@
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
 **Last updated:** 2026-06-09 (**Phase 4 — session 19: Cursor MCP server visible; next =
-agent definitions before skills**). Parent
+pre-build agent definitions before skills/build work**). Parent
 workspace `ai-memory` now has a root `AGENTS.md` plus `.cursor/rules/00-workspace-control-plane.mdc`,
 both thin pointers that route future agents directly to `ai-memory-infra` as the control
 plane before they spend time rediscovering the folder layout. Live OpenAPI showed
@@ -36,7 +36,10 @@ prompts to be valid only after a logical checkpoint, and promoted the final all-
 verifier from P2 to P1. Operator then confirmed Cursor lists a **workspace MCP server** named
 `ai-memory`, proving the Cursor-side MCP registration is visible. A final rule refinement was
 added after another operator catch: do **not** print a resume prompt while waiting on Chandra to
-perform the next step in the same active flow, even if `STATUS.md` is current. Phase 2 is closed;
+perform the next step in the same active flow, even if `STATUS.md` is current. Operator then set
+the next resume point: before any further build work, define the agents/personas that will use the
+memory layer, then define skills/tools under them. This is a pre-build product-design gate, not a
+numbered infra phase. Phase 2 is closed;
 Phase 3
 browser reach is sufficiently proven for the seamless path. Session 17 ran repo-health
 green for `ai-memory-infra` + `ai-memory-infra-private`, then proved ChatGPT-side
@@ -417,11 +420,12 @@ workspace root; the persistent `AI_MEMORY_API_KEY` user env var is already set; 
 reloaded Cursor. Cursor now lists a workspace MCP server named `ai-memory`, so Cursor-side local
 MCP visibility is proven. The current correction tightened concierge/handoff rules after the agent
 gave a vague MCP-check instruction and emitted resume prompts while operator action was pending.
-**Next:** move to **agent definitions before skills**. First define the small set of agents/personas
-that will use the memory layer (for example: coding agent, research/strategy agent, personal
-operator assistant), their boundaries, and what each should store/retrieve. Then add skills/tools
-under those agents. Reason: skills without agent definitions become a bag of commands with no owner
-or success criteria.
+**Next:** **pre-build gate — define agent/persona definitions before any more build work.** Do not
+start implementing skills/tools yet. First define the small set of agents/personas that will use the
+memory layer (for example: coding agent, research/strategy agent, personal operator assistant), their
+boundaries, what each should store/retrieve, and success criteria. Then add skills/tools under those
+agents. Reason: skills without agent definitions become a bag of commands with no owner or success
+criteria.
 
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
