@@ -1,8 +1,9 @@
 # ADR 023: Backup automation & data-loss hardening (Phase 2, reopened)
 
-**Status:** Accepted — decisions locked this session; **implementation deferred to the
-next session** (tenet 16, single-task sessions). This ADR is the spec the next session
-builds against.
+**Status:** Accepted — **§1 (timer) + §2 (heartbeat) LIVE; §3 (data-loss hardening)
+IMPLEMENTED 2026-06-08** (see Implementation update below). **§3(b) least-privilege key
+pending an operator console step; §4 (restore drill) not yet started.** This ADR is the
+spec; the Implementation update records what was verified and built.
 **Date:** 2026-06-08
 **Deciders:** Chandra
 
@@ -113,3 +114,53 @@ Five decisions, to be **implemented next session**:
 irreversibility of the effect, not the code".)*
 
 ---
+
+## Implementation update (2026-06-08, §3 data-loss hardening)
+
+**Vendor facts web-verified first (tenet 8; source = DigitalOcean official docs):**
+
+- **Spaces Bucket Versioning — SUPPORTED** (API/Terraform only, not the control panel). A
+  delete creates a *delete-marker* and the prior object becomes a recoverable noncurrent
+  version. Once enabled a bucket can never return to fully-unversioned (only suspended).
+- **Spaces Bucket Lifecycle — SUPPORTED**: time-based `expiration`,
+  `noncurrent_version_expiration`, `expired_object_delete_marker`, and
+  abort-incomplete-multipart. (Tag-based rules are *not* supported — we don't need them.)
+- **Object-Lock / WORM — NOT SUPPORTED** (DO-staff-confirmed). True immutability would
+  require a *different provider* (S3/B2/Wasabi) = a tenet-12 vendor change, **out of scope**.
+  Versioning is the practical delete/overwrite recovery net instead.
+- **Spaces access-key scopes = Read / Read-Write-Delete / All only** → there is **no
+  "write-but-cannot-delete" tier**. So §3(b)'s "no mass-delete" goal isn't fully attainable
+  on DO; the realistic least-privilege is a key **scoped to the backup bucket only** (limits
+  blast radius), with versioning as the recovery backstop.
+
+**Built (operator-approved retention: keep 30 days; deleted/overwritten copies recoverable
+14 days):**
+
+- **(§3a) Versioning + server-side lifecycle, via Terraform** (`infra/terraform/main.tf`,
+  `digitalocean_spaces_bucket.backups`). Versioning was already declared and confirmed
+  **live** by a refresh-plan (no change). Added two `lifecycle_rule`s — `expire-old-backups`
+  (`expiration.days=30`, `noncurrent_version_expiration.days=14`,
+  `abort_incomplete_multipart_upload_days=1`) and `sweep-expired-delete-markers`
+  (`expired_object_delete_marker=true`). `terraform apply` = *1 changed*; a follow-up plan
+  reported **"No changes"** (converged). Retention is now a **declarative, auditable
+  server-side policy**, not an imperative client-side `rm`.
+- **(§3a, cont.) Removed the client-side prune** from `backup.sh` (the old
+  `s3cmd del --recursive --force` of old prefixes). The backup path **no longer deletes
+  anything** — a buggy or compromised droplet can't wipe the backup history.
+- **(§3c) Pre-restore safety snapshot** added to `restore.sh`: after the typed `RESTORE`
+  confirm and *before* any overwrite, it runs `backup.sh` to capture the **current** state,
+  converting the destructive restore into a two-way door. Default ON; `SKIP_PRESNAPSHOT=1`
+  escape hatch for when the current state is already broken/unbackupable. A failed snapshot
+  **aborts** the restore (won't overwrite live data blindly).
+
+**Still open:**
+
+- **(§3b) Least-privilege backup key** — DO can't do write-without-delete, so the plan is a
+  **bucket-scoped** Spaces key (+ Bitwarden custody, ADR 017). This needs an **operator
+  console step** (create the scoped key) + a droplet `.env` swap → done as the next concierge
+  step.
+- **(§4) Recurring restore drill** — not started.
+
+*(Cross-platform fix shipped alongside: `backup.sh`/`restore.sh` `.env` readers now strip a
+trailing CR via `tr -d '\r'`, so a Windows/PowerShell-appended `.env` line can't corrupt a
+value — retires the manual `sed -i 's/\r$//'` gotcha.)*

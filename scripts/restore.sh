@@ -19,6 +19,7 @@ PROJECT="${COMPOSE_PROJECT_NAME:-ai-memory-infra}"
 NEO4J_IMAGE="${NEO4J_IMAGE:-neo4j:5.26.4}"
 NEO4J_DB="${NEO4J_DB:-neo4j}"
 WHICH="${1:-latest}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
 
@@ -86,6 +87,23 @@ if [[ "${FORCE:-0}" != "1" ]]; then
 	echo "on this droplet with the ${TS} snapshot. This cannot be undone."
 	read -r -p 'Type RESTORE to proceed: ' ans
 	[[ "${ans}" == "RESTORE" ]] || die "aborted."
+fi
+
+# --- 0. Pre-restore safety snapshot (ADR 023 §3) ------------------------------
+# A restore overwrites everything, so first capture the CURRENT state as its own
+# backup — that makes a wrong restore (or restoring the wrong snapshot) itself
+# recoverable. Default ON; set SKIP_PRESNAPSHOT=1 only when the current state is
+# already broken/unbackupable and you accept losing it (e.g. that's why you're
+# restoring). The snapshot lands in the same bucket as a normal backup.
+if [[ "${SKIP_PRESNAPSHOT:-0}" == "1" ]]; then
+	log "Skipping pre-restore safety snapshot (SKIP_PRESNAPSHOT=1) — current state will NOT be saved"
+else
+	log "Taking a pre-restore safety snapshot of the CURRENT state (so this restore is reversible)"
+	if bash "${SCRIPT_DIR}/backup.sh"; then
+		log "Pre-restore snapshot done — the pre-restore state is now backed up"
+	else
+		die "pre-restore safety snapshot FAILED — refusing to overwrite live data. Fix backup.sh, or re-run with SKIP_PRESNAPSHOT=1 to restore anyway (current state will be lost)."
+	fi
 fi
 
 # --- 1. Stop the app so nothing writes mid-restore ----------------------------

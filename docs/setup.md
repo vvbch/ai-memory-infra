@@ -247,8 +247,12 @@ sudo bash /opt/ai-memory-infra/scripts/backup.sh
 > online) + `tar` of the mem0 SQLite history (online) + an **offline** Neo4j dump
 > (briefly stops/starts neo4j — Community Edition can't dump a running DB; only
 > the graph pauses ~20–30 s, the API stays up). Uploads all three + a SHA-256
-> `MANIFEST.txt` to `s3://$BACKUP_BUCKET/backups/<UTC-timestamp>/`, then prunes to
-> the newest 7. Backups are **manual today** — cron scheduling is BACKLOG P2.
+> `MANIFEST.txt` to `s3://$BACKUP_BUCKET/backups/<UTC-timestamp>/`. **The script no
+> longer deletes anything** — retention is enforced **server-side** by a Spaces
+> lifecycle rule (ADR 023 §3: current backups expire after 30 days; a deleted/
+> overwritten copy stays recoverable 14 more days via bucket *versioning*). Backups
+> also run **automatically** nightly via a `systemd` timer (00:00 IST), monitored by
+> a dead-man's-switch (ADR 023 §1–§2); the command above is the manual/on-demand path.
 
 ### Restore  **[on the droplet — DESTRUCTIVE]**
 ```bash
@@ -256,10 +260,13 @@ sudo bash /opt/ai-memory-infra/scripts/restore.sh            # newest backup
 sudo bash /opt/ai-memory-infra/scripts/restore.sh 20260608T062241Z   # a specific one
 ```
 > **Deeper:** downloads the prefix, **verifies checksums against the manifest**,
-> then asks you to type `RESTORE` (set `FORCE=1` to skip for automation). It stops
-> mem0, `pg_restore --clean`s Postgres, wipes+untars the SQLite volume, and does an
-> offline Neo4j `load --overwrite`, then brings everything back. Give Neo4j ~30 s
-> to warm up, then verify with a `/search`.
+> then asks you to type `RESTORE` (set `FORCE=1` to skip for automation). It first
+> takes a **pre-restore safety snapshot** of the *current* state (so a wrong restore
+> is itself recoverable — set `SKIP_PRESNAPSHOT=1` only if the current state is
+> already broken/unbackupable), then stops mem0, `pg_restore --clean`s Postgres,
+> wipes+untars the SQLite volume, and does an offline Neo4j `load --overwrite`,
+> before bringing everything back. Give Neo4j ~30 s to warm up, then verify with a
+> `/search`.
 
 ### Done when
 `backup.sh` lands four files in the bucket, and a restore round-trips a known

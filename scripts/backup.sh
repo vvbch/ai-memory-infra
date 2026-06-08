@@ -27,7 +27,10 @@ ENV_FILE="${INFRA_DIR}/.env"
 PROJECT="${COMPOSE_PROJECT_NAME:-ai-memory-infra}" # `name:` in docker-compose.yml
 NEO4J_IMAGE="${NEO4J_IMAGE:-neo4j:5.26.4}"         # must match the running version
 NEO4J_DB="${NEO4J_DB:-neo4j}"                       # default DB holds mem0 + LifeGraph
-RETAIN="${RETAIN:-7}"                               # keep this many newest backups
+# Retention is enforced SERVER-SIDE by a Spaces lifecycle rule (ADR 023 §3,
+# infra/terraform/main.tf): current backups expire after 30 days, noncurrent
+# (deleted/overwritten) versions linger 14 more days. This script therefore
+# never deletes — a buggy or compromised box can't wipe the backup history.
 
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.prod.yml)
 
@@ -174,17 +177,10 @@ for f in postgres.dump neo4j.dump mem0-history.tar.gz MANIFEST.txt; do
 	"${S3[@]}" put "${STAGE}/${f}" "s3://${BACKUP_BUCKET}/${PREFIX}/${f}"
 done
 
-# --- 6. Retention: keep the newest $RETAIN backup prefixes --------------------
-log "Pruning old backups (keeping newest ${RETAIN})"
-mapfile -t PREFIXES < <("${S3[@]}" ls "s3://${BACKUP_BUCKET}/backups/" | awk '{print $NF}' | grep -E '/backups/[0-9TZ]+/$' | sort)
-count=${#PREFIXES[@]}
-if ((count > RETAIN)); then
-	prune=$((count - RETAIN))
-	for ((i = 0; i < prune; i++)); do
-		echo "  removing ${PREFIXES[i]}"
-		"${S3[@]}" del --recursive --force "${PREFIXES[i]}" >/dev/null
-	done
-fi
+# --- 6. Retention --------------------------------------------------------------
+# Handled server-side by the bucket lifecycle rule (ADR 023 §3) — see the note at
+# the top of this script. No client-side delete here by design (tenet 17): the
+# backup path never destroys data, so a fault here can't cascade into data loss.
 
 log "Backup complete: s3://${BACKUP_BUCKET}/${PREFIX}/"
 "${S3[@]}" ls "s3://${BACKUP_BUCKET}/${PREFIX}/"

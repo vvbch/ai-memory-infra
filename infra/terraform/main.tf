@@ -133,8 +133,23 @@ resource "cloudflare_dns_record" "apex_a" {
 }
 
 # ---- Backups bucket (DO Spaces) ------------------------------------------
-# Off-box destination for the Phase 2 backup pipeline. Private ACL; versioning
-# on so a bad backup can't clobber a good one.
+# Off-box destination for the Phase 2 backup pipeline. Private ACL.
+#
+# Data-loss hardening (ADR 023 §3, operator-approved 2026-06-08):
+#   - versioning ON: an accidental/malicious delete or overwrite leaves the
+#     prior copy recoverable (delete → delete-marker, old version retained).
+#     DO Spaces supports versioning + lifecycle (API/Terraform) but NOT
+#     Object-Lock/WORM (verified vs DO docs; true immutability would need a
+#     provider change = tenet 12, out of scope).
+#   - lifecycle owns retention server-side, replacing the old client-side
+#     `s3cmd del` prune in backup.sh (a buggy/compromised box can no longer
+#     wipe every backup; deletion is now a declarative, auditable policy):
+#       * current backups expire after 30 days,
+#       * noncurrent versions (a deleted/overwritten copy) stay recoverable
+#         14 more days, then are purged to bound cost,
+#       * expired delete-markers are swept,
+#       * incomplete multipart uploads are aborted after 1 day.
+# Retention is a TTL one-way door (tenet 17) — these numbers were signed off.
 
 resource "digitalocean_spaces_bucket" "backups" {
   name   = var.backup_bucket_name
@@ -143,5 +158,29 @@ resource "digitalocean_spaces_bucket" "backups" {
 
   versioning {
     enabled = true
+  }
+
+  lifecycle_rule {
+    id      = "expire-old-backups"
+    enabled = true
+
+    abort_incomplete_multipart_upload_days = 1
+
+    expiration {
+      days = 30
+    }
+
+    noncurrent_version_expiration {
+      days = 14
+    }
+  }
+
+  lifecycle_rule {
+    id      = "sweep-expired-delete-markers"
+    enabled = true
+
+    expiration {
+      expired_object_delete_marker = true
+    }
   }
 }

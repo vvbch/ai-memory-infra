@@ -4,7 +4,25 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 2 automation — implementation session 2: DEPLOYED & GREEN**).
+**Last updated:** 2026-06-08 (**Phase 2 automation — session 3: ADR 023 §3 data-loss hardening
+DONE + Windows→Linux CRLF bug fixed for good**). **(1) Portability fix (committed `9344466`):** the
+recurring Windows→Linux pain wasn't git (`.gitattributes` already pins `.sh` to LF) — it was *runtime*
+CR injection when appending to the droplet `.env` from PowerShell over SSH (trailing `\r` → broke the
+heartbeat URL last session). Fixed once and for all: `backup.sh`/`restore.sh` `.env` readers now pipe
+through `tr -d '\r'`, so a CRLF `.env` line can't corrupt a value — no more manual `sed -i 's/\r$//'`
+(verified with a CRLF fixture; `bash -n` clean). **(2) ADR 023 §3 (operator-approved retention: keep
+30 d, recoverable 14 d):** web-verified DO Spaces facts first (versioning ✅, lifecycle ✅, Object-Lock/
+WORM ❌, key scopes = Read/RWD/All only). Built via Terraform: versioning confirmed **already live**
+(refresh-plan = no change) + added two lifecycle rules (expire current @30 d, noncurrent @14 d, sweep
+delete-markers, abort incomplete MPU @1 d); `terraform apply` = 1 changed, re-plan = **converged**.
+**Removed the client-side `s3cmd del` prune** from `backup.sh` (the backup path no longer deletes
+anything → a compromised box can't wipe history; retention is now declarative server-side). **Added a
+pre-restore safety snapshot** to `restore.sh` (backs up current state before overwriting; `SKIP_PRESNAPSHOT=1`
+escape hatch; a failed snapshot aborts). ADR 023 + `setup.md` updated. **Still open in §3: (b)
+least-privilege bucket-scoped backup key — needs an operator console step (next).** **§4 restore drill
+not started.** **Next: §3(b) key, then §4 drill, then Phase 3 (Chrome extension).**
+
+**Prior update:** 2026-06-08 (**Phase 2 automation — implementation session 2: DEPLOYED & GREEN**).
 Brought the droplet to GitHub truth (`git reset --hard origin/main` → `c4f31b8`; **verified first**
 that the droplet's only un-committed live edits to `backup.sh`/`restore.sh`/`docker-compose.yml` were
 already represented in `origin/main`, so nothing live-only was lost — tenet 11), then **deployed +
@@ -586,20 +604,23 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 2 automation, session 3. ✅ (a) DEPLOY DONE & GREEN (session 2,
-> 2026-06-08):** droplet synced to `origin/main` (`c4f31b8`); the three `systemd` units installed
-> to `/etc/systemd/system/`; `ai-memory-backup.timer` **enabled + active** (next run 18:32 UTC ≈
-> 00:02 IST, `Persistent=true`); `HEALTHCHECK_URL` added to the droplet `/opt/ai-memory-infra/infra/.env`
-> (CR-strip gotcha fixed); two on-demand `systemctl start ai-memory-backup.service` runs =
-> `Result=success`, artifacts uploaded, prune ran; **healthchecks.io returned HTTP 200 `OK`
-> (dead-man's-switch GREEN)**. ADR 023 §1 + §2 are LIVE. **NEXT ACTION = (b) ADR 023 §3 data-loss
-> hardening** — ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST (tenet 8); move
-> retention to server-side lifecycle over the client-side `s3cmd del` prune; add a least-privilege
-> backup-only Spaces key; add a pre-restore safety snapshot to `restore.sh`. **(c) §4 restore
-> drill.** THEN Phase 3 (Chrome extension). **⚠ Tenet 17 — ASK before building anything that
-> deletes/overwrites data**, even if the code reverts cleanly (the §3 prune→lifecycle change and
-> the pre-restore snapshot are exactly this one-way-door class; surface options + get sign-off).
-> P1 `.env` plaintext-note strip stays deferred (tenet 18, ~2026-06-15).**
+> **RESUME HERE — Phase 2 automation, session 4. ✅ §1+§2 LIVE & GREEN (timer + dead-man's-switch);
+> ✅ §3 data-loss hardening DONE (session 3, 2026-06-08):** DO facts web-verified (versioning ✅,
+> lifecycle ✅, Object-Lock ❌, key scopes Read/RWD/All); versioning already live; two lifecycle rules
+> applied via Terraform (30 d current / 14 d noncurrent / sweep markers / abort MPU; re-plan converged);
+> client-side `s3cmd del` prune removed from `backup.sh`; pre-restore safety snapshot added to
+> `restore.sh`. Windows→Linux CRLF `.env` bug fixed for good (`tr -d '\r'` in the readers). **NEXT
+> ACTION = §3(b) least-privilege backup key** (concierge): DO has **no write-without-delete tier**, so
+> create a **bucket-scoped** Spaces key in the DO console (operator click-step), store it in Bitwarden
+> (ADR 017), swap it into the droplet `/opt/ai-memory-infra/infra/.env` (use the CR-safe append — now
+> auto-handled), re-run `backup.sh` to confirm it still works, then revoke/retire the old shared key's
+> backup use. **THEN §4 restore drill** (monthly; restore latest into a throwaway target, assert a
+> codeword round-trips), then Phase 3 (Chrome extension). **⚠ Tenet 17 — the key swap + any
+> delete/overwrite still needs care; verify backup works on the new key before retiring the old.**
+> **⚠ Droplet still has the OLD `backup.sh` (with the prune + pre-CR-fix) until synced** —
+> `git fetch && git diff --stat origin/main` then `git reset --hard origin/main` on the droplet
+> (`/opt/ai-memory-infra`) to pick up this session's script changes. P1 `.env` plaintext-note strip
+> stays deferred (tenet 18, ~2026-06-15).**
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
@@ -653,22 +674,16 @@ pre-commit is now DONE** (gitleaks gate).
    notes); two on-demand `systemctl start ai-memory-backup.service` runs succeeded and **healthchecks.io
    returned HTTP 200 `OK`**. Operator's check = cron `30 18 * * *` UTC, 1 h grace; URL in Bitwarden.
    **Local backstop** = `OnFailure=` marker (a "newest prefix < 25 h" freshness check is still a TODO if
-   we want belt-and-suspenders, but the external monitor covers silence).    (3) 🔄 **Data-loss hardening
-   (tenet 17) — VENDOR FACTS VERIFIED 2026-06-08, awaiting operator sign-off (one-way door):**
-   per DO official docs — **Bucket Versioning = SUPPORTED** (API-only / Terraform `versioning{}`;
-   delete→delete-marker, prior versions recoverable; "can never return to unversioned", only
-   suspend); **Bucket Lifecycle = SUPPORTED** (time-based `expiration` + `noncurrent_version_expiration`
-   + `expired_object_delete_marker` + abort-incomplete-MPU; tag-based NOT supported; via API /
-   `s3cmd expire`/`setlifecycle` / Terraform `lifecycle_rule{}`); **Object Lock / WORM = NOT
-   SUPPORTED** (DO staff-confirmed; true immutability would need a provider change = tenet-12, out of
-   scope). **Spaces key scopes = Read / Read+Write+Delete / All only** → no "write-but-can't-delete"
-   tier; closest least-privilege = a key **scoped to the backup bucket only** (limits blast radius),
-   with versioning as the real delete-recovery net. **Recommended plan:** (a) enable versioning on
-   `ai-memory-infra-backups-chandrav` (Terraform); (b) replace the client-side `s3cmd del` prune with
-   a **server-side lifecycle rule** (expire current after ~30 d, expire noncurrent after ~14 d, delete
-   expired markers); (c) bucket-scoped backup key (operator console step + Bitwarden); (d) **pre-restore
-   safety snapshot** in `restore.sh` (additive). **All of (a)–(c) are TTL/delete-policy one-way doors →
-   ASK before applying (tenet 17).** (4) ⬜ **Restore drill — NOT STARTED**
+   we want belt-and-suspenders, but the external monitor covers silence).    (3) ✅ **Data-loss hardening — DONE 2026-06-08 (operator signed off: keep 30 d, recoverable 14 d).**
+   Web-verified DO facts first (versioning ✅, lifecycle ✅, **Object-Lock/WORM ❌**, key scopes =
+   Read/RWD/All only — no write-without-delete). **(a)** versioning confirmed already live; added two
+   `lifecycle_rule`s to `infra/terraform/main.tf` (`expire-old-backups`: current @30 d + noncurrent
+   @14 d + abort-MPU @1 d; `sweep-expired-delete-markers`) → `terraform apply` 1 changed, re-plan
+   converged. **Removed the client-side `s3cmd del` prune** from `backup.sh`. **(c)** `restore.sh`
+   now takes a **pre-restore safety snapshot** (default on; `SKIP_PRESNAPSHOT=1` escape hatch; failed
+   snapshot aborts). **⬜ (b) least-privilege key STILL OPEN:** DO has no write-without-delete tier →
+   make a **bucket-scoped** Spaces key (operator console step) + Bitwarden custody + droplet `.env`
+   swap. **Next concierge step.** (4) ⬜ **Restore drill — NOT STARTED**
    (monthly, automated into a throwaway target where feasible). **Plus a deploy step:** push (1)+(2)
    to the droplet and confirm a real ping. **Done when** backups run on the timer, a success/failure
    signal reaches the operator, the store is delete/overwrite-resistant, restore pre-snapshots, and
