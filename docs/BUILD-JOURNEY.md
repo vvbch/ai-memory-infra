@@ -584,3 +584,19 @@ the step harder than it should be.
 **Next**
 - Enter the real `ADMIN_API_KEY` from Bitwarden in the OpenMemory popup, then prove add/search/get from
   the browser against the running server.
+
+## 2026-06-08 — Sidebar Recent Memories fetch fixed
+
+**Focus:** handle the first browser-side failure after saving the API key.
+
+**Milestones**
+- **Failure observed.** After saving the API key, the OpenMemory sidebar showed **Error loading
+  memories** in Recent Memories.
+- **Sidebar API path corrected.** The sidebar now uses the shared self-hosted API helpers for
+  `serverUrl`, `apiKey`, and `userId`, handles non-2xx responses explicitly, and accepts the
+  self-hosted memory list response shape.
+- **Build is green.** `npm run type-check` and `npm run build` pass after the fix.
+
+**Next**
+- Reload the unpacked extension in Chrome, reopen OpenMemory, then continue browser add/search/get
+  verification.

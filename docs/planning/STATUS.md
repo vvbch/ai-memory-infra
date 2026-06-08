@@ -4,9 +4,9 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 3 — session 9: unpacked Chrome extension loaded;
-control-plane prompt corrected; API verification next**). Phase 2 is closed; Phase 3 browser reach is
-active. Session 8 created private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
+**Last updated:** 2026-06-08 (**Phase 3 — session 10: sidebar Recent Memories fetch fixed;
+extension reload next**). Phase 2 is closed; Phase 3 browser reach is active. Session 8 created
+private GitHub repo **`vvbch/ai-memory-extension`**, imported the upstream
 MIT `mem0ai/mem0-chrome-extension` history, installed Node.js LTS on Windows, verified the raw
 upstream build, then rewrote the extension in commit **`7ac3011`**: default server
 `https://memory.chandrav.dev`; local popup settings for server URL + API key + user id; `X-API-Key`
@@ -21,8 +21,13 @@ unpacked Chrome extension and confirmed **OpenMemory** appears on `chrome://exte
 operator prompt was stale/ambiguous, so Chrome's current "Load unpacked" flow was web-verified and the
 control plane was updated: `AGENTS.md` + `docs/tenets.md` now require current-doc/live-UI verification
 for volatile console/browser prompts, and the extension README now says to select the `dist` folder
-itself, the folder containing `manifest.json`. **Next: enter the Bitwarden `ADMIN_API_KEY` in the
-OpenMemory popup and verify add/search/get memories from the browser.**
+itself, the folder containing `manifest.json`. Session 10: after API-key entry, the sidebar showed
+**Error loading memories**; fixed `src/sidebar.ts` to fetch `GET /memories?user_id=...` using the same
+stored `serverUrl`, `apiKey`, and `userId` helper path as the popup/content scripts, to reject non-2xx
+responses clearly, and to tolerate both array and `{ results, count }` response shapes. Verification:
+`npm run type-check` green; `npm run build` green. **Next: reload the unpacked extension in
+`chrome://extensions/`, reopen OpenMemory, and verify Recent Memories loads before testing add/search/get
+from a browser page.**
 
 **Prior update:** 2026-06-08 (**Phase 2 automation — session 6: drill dead-man's-switch
 WIRED & VERIFIED GREEN → Phase 2 COMPLETE**). Closed the final operator step. Walked the
@@ -709,8 +714,9 @@ pre-commit is now DONE** (gitleaks gate).
 ## Next action
 
 > **RESUME HERE — Phase 3 (Chrome extension fork) IN PROGRESS. Private repo exists; self-hosted
-> rewrite is committed; unpacked extension load is done; next is API-key entry + browser
-> verification.** Session 8 (2026-06-08): created private GitHub repo **`vvbch/ai-memory-extension`**,
+> rewrite is committed; unpacked extension load is done; sidebar fetch fix is built; next is extension
+> reload + browser verification.** Session 8 (2026-06-08): created private GitHub repo
+> **`vvbch/ai-memory-extension`**,
 > imported upstream MIT history, verified the raw upstream baseline, then rewrote and committed the
 > self-hosted fork (`7ac3011`). Session 9: operator loaded `ai-memory-extension/dist` as an unpacked
 > Chrome extension and confirmed **OpenMemory** appears on `chrome://extensions`. The stale Chrome
@@ -731,9 +737,14 @@ pre-commit is now DONE** (gitleaks gate).
 > 4. ✅ Load `ai-memory-extension/dist` as an unpacked Chrome extension. Current Chrome flow:
 >    `chrome://extensions/` → Developer mode toggle → **Load unpacked** → select the `dist` folder
 >    itself (the folder containing `manifest.json`) → confirm **OpenMemory** appears.
-> 5. Enter the real API key from Bitwarden in the OpenMemory popup, then verify `/memories`, `/search`,
->    and `GET /memories?user_id=` from the browser.
-> 6. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
+> 5. ✅ Enter the real API key from Bitwarden in the OpenMemory popup. Sidebar initially showed
+>    **Error loading memories**.
+> 6. ✅ Fix and rebuild the sidebar Recent Memories fetch: it now uses stored `serverUrl`, `apiKey`, and
+>    `userId` consistently, handles non-2xx responses, and accepts the self-hosted memory response shape.
+>    `npm run type-check` + `npm run build` green.
+> 7. Reload the unpacked extension in `chrome://extensions/`, reopen OpenMemory, then verify
+>    `/memories`, `/search`, and `GET /memories?user_id=` from the browser.
+> 8. Keep it a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
