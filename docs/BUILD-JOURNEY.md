@@ -9,6 +9,29 @@
 
 ---
 
+## 2026-06-08 — Made the deployed API usable (auth verified)
+
+**Focus:** turn the live-but-locked memory API into a usable one. Short, single-task
+session (concierge mode).
+
+**Milestones**
+- **API authentication verified working.** Auth is on by default; confirmed a protected
+  endpoint returns *unauthorized* with no key and *success* when the admin API key is
+  presented. The deploy was already usable — the key had been generated into the server
+  config at deploy time — so no extra setup tooling or admin dashboard was needed.
+
+**Decisions**
+- **Used the simplest auth path that worked (fewer moving parts).** Rather than running the
+  upstream "bootstrap" helper — which would have spun up a *second, conflicting* container
+  stack — we used the shared admin key already wired into our own stack. Per-user keys and
+  the setup wizard remain available if/when the admin dashboard is added later.
+
+**Engineering notes**
+- Caught that a documented "create admin" shortcut assumed the project's *default* layout, not
+  our custom one — verifying against the actual running stack avoided standing up a duplicate
+  database. Corrected a stale planning note (work flagged as "to commit" had already shipped a
+  session earlier) so the resume state matches reality.
+
 ## 2026-06-08 — Control-plane: stateless, checkpointed agent sessions
 
 **Focus:** a governance fix, no build state changed. A long-lived AI-agent session had

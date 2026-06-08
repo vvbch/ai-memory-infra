@@ -4,13 +4,20 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (control-plane session — **tenet 16: stateless, disposable
+**Last updated:** 2026-06-08 (usable-API session — **steps 1 & 2 closed**. Step 1 (commit
+deploy changes) was already done in the prior session (`3d1db74` + `b6ffa2d`); STATUS text
+was stale, now corrected. Step 2 (admin + API key): the `ADMIN_API_KEY` was already in the
+droplet `.env` from deploy — **verified working** (`X-API-Key` → 200, no key → 401), so the
+API is now usable with **zero** extra moving parts (tenet 7; no `make bootstrap`/dashboard).
+**Next action → step 3** (verify model config) then **step 4** (POST /memories round-trip).
+Open custody TODO: confirm `ADMIN_API_KEY` is in Bitwarden. Prior header retained below.)
+
+**Prior update:** 2026-06-08 (control-plane session — **tenet 16: stateless, disposable
 sessions**. Codified after a long-lived Cursor session burned a month's $60 plan credits in
 half a day (context-window amplification, COE 2026-06-08): one task per chat, checkpoint
-`STATUS.md` per step, end every response with a Resume prompt. No deploy state changed —
-**Next action is unchanged** (create admin + API key). Prior header retained below.)
+`STATUS.md` per step, end every response with a Resume prompt.)
 
-**Prior update:** 2026-06-07 (session-resume #3 — **PHASE 1 DEPLOYED**. `tf-apply`
+**Earlier update:** 2026-06-07 (session-resume #3 — **PHASE 1 DEPLOYED**. `tf-apply`
 created the droplet (BLR1, `168.144.145.29`) + firewall + Cloudflare DNS + Spaces
 bucket; the droplet was bootstrapped and the Compose stack is **live and healthy over
 HTTPS**: `memory.chandrav.dev/docs` → 200 w/ valid Let's Encrypt cert; Caddy basic-auth
@@ -32,9 +39,12 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
 `scripts/teardown.py` if income gets tight.
 
 **What's NOT done yet (next session):**
-1. **Save our work to GitHub** — 5 files changed on your laptop but not committed yet.
-2. **Create a login for the API** — the app has a lock on it; nobody can add memories
-   until we create an admin account + API key on the server (one-time setup).
+1. ✅ **Save our work to GitHub** — DONE (was already committed + pushed in prior
+   session: `3d1db74` infra + `b6ffa2d` docs; both repos clean, `0 ahead/0 behind`).
+2. ✅ **Create a login for the API** — DONE. The admin API key was already generated
+   into the server's `.env` at deploy time; verified working this session (a protected
+   route returns 401 with no key, **200 with the `X-API-Key` header**). Still TODO:
+   confirm the key is saved in Bitwarden (custody gate).
 3. **Test it** — add one test memory, read it back, confirm it stuck.
 4. **Make reinstall repeatable** — if we had to rebuild the server from scratch today,
    the install script would need a manual fix (we built the app image by hand this
@@ -44,7 +54,7 @@ everything runs ≈ ₹3,800/mo landed. You can pause/stop the box anytime with
 Ask for **concierge mode** (one step at a time, plain English, no jargon).
 
 ```
-Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 2: create admin + API key. Concierge mode, one step at a time.
+Resume ai-memory-infra — read STATUS.md (Plain English section) and AGENTS.md, run repo-health, then Next action step 3: verify model config (gpt-5-mini + text-embedding-3-small actually in effect), then step 4: POST /memories round-trip test with the API key. Concierge mode, one step at a time, plain English.
 ```
 
 **Your passwords:** all in Bitwarden folder `ai-memory-infra`. SSH into the server still
@@ -83,9 +93,9 @@ used (headroom OK). `memory.chandrav.dev/docs` → 200 over HTTPS w/ valid cert.
   returns 401 (bcrypt hash works; the `wdqOTNUqJsh` Compose warning is harmless noise).
 - **Gmail filters** (3) set up for infra mail (DO/OpenAI/Bitwarden/LE visible+important;
   Cloudflare visible; GitHub auto-archived) under label `ai-memory-infra`.
-- **Uncommitted** (review + commit): `infra/mem0-server.Dockerfile` (new),
-  `infra/docker-compose.yml` (image→local, `APP_DB_NAME`, `mem0_history`, dashboard
-  profile), `docs/planning/BACKLOG.md`, this `STATUS.md`.
+- **Committed + pushed** (2026-06-08, no longer pending): `infra/mem0-server.Dockerfile`
+  (new) + `infra/docker-compose.yml` in `3d1db74`; `docs/planning/BACKLOG.md` +
+  `docs/planning/STATUS.md` in `b6ffa2d`. (`infra/.env` + `terraform.tfvars` stay gitignored.)
 
 ## Done this session (2026-06-07, Path B — Cloudflare registrar + DNS)
 
@@ -220,10 +230,12 @@ displaces the Phase-1 deploy (tenet 13).
   (both gitignored, on laptop + droplet).
 - ✅ **"Verify at deploy" items resolved** (Mem0 image arch/tags, graph + psycopg deps,
   dashboard image) — see "Done this session #3" for what each turned into.
-- **API not yet usable (auth on, no admin).** Auth is on by default (PR #4837); a fresh
-  install has no admin/API key, so protected routes 401 (`/docs` is open → 200). Create
-  an admin + API key (server `make bootstrap`/CLI on the droplet, or the setup wizard —
-  but the wizard needs the dashboard, which is deferred). **Blocks a `POST /memories` test.**
+- ✅ **API is now usable (admin API key works).** Auth is on (`AUTH_DISABLED=false`,
+  PR #4837). The legacy `ADMIN_API_KEY` (43-char, in the droplet `.env`) was generated at
+  deploy time; verified 2026-06-08: `GET /memories?user_id=diag` → **401 without** the key,
+  **200 with** `X-API-Key`. No `make bootstrap` / dashboard needed (tenet 7 — fewer moving
+  parts). Per-user `m0sk_` keys + the `/setup` wizard remain available if we add the
+  dashboard later. **Custody TODO:** confirm `ADMIN_API_KEY` is stored in Bitwarden.
 - **Model config unverified.** The `MEM0_DEFAULT_LLM_MODEL`/`_EMBEDDER_MODEL` env vars are
   **not** in the server's documented env table — model selection is likely via the server
   config/wizard, not those vars. Confirm `gpt-5-mini` + `text-embedding-3-small` are
@@ -252,15 +264,16 @@ displaces the Phase-1 deploy (tenet 13).
 
 ## Next action
 
-> **RESUME HERE — stack is DEPLOYED & healthy over HTTPS. Make it *usable*, then commit.**
+> **RESUME HERE — stack is DEPLOYED & healthy over HTTPS. Make it *usable*.**
 
-1. **Commit the deploy changes** (tenet 1/11 — don't batch): `infra/mem0-server.Dockerfile`
-   (new), `infra/docker-compose.yml`, `docs/planning/BACKLOG.md`, `docs/planning/STATUS.md`.
-   Run `check-repo-health` first. (`infra/.env` + `terraform.tfvars` stay gitignored.)
-2. **Create an admin + API key** so the API is usable (auth is on; protected routes 401).
-   On the droplet: try `cd /opt/mem0-src/server && make bootstrap` (PR #4837 generates a
-   random admin password) or the server CLI; store the admin creds + API key in Bitwarden.
-3. **Verify model config** — confirm `gpt-5-mini` (extraction) + `text-embedding-3-small`
+1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
+   docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
+2. ✅ **Create an admin + API key** — DONE (2026-06-08). The `ADMIN_API_KEY` was already in
+   the droplet `.env` (legacy admin mode, tenet 7 — no `make bootstrap`/dashboard needed);
+   verified working (`X-API-Key` → 200, no key → 401). **Custody TODO:** confirm the key is
+   in Bitwarden. (`make bootstrap` was the wrong tool here — it would spin up mem0's *own*
+   conflicting compose stack; our stack runs from `/opt/ai-memory-infra/infra`.)
+3. **← NEXT: Verify model config** — confirm `gpt-5-mini` (extraction) + `text-embedding-3-small`
    (embeddings) are actually in effect (the `MEM0_DEFAULT_*` env vars may be ignored; check
    the server's Configuration/`/configure`). Re-set via config if needed (ADR 013/011).
 4. **Functional test:** `POST /memories` round-trip with the API key (the setup.md
