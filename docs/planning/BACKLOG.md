@@ -27,11 +27,21 @@
   dashboard image 404s). Fix: fold `git clone mem0ai/mem0` + `docker build` into
   `bootstrap.sh` (or build + push `mem0-api-server` to GHCR and reference that), make the
   `pull` step tolerant, and **update `setup.md`** (prereqs + Step 6) to match (tenet 10).
-- **`[deploy]` Stand up admin/API-key + confirm model config.** Auth is on; create an
-  admin + API key (server `make bootstrap`/CLI on the droplet) and store in Bitwarden, so
-  the API is usable. Verify `gpt-5-mini`/`text-embedding-3-small` are actually in effect
-  (the `MEM0_DEFAULT_*` env vars aren't in the server's documented env table). Then run a
-  `POST /memories` round-trip (setup.md "Done when").
+
+- **`[deploy]` Document the OpenAI project model-access requirement in `setup.md`.** Step 4
+  (round-trip) was blocked because the OpenAI project was scoped to only `gpt-5-mini`, so
+  `text-embedding-3-small` returned 403 and every `add` failed. `setup.md` (Step 0/secrets +
+  Step 7 "Done when") should call out: the OpenAI project must allow **both** `gpt-5-mini` and
+  `text-embedding-3-small` (or "allow all models"); the project model allow-list UI is currently
+  buggy (use "allow all", or the Admin API model-permissions endpoint). Tie: ADR 013/011, tenet
+  10. Control-plane fix for the step-4 blocker (2026-06-08).
+
+> **Resolved / moved out of backlog:** "Stand up admin/API-key + confirm model
+> config" is **no longer deferred** — the admin key is done (built-in
+> `ADMIN_API_KEY`, **not** `make bootstrap`; see **ADR 020**, locked) and the
+> model-config + `POST /memories` round-trip are the active `STATUS.md` "Next
+> action" (steps 3–4). Do not re-add `make bootstrap` here — it would stand up a
+> conflicting second DB stack (ADR 020).
 
 ## P2 — governance & quality hardening (fold into CI / eval phases)
 

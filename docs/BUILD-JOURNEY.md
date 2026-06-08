@@ -9,6 +9,41 @@
 
 ---
 
+## 2026-06-08 — Verified the running models; isolated a provider-side block
+
+**Focus:** confirm the live server actually uses the chosen models, then prove a memory
+round-trips end to end. Short, single-task session (concierge mode).
+
+**Milestones**
+- **Model configuration verified against the *running* server**, not just the config file:
+  the deployed service genuinely loads the intended small extraction model and the intended
+  embeddings model at start-up. Corrected a stale planning note that wrongly assumed those
+  settings were ignored — they're read at boot, with a cheaper model as the silent fallback if
+  the variable is ever unset (so it must stay pinned).
+- **Round-trip test blocked by an external provider setting, cleanly root-caused.** The API
+  login itself worked; saving a memory failed because the LLM provider **project was scoped to
+  a single model** and refused the embeddings model every save needs. Verified by calling the
+  provider directly (extraction model → success; embeddings model → *project has no access*),
+  which isolated the fault to provider configuration rather than our stack or key.
+
+**Decisions**
+- **Locked the deployment's auth approach as a formal decision record** (built-in admin key,
+  never the upstream "bootstrap" helper that would duplicate the database stack) so it isn't
+  re-litigated in future sessions.
+- **Removed an over-tight model allow-list in favour of the real cost guardrail.** The hard
+  spend cap is the prepaid budget with auto-recharge off — not a per-project model list — so
+  the list was loosened to unblock embeddings without weakening cost control.
+
+**Engineering notes**
+- A vague upstream "authentication" error actually meant a *model-permission* denial; only
+  bypassing the memory layer and hitting the provider API directly revealed the true cause.
+- Distinguished a provider's **model-list** view from its **inference authorization**: a model
+  can appear available yet still be refused at call time (a known, current provider dashboard
+  bug). Trusted the live call as ground truth and stopped after a few evidence-based retries
+  rather than waiting indefinitely.
+- Kept the production secret on the server throughout — the authenticated test runs on the
+  host, reading the key from its environment, so it never crosses into logs or chat.
+
 ## 2026-06-08 — Made the deployed API usable (auth verified)
 
 **Focus:** turn the live-but-locked memory API into a usable one. Short, single-task
