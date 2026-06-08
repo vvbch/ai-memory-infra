@@ -569,10 +569,13 @@ pre-commit is now DONE** (gitleaks gate).
   `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')`.
 - **SSH:** key is in `ssh-agent` (passphrase in Bitwarden); secrets are read from the server
   `.env`, never printed. Droplet `168.144.145.29` (`root@`).
-- **Appending to the droplet `.env` from Windows → strip CR.** Piping a line from PowerShell over
-  SSH (`$line | ssh … "cat >> .env"`) appends a trailing `\r`, which silently breaks values read by
-  `backup.sh` (a heartbeat URL with a `\r` → `curl: (3) URL rejected: Malformed input`). After any
-  such append, run `ssh root@… "sed -i 's/\r$//' /opt/ai-memory-infra/infra/.env"` and re-verify.
+- **Appending to the droplet `.env` from Windows → CR now handled at the reader (FIXED 2026-06-08).**
+  Piping a line from PowerShell over SSH (`$line | ssh … "cat >> .env"`) appends a trailing `\r`
+  (CRLF), which used to silently break values read by `backup.sh`/`restore.sh` (a heartbeat URL with
+  a `\r` → `curl: (3) URL rejected: Malformed input`). **Fixed once and for all:** `envval`/`envval_opt`
+  now pipe every value through `tr -d '\r'`, so a CRLF `.env` line can no longer corrupt a value — no
+  manual `sed -i 's/\r$//'` needed anymore (verified with a CRLF fixture: URL + quoted value both come
+  out clean, no `0d` byte). Tracked `.sh` files are separately pinned to LF by `.gitattributes`.
 - **Droplet repo sync = `git fetch && git reset --hard origin/main` (tenet 11, remote is truth).**
   The droplet `/opt/ai-memory-infra` is a real clone; it had live working-tree edits from earlier
   on-box sessions, but those were already committed to `origin/main` — verify with

@@ -45,8 +45,12 @@ envval() {
 	local line
 	line="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 || true)"
 	[[ -n "${line}" ]] || die "${key} is not set in ${ENV_FILE}."
-	# strip `key=`, surrounding quotes, and any trailing inline comment/whitespace
-	printf '%s' "${line#*=}" | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+	# strip a trailing CR (the .env may have been appended to from Windows/PowerShell
+	# over SSH, which leaves CRLF — a stray \r silently corrupts values, e.g. a
+	# heartbeat URL -> "curl: (3) URL rejected"), then `key=`, surrounding quotes,
+	# and any trailing inline comment/whitespace. CR-stripping here means callers
+	# never have to remember `sed -i 's/\r$//' .env`.
+	printf '%s' "${line#*=}" | tr -d '\r' | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
 }
 
 # Like envval, but returns empty (no error) when the key is absent — for OPTIONAL
@@ -57,7 +61,7 @@ envval_opt() {
 	local line
 	line="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 || true)"
 	[[ -n "${line}" ]] || return 0
-	printf '%s' "${line#*=}" | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+	printf '%s' "${line#*=}" | tr -d '\r' | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
 }
 
 # Optional dead-man's-switch heartbeat (ADR 023 §2). If HEALTHCHECK_URL is set in

@@ -34,7 +34,9 @@ envval() {
 	local line
 	line="$(grep -E "^${key}=" "${ENV_FILE}" | head -n1 || true)"
 	[[ -n "${line}" ]] || die "${key} is not set in ${ENV_FILE}."
-	printf '%s' "${line#*=}" | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
+	# strip a trailing CR first (a Windows/PowerShell-appended .env line carries
+	# CRLF; a stray \r silently corrupts values), then key=, quotes, inline comment.
+	printf '%s' "${line#*=}" | tr -d '\r' | sed -e 's/[[:space:]]*#.*$//' -e 's/^"\(.*\)"$/\1/' -e "s/^'\(.*\)'$/\1/"
 }
 
 cd "${INFRA_DIR}" || die "cannot cd to ${INFRA_DIR}"
