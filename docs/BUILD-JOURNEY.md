@@ -369,3 +369,62 @@ on on the real server — then prove the watchdog sees a real "backup OK".
 - Make the backup storage itself resistant to accidental deletion, and set up a recurring
   *practice* restore. Those touch how data could be lost, so they'll be talked through before
   being built — not done silently.
+
+## 2026-06-08 — Making the backups hard to lose (versioning + auto-expiry)
+
+**Focus:** harden *where* the backups live so a mistake — or a compromised server — can't quietly
+erase your history. (Talked through first, because anything touching data loss is a one-way door.)
+
+**Milestones**
+- **Old versions are now kept, then aged out on a schedule.** The cloud bucket keeps previous
+  versions of each backup and automatically expires them on a 30-day / 14-day policy. This runs on
+  the storage provider's side, so even a hacked server can't wipe the history — it simply doesn't
+  have the power to.
+- **The server stopped being allowed to delete backups at all.** The backup job used to prune old
+  copies itself; that "delete" ability was removed. Cleanup is now the storage provider's job, not
+  the server's.
+- **A wrong restore is now recoverable.** Before a restore overwrites anything, the system first
+  snapshots the current state — so if you ever restore the wrong thing, you can get back to where
+  you were.
+
+**Engineering notes**
+- **Don't assume a cloud service can do something just because a famous one can.** We checked the
+  provider's actual capabilities first: it supports keeping old versions and auto-expiry, but does
+  **not** offer write-once "locked" storage. So the design leaned on what genuinely exists (versioning
+  + expiry + removing the server's delete power) instead of a feature that wasn't there.
+- **Take power away from the thing most likely to be attacked.** The safest backup is one the
+  everyday server *cannot* destroy; moving the cleanup to the storage side does exactly that.
+
+*(House-keeping: this entry and the next were written up one session late — the work shipped on time,
+but the public/private journal wasn't updated in the same sitting. Caught and backfilled.)*
+
+## 2026-06-08 — A backup key that can only touch the backups
+
+**Focus:** give the server a **narrow** key that can reach *only* the backup bucket, instead of the
+broad key that could touch the whole cloud account.
+
+**Milestones**
+- **The server now uses a "backups-only" key.** We created a new access key scoped to just the
+  backup bucket, saved it to the password vault, and swapped it onto the server. If that server were
+  ever compromised, the key in it can reach the backups and nothing else — no other data, no ability
+  to reconfigure the account.
+- **Proven before trusting it.** We ran a real backup through the exact nightly path and watched it
+  succeed on the new key (all four data files landed in the cloud) *before* retiring the old key's
+  use on the server. The broad key was never removed on faith.
+
+**Engineering notes**
+- **Verify the new credential works before retiring the old one.** The first test actually *failed* —
+  an invisible stray character had corrupted the key during the copy from a Windows machine to the
+  Linux server (the same cross-platform paper-cut as before, in a new spot). Because we tested first,
+  this surfaced instantly as a clear error instead of becoming a *silent* broken backup discovered
+  weeks later. We found the bad byte, repaired it, and re-ran to a clean success.
+- **Stop threading text through three layers of shell.** The corruption came from trying to clean the
+  value while it passed through three different command interpreters. The durable fix was to do the
+  cleaning inside one proper script on the server itself — a recurring lesson, now applied up front.
+- **Least privilege brings separation of duties for free.** The narrow key deliberately *can't*
+  change the bucket's settings — so the powerful "configure everything" key stays separate and off
+  the server entirely, used only from the owner's own machine.
+
+**What's left for backups**
+- Set up a recurring *practice* restore (a "drill") so we stay confident the recover-button works.
+  That's the last piece before the backup system is considered done.

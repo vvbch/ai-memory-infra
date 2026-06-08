@@ -4,7 +4,23 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 2 automation — session 3: ADR 023 §3 data-loss hardening
+**Last updated:** 2026-06-08 (**Phase 2 automation — session 4: ADR 023 §3(b) least-privilege
+backup key DONE & VERIFIED**). Created a **bucket-scoped DO Spaces "Limited Access" key**
+(`ai-memory-backup-only`, scoped to `ai-memory-infra-backups-chandrav`, R/W/D — DO has no
+write-without-delete tier) via the console (operator click-step), stored it in Bitwarden (ADR 017,
+custody closed), and **swapped it into the droplet `infra/.env`** in place of the broad "All
+buckets/All permissions" key. **Verified before retiring (tenet 17):** ran the backup through the
+exact nightly path (`systemctl start ai-memory-backup.service`) → first attempt **403
+InvalidAccessKeyId** (the swap had injected CR junk — the cross-shell quoting trap; `tr -d "\r\n"`
+mangled through PowerShell→ssh→bash so the value carried a trailing `\r`); **repaired on-server**
+with bash ANSI-C `${raw%%$'\r'*}` truncation (no fragile escaping), re-ran → **Result=success,
+ExecMainStatus=0, all 4 artifacts uploaded**. The old broad key is **no longer on the droplet**
+(retained locally only — the limited key *can't* change bucket config, so lifecycle/versioning stays
+under the full Terraform key, which is correct). Shredded the temp `.env.bak.*` files (held the old
+key in plaintext) once verified. **§3 (a)+(b)+(c) all DONE. Next: §4 restore drill, then Phase 3
+(Chrome extension).**
+
+**Prior update:** 2026-06-08 (**Phase 2 automation — session 3: ADR 023 §3 data-loss hardening
 DONE + Windows→Linux CRLF bug fixed for good**). **(1) Portability fix (committed `9344466`):** the
 recurring Windows→Linux pain wasn't git (`.gitattributes` already pins `.sh` to LF) — it was *runtime*
 CR injection when appending to the droplet `.env` from PowerShell over SSH (trailing `\r` → broke the
@@ -202,9 +218,14 @@ the new "burn-in, then clean up" rule (tenet 18).
    You created the check and saved its link in Bitwarden; I wired the server to ping it. **✅ NOW LIVE
    (2026-06-08):** the nightly auto-backup is switched on on the *real* server (first run tonight ~00:02
    IST), and we watched a real "backup OK" ping land — **healthchecks.io went green (HTTP 200)**. So the
-   watchdog is now actually watching. **Still to do (next session):** make the backup storage itself
-   resistant to accidental deletion; and set up a regular *practice* restore. **So Phase 2 is still open
-   until those two are done, THEN Phase 3 — the Chrome browser extension.**
+   watchdog is now actually watching. **✅ NOW DONE TOO (2026-06-08):** the backup storage is now
+   **resistant to accidental deletion** — the cloud bucket keeps old versions and auto-expires them on
+   a 30-day / 14-day schedule (server-side, so a hacked server can't wipe history), and the server now
+   uses a **narrow "backup-only" key** that can reach *only* the backup bucket and nothing else in your
+   cloud account (we created it, saved it in Bitwarden, swapped it in, and watched a real backup
+   succeed on it). **Still to do (next session):** set up a regular *practice* restore (a "drill") so
+   we know the recover-button keeps working. **So Phase 2 is open until that drill exists, THEN
+   Phase 3 — the Chrome browser extension.**
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -247,10 +268,12 @@ ADR 022). **But Phase 2 was re-scoped 2026-06-08 (backup-strategy review):** bac
 **manual** (unbounded RPO) and failed **silently**, so automation is in-scope. **Implementing ADR 023:
 §1+§2 DEPLOYED & LIVE (2026-06-08):** ✅ daily systemd timer enabled+active on the droplet (next run
 18:32 UTC); ✅ dead-man's-switch live, vendor = healthchecks.io, **confirmed green (HTTP 200)** from two
-real service runs. ⬜ Still to do: data-loss hardening (server-side
-lifecycle/versioning over client-side delete-prune — web-verify DO Spaces support first;
-least-privilege backup key; pre-restore safety snapshot); recurring restore drill. **Phase 2 is
-NOT done until backups are scheduled + self-monitoring + drilled.**
+real service runs. ✅ **§3 data-loss hardening DONE (2026-06-08):** server-side versioning + 30 d/14 d
+lifecycle (replaces the client-side delete-prune, removed from `backup.sh`); **least-privilege
+bucket-scoped backup key** (`ai-memory-backup-only`, swapped into the droplet `.env` + verified —
+session 4); pre-restore safety snapshot in `restore.sh`. ⬜ Still to do: **§4 recurring restore
+drill**. **Phase 2 is NOT done until backups are scheduled + self-monitoring + drilled** — only the
+drill remains.
 
 **Phase 1 — Infrastructure as Code → DEPLOYED.** `tf-init`/`plan`/`apply` all run:
 9 resources created (droplet `s-2vcpu-4gb` BLR1 `168.144.145.29`, firewall 22/80/443,
@@ -604,23 +627,22 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Phase 2 automation, session 4. ✅ §1+§2 LIVE & GREEN (timer + dead-man's-switch);
-> ✅ §3 data-loss hardening DONE (session 3, 2026-06-08):** DO facts web-verified (versioning ✅,
-> lifecycle ✅, Object-Lock ❌, key scopes Read/RWD/All); versioning already live; two lifecycle rules
-> applied via Terraform (30 d current / 14 d noncurrent / sweep markers / abort MPU; re-plan converged);
-> client-side `s3cmd del` prune removed from `backup.sh`; pre-restore safety snapshot added to
-> `restore.sh`. Windows→Linux CRLF `.env` bug fixed for good (`tr -d '\r'` in the readers). **NEXT
-> ACTION = §3(b) least-privilege backup key** (concierge): DO has **no write-without-delete tier**, so
-> create a **bucket-scoped** Spaces key in the DO console (operator click-step), store it in Bitwarden
-> (ADR 017), swap it into the droplet `/opt/ai-memory-infra/infra/.env` (use the CR-safe append — now
-> auto-handled), re-run `backup.sh` to confirm it still works, then revoke/retire the old shared key's
-> backup use. **THEN §4 restore drill** (monthly; restore latest into a throwaway target, assert a
-> codeword round-trips), then Phase 3 (Chrome extension). **⚠ Tenet 17 — the key swap + any
-> delete/overwrite still needs care; verify backup works on the new key before retiring the old.**
-> **✅ Droplet ALREADY SYNCED this session** to `2e7b72c` (`git reset --hard origin/main`; working
-> tree clean, no live-only loss, `bash -n` OK) — so tonight's nightly timer runs the hardened
-> `backup.sh` (no client-side prune, CR-safe). P1 `.env` plaintext-note strip stays deferred
-> (tenet 18, ~2026-06-15).**
+> **RESUME HERE — Phase 2 automation, session 5. ✅ §1+§2 LIVE & GREEN (timer + dead-man's-switch);
+> ✅ §3 data-loss hardening FULLY DONE (a versioning+lifecycle, b least-privilege key, c pre-restore
+> snapshot).** Session 4 (2026-06-08) closed **§3(b)**: created a bucket-scoped DO Spaces "Limited
+> Access" key (`ai-memory-backup-only`, R/W/D — DO has no write-without-delete tier) → Bitwarden →
+> swapped into the droplet `infra/.env`; **verified backup works on the new key** (`Result=success`,
+> 4 artifacts uploaded) after repairing a CR-injection on the swap; old broad key removed from the
+> droplet (kept locally for Terraform only); temp `.env.bak.*` shredded. **NEXT ACTION = §4 restore
+> drill** (ADR 023 §4): establish a **monthly** drill that restores `latest` into a **throwaway
+> target** and asserts a codeword round-trips (incl. vector `/search`), without risking live data —
+> lean on `restore.sh`'s pre-restore safety snapshot (`SKIP_PRESNAPSHOT` default off) and/or a scratch
+> stack. ⚠ **Tenet 17 (data-loss effect):** a destructive restore against the live stack is a one-way
+> door — design the drill to use an isolated/throwaway target, or take + verify a fresh backup first;
+> surface the approach to the operator before running anything destructive. **THEN Phase 3 (Chrome
+> extension).** Nightly timer is live (next run 18:30 UTC ≈ 00:00 IST) running the hardened, CR-safe
+> `backup.sh` (no client-side prune; server-side 30 d/14 d lifecycle). P1 `.env` plaintext-note strip
+> stays deferred (tenet 18, ~2026-06-15).
 
 **§3(b) console flow (web-verified 2026-06-08, DO docs — for the next step):** DO **Per-Bucket Access
 Keys** are GA. Console → **Spaces Object Storage** → **Access Keys** tab → **Create Access Key** →
@@ -690,9 +712,13 @@ with `PutBucketPolicy`. Then swap `SPACES_ACCESS_KEY`/`SPACES_SECRET_KEY` in the
    @14 d + abort-MPU @1 d; `sweep-expired-delete-markers`) → `terraform apply` 1 changed, re-plan
    converged. **Removed the client-side `s3cmd del` prune** from `backup.sh`. **(c)** `restore.sh`
    now takes a **pre-restore safety snapshot** (default on; `SKIP_PRESNAPSHOT=1` escape hatch; failed
-   snapshot aborts). **⬜ (b) least-privilege key STILL OPEN:** DO has no write-without-delete tier →
-   make a **bucket-scoped** Spaces key (operator console step) + Bitwarden custody + droplet `.env`
-   swap. **Next concierge step.** (4) ⬜ **Restore drill — NOT STARTED**
+   snapshot aborts). **✅ (b) least-privilege key DONE (2026-06-08, session 4):** bucket-scoped DO
+   Spaces "Limited Access" key `ai-memory-backup-only` (R/W/D — DO has no write-without-delete tier) →
+   Bitwarden (custody) → swapped into the droplet `infra/.env`; **backup verified on the new key**
+   (`Result=success`, 4 artifacts uploaded) after repairing a CR-injection from the cross-shell swap;
+   old broad key removed from the droplet (retained locally for Terraform — the limited key can't
+   change bucket config, so versioning/lifecycle stays under the full key). Temp `.env.bak.*` shredded.
+   (4) ⬜ **Restore drill — NOT STARTED**
    (monthly, automated into a throwaway target where feasible). **Plus a deploy step:** push (1)+(2)
    to the droplet and confirm a real ping. **Done when** backups run on the timer, a success/failure
    signal reaches the operator, the store is delete/overwrite-resistant, restore pre-snapshots, and

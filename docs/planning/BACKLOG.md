@@ -63,7 +63,10 @@
   decision, tenet 12), **data-loss hardening** (server-side lifecycle/versioning instead of a
   client-side delete-prune; a least-privilege backup key; a pre-restore safety snapshot), and a
   recurring **restore drill**. Tie: tenets 4 (graceful degradation), 17 (effect-vs-code),
-  ADR 022 + ADR 023.
+  ADR 022 + ADR 023. **Progress (2026-06-08):** ✅ §1 daily timer + ✅ §2 dead-man's-switch
+  (healthchecks.io, green) + ✅ §3 data-loss hardening — (a) server-side versioning + 30 d/14 d
+  lifecycle, (b) least-privilege bucket-scoped backup key (verified), (c) pre-restore snapshot.
+  ⬜ **Only §4 restore drill remains** before Phase 2 is done.
 - **`[deploy]` Build & re-enable the Mem0 dashboard.** No published `mem0/mem0-dashboard`
   image exists; it's gated behind the compose `dashboard` profile and deferred. Build it
   from the mem0 repo's `server/dashboard` context (Next.js, needs a node build), then
