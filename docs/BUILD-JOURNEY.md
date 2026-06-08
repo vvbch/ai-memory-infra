@@ -335,3 +335,37 @@ watches itself, and tells you when it breaks.
   status — costing effort every time and risking drift. We cut it back to a one-line pointer
   ("read the status file, then do the next thing"), because the status file *is* the source
   of truth. Small process leaks compound; fix them when you spot them.
+
+## 2026-06-08 — The nightly backup is now live (and the watchdog is watching)
+
+**Focus:** take the backup automation that was *written* last time and actually switch it
+on on the real server — then prove the watchdog sees a real "backup OK".
+
+**Milestones**
+- **The server now backs itself up on a schedule.** The nightly job is switched on on the
+  live machine; the next run is tonight just after midnight (India time). If the box is ever
+  paused, it catches up the missed run when it comes back.
+- **The watchdog is confirmed working.** We ran a backup by hand to test the whole chain end
+  to end: the backup completed, all the data files landed in the cloud bucket, and the
+  monitoring service received the "backup OK" ping and turned green. So from now on, if the
+  server ever goes silent at backup time, you'll get an email.
+
+**Engineering notes**
+- **Don't trust the live box's state — prove it before changing it.** The server's copy of
+  the code had drifted from the saved-to-GitHub version through earlier hands-on sessions.
+  Rather than blindly overwrite it, we first compared the two and confirmed the only real
+  difference was the new code we *meant* to add — so resetting the server to the GitHub
+  version was provably safe and lost nothing.
+- **A classic cross-platform paper-cut, caught by testing.** The very first test ping failed
+  because copying a setting from a Windows machine to the Linux server left an invisible
+  stray character on the end of the line, which broke the web address. Found it, stripped it,
+  re-tested, confirmed green. This is exactly why the project insists on Windows *and* Linux
+  both working cleanly — and why we test the real path, not just the happy path.
+- **Test the scheduled job, not just the script.** We triggered the backup through the same
+  scheduler that will run it nightly (rather than running the script directly), so the test
+  exercised the exact path that matters.
+
+**What's left for backups**
+- Make the backup storage itself resistant to accidental deletion, and set up a recurring
+  *practice* restore. Those touch how data could be lost, so they'll be talked through before
+  being built — not done silently.

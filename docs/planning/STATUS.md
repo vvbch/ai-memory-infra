@@ -4,7 +4,25 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-08 (**Phase 2 automation — implementation session 1**). Built the
+**Last updated:** 2026-06-08 (**Phase 2 automation — implementation session 2: DEPLOYED & GREEN**).
+Brought the droplet to GitHub truth (`git reset --hard origin/main` → `c4f31b8`; **verified first**
+that the droplet's only un-committed live edits to `backup.sh`/`restore.sh`/`docker-compose.yml` were
+already represented in `origin/main`, so nothing live-only was lost — tenet 11), then **deployed +
+switched on the nightly backup**: installed the three `systemd` units to `/etc/systemd/system/`,
+`systemctl enable --now ai-memory-backup.timer` (**enabled + active; next run 18:32 UTC ≈ 00:02 IST**,
+`Persistent=true` catch-up), added `HEALTHCHECK_URL` to the droplet `infra/.env`, and **ran two
+on-demand backups via the service** (`Result=success`, ExecMainStatus 0; all four artifacts uploaded
+to `s3://…/backups/<UTC>/`, newest-7 prune ran). **Dead-man's-switch CONFIRMED GREEN:** healthchecks.io
+returned **HTTP 200 `OK`** to the success ping. **Gotcha found + fixed:** the *first* run's heartbeat
+errored `curl: (3) URL rejected: Malformed input to a URL function` — appending the URL line to the
+Linux `.env` *from Windows* left a trailing `\r`; fixed with `sed -i 's/\r$//' .env` and re-verified
+(see Environment notes — always strip CR when appending to the droplet `.env` from PowerShell). **ADR
+023 §1 (daily timer) + §2 (heartbeat monitor) are now DONE & LIVE on the droplet.** Remaining for
+Phase 2: **§3 data-loss hardening** (⚠ one-way-door class — tenet 17 needs operator sign-off, and
+web-verify DO Spaces versioning/lifecycle FIRST) + **§4 restore drill**. **Next: ADR 023 §3 → §4, then
+Phase 3 (Chrome extension).**
+
+**Prior update:** 2026-06-08 (**Phase 2 automation — implementation session 1**). Built the
 *reversible half* of ADR 023 and picked the monitor. **(1) Daily backup schedule DONE (in
 repo):** versioned `systemd` units — `infra/systemd/ai-memory-backup.service` (oneshot →
 `backup.sh`), `…backup.timer` (18:30 UTC = midnight IST, `Persistent=true` catch-up if the
@@ -163,10 +181,12 @@ the new "burn-in, then clean up" rule (tenet 18).
    off at that hour it runs the missed one as soon as it's back. **(b)** We picked the **watchdog**:
    a free service (healthchecks.io) that expects a nightly "backup OK" ping and **emails you if it
    ever goes silent** — the only way to catch a *dead* server (a dead box can't email you itself).
-   You created the check and saved its link in Bitwarden; I wired the server to ping it. **Still to
-   do (next session):** switch this on on the *live* server and watch a real ping land; make the
-   backup storage itself resistant to accidental deletion; and set up a regular *practice* restore.
-   **So Phase 2 is still open until those are done, THEN Phase 3 — the Chrome browser extension.**
+   You created the check and saved its link in Bitwarden; I wired the server to ping it. **✅ NOW LIVE
+   (2026-06-08):** the nightly auto-backup is switched on on the *real* server (first run tonight ~00:02
+   IST), and we watched a real "backup OK" ping land — **healthchecks.io went green (HTTP 200)**. So the
+   watchdog is now actually watching. **Still to do (next session):** make the backup storage itself
+   resistant to accidental deletion; and set up a regular *practice* restore. **So Phase 2 is still open
+   until those two are done, THEN Phase 3 — the Chrome browser extension.**
 
 **How to do the Bitwarden check (✅ DONE 2026-06-08 — kept for reference):** the master API
 key (`ADMIN_API_KEY`) lives safely on the server, but per our custody rule (ADR 017) it must
@@ -205,11 +225,11 @@ graph-only stop/start), uploaded with a SHA-256 manifest to
 `s3://ai-memory-infra-backups-chandrav/backups/<UTC>/` (newest-7 retention); restore verifies
 checksums, confirms, then `pg_restore --clean` + SQLite untar + offline neo4j `load`. **Restore
 round-trip verified end-to-end** (write→backup→delete→restore→memory + vector search returned;
-ADR 022). **But Phase 2 was re-scoped 2026-06-08 (backup-strategy review):** backups are
-**manual** today (unbounded RPO) and fail **silently**, so automation is now *in-scope*, not
-parked. **Implementing ADR 023 (session 1 DONE in repo):** ✅ daily systemd timer + units;
-✅ dead-man's-switch wired, vendor chosen = healthchecks.io (heartbeat in `backup.sh`). ⬜ Still
-to do: deploy (1)+(2) to the droplet + confirm a live ping; data-loss hardening (server-side
+ADR 022). **But Phase 2 was re-scoped 2026-06-08 (backup-strategy review):** backups *were*
+**manual** (unbounded RPO) and failed **silently**, so automation is in-scope. **Implementing ADR 023:
+§1+§2 DEPLOYED & LIVE (2026-06-08):** ✅ daily systemd timer enabled+active on the droplet (next run
+18:32 UTC); ✅ dead-man's-switch live, vendor = healthchecks.io, **confirmed green (HTTP 200)** from two
+real service runs. ⬜ Still to do: data-loss hardening (server-side
 lifecycle/versioning over client-side delete-prune — web-verify DO Spaces support first;
 least-privilege backup key; pre-restore safety snapshot); recurring restore drill. **Phase 2 is
 NOT done until backups are scheduled + self-monitoring + drilled.**
@@ -549,25 +569,34 @@ pre-commit is now DONE** (gitleaks gate).
   `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')`.
 - **SSH:** key is in `ssh-agent` (passphrase in Bitwarden); secrets are read from the server
   `.env`, never printed. Droplet `168.144.145.29` (`root@`).
+- **Appending to the droplet `.env` from Windows → strip CR.** Piping a line from PowerShell over
+  SSH (`$line | ssh … "cat >> .env"`) appends a trailing `\r`, which silently breaks values read by
+  `backup.sh` (a heartbeat URL with a `\r` → `curl: (3) URL rejected: Malformed input`). After any
+  such append, run `ssh root@… "sed -i 's/\r$//' /opt/ai-memory-infra/infra/.env"` and re-verify.
+- **Droplet repo sync = `git fetch && git reset --hard origin/main` (tenet 11, remote is truth).**
+  The droplet `/opt/ai-memory-infra` is a real clone; it had live working-tree edits from earlier
+  on-box sessions, but those were already committed to `origin/main` — verify with
+  `git diff --stat origin/main` (expect only the intended new delta) *before* resetting, so no
+  live-only patch is lost. `.env`/`terraform.tfvars` are gitignored, so a hard reset never touches them.
 - **No-bash-on-Windows:** `bash -n` syntax checks use the Git-bundled bash at
   `C:\Program Files\Git\bin\bash.exe`.
 
 ## Next action
 
-> **RESUME HERE — Phase 2 automation, session 2. DONE so far (session 1, in the repo,
-> NOT yet deployed):** the daily `systemd` backup timer + units (`infra/systemd/`), wired
-> into `bootstrap.sh`; the dead-man's-switch heartbeat wired into `backup.sh`; **monitoring
-> vendor chosen = healthchecks.io** (`HEALTHCHECK_URL` in local `.env` + Bitwarden; the
-> operator's check is created). **NEXT ACTION = (a) DEPLOY to the droplet** — copy the updated
-> `scripts/` + the new `infra/systemd/` units, `systemctl enable --now ai-memory-backup.timer`,
-> add `HEALTHCHECK_URL` to the droplet `/opt/ai-memory-infra/infra/.env`, run one backup and
-> **confirm the healthchecks.io check goes green**. **(b) ADR 023 §3 data-loss hardening** —
-> ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST (tenet 8); move retention
-> to server-side lifecycle over the client-side `s3cmd del` prune; add a least-privilege
+> **RESUME HERE — Phase 2 automation, session 3. ✅ (a) DEPLOY DONE & GREEN (session 2,
+> 2026-06-08):** droplet synced to `origin/main` (`c4f31b8`); the three `systemd` units installed
+> to `/etc/systemd/system/`; `ai-memory-backup.timer` **enabled + active** (next run 18:32 UTC ≈
+> 00:02 IST, `Persistent=true`); `HEALTHCHECK_URL` added to the droplet `/opt/ai-memory-infra/infra/.env`
+> (CR-strip gotcha fixed); two on-demand `systemctl start ai-memory-backup.service` runs =
+> `Result=success`, artifacts uploaded, prune ran; **healthchecks.io returned HTTP 200 `OK`
+> (dead-man's-switch GREEN)**. ADR 023 §1 + §2 are LIVE. **NEXT ACTION = (b) ADR 023 §3 data-loss
+> hardening** — ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST (tenet 8); move
+> retention to server-side lifecycle over the client-side `s3cmd del` prune; add a least-privilege
 > backup-only Spaces key; add a pre-restore safety snapshot to `restore.sh`. **(c) §4 restore
-> drill.** THEN Phase 3 (Chrome extension). **Tenet 17:** ASK before building anything that
-> deletes/overwrites data, even if the code reverts cleanly (the §3 prune/lifecycle change is
-> exactly this class). P1 `.env` plaintext-note strip stays deferred (tenet 18, ~2026-06-15).**
+> drill.** THEN Phase 3 (Chrome extension). **⚠ Tenet 17 — ASK before building anything that
+> deletes/overwrites data**, even if the code reverts cleanly (the §3 prune→lifecycle change and
+> the pre-restore snapshot are exactly this one-way-door class; surface options + get sign-off).
+> P1 `.env` plaintext-note strip stays deferred (tenet 18, ~2026-06-15).**
 
 1. ✅ **Commit the deploy changes** — DONE (prior session: `3d1db74` infra + `b6ffa2d`
    docs; repo-health green, both repos `0 ahead/0 behind`). No pending changes.
@@ -610,15 +639,18 @@ pre-commit is now DONE** (gitleaks gate).
    latest` → exact record + `/search` returned (vectors restored). ADR 022. **Re-scoped
    2026-06-08:** backups are manual (unbounded RPO) + fail silently → automation pulled into
    Phase 2 (see step 8). Tenet 17 sharpened (effect-vs-code).
-8. 🔄 **Phase 2 automation + data-loss hardening (ADR 023) — IN PROGRESS (session 1 of ~2).**
-   (1) ✅ **Daily `systemd` timer BUILT (in repo, not deployed)** — `infra/systemd/ai-memory-backup.{service,timer}`
-   (`Persistent=true`, 18:30 UTC) + `…-failure.service` (`OnFailure` journal marker); installed by
-   `bootstrap.sh`. (2) ✅ **Dead-man's-switch wired + vendor chosen = healthchecks.io** (free,
-   open-source, no lock-in; web-verified vs cron-job.org + DO Uptime, tenet 8). `backup.sh` pings
-   `/start` + success + `/fail` from an optional `HEALTHCHECK_URL`; operator created the check (cron
-   `30 18 * * *` UTC, 1 h grace) + saved the URL to Bitwarden; staged in local `.env`. **Local
-   backstop** = `OnFailure=` marker (a "newest prefix < 25 h" freshness check is still a TODO if we
-   want belt-and-suspenders, but the external monitor covers silence). (3) ⬜ **Data-loss hardening
+8. 🔄 **Phase 2 automation + data-loss hardening (ADR 023) — §1+§2 DEPLOYED & LIVE; §3+§4 next.**
+   (1) ✅ **Daily `systemd` timer DEPLOYED & LIVE** — `infra/systemd/ai-memory-backup.{service,timer}`
+   (`Persistent=true`, 18:30 UTC) + `…-failure.service` (`OnFailure` journal marker); installed to
+   `/etc/systemd/system/` on the droplet and **`enable --now`'d (enabled + active; next run 18:32 UTC ≈
+   00:02 IST)**; also installed by `bootstrap.sh` for clean rebuilds. (2) ✅ **Dead-man's-switch wired +
+   vendor = healthchecks.io + CONFIRMED GREEN** (free, open-source, no lock-in; web-verified vs
+   cron-job.org + DO Uptime, tenet 8). `backup.sh` pings `/start` + success + `/fail` from
+   `HEALTHCHECK_URL`; **added to the droplet `infra/.env`** (CR-strip gotcha fixed, see Environment
+   notes); two on-demand `systemctl start ai-memory-backup.service` runs succeeded and **healthchecks.io
+   returned HTTP 200 `OK`**. Operator's check = cron `30 18 * * *` UTC, 1 h grace; URL in Bitwarden.
+   **Local backstop** = `OnFailure=` marker (a "newest prefix < 25 h" freshness check is still a TODO if
+   we want belt-and-suspenders, but the external monitor covers silence). (3) ⬜ **Data-loss hardening
    (tenet 17) — NOT STARTED:** ⚠ web-verify DO Spaces *versioning/object-lock + lifecycle* FIRST
    (tenet 8); replace the client-side `s3cmd del` prune with **server-side lifecycle/versioning**;
    add a **least-privilege backup-only Spaces key** (write+list, no mass-delete); make `restore.sh`
