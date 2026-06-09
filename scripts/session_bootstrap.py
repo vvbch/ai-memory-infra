@@ -17,19 +17,23 @@ can inject it once instead of the agent re-deriving it.
 PORTABILITY (tenet 2)
 ---------------------
 This file is the single source of truth. Each IDE only needs a *thin adapter*
-that runs it at session start:
-  * Cursor / Claude Code  -> ``sessionStart`` hook  (``--cursor`` JSON mode)
-  * VS Code / others      -> a task or shell profile (default text mode)
-The adapters carry no logic; they just invoke this script. Generate them with
-``scripts/install_ide_hooks.py``.
+that runs it at session start. The session-start *output contract* differs by
+harness, so this script offers one mode per contract (the adapters pick the
+right flag; they carry no logic). Generate the adapters with
+``scripts/install_ide_hooks.py``:
+  * Cursor                       -> ``--cursor``       (``{additional_context, env}``)
+  * Claude Code                  -> plain text mode    (stdout injected as context)
+  * Codex / Gemini / Grok        -> ``--hookspecific`` (``hookSpecificOutput.additionalContext``)
+  * VS Code / others / humans    -> default text mode  (folder-open task / shell)
 
 CROSS-PLATFORM (tenet 3): pure Python stdlib, no shell-isms, Mac/Windows alike.
 
 USAGE
 -----
-  python scripts/session_bootstrap.py            # human/plain-text block
-  python scripts/session_bootstrap.py --cursor   # Cursor sessionStart JSON
-  python scripts/session_bootstrap.py --json      # raw fields as JSON
+  python scripts/session_bootstrap.py                # human/plain-text block
+  python scripts/session_bootstrap.py --cursor       # Cursor sessionStart JSON
+  python scripts/session_bootstrap.py --hookspecific  # Codex/Gemini/Grok SessionStart JSON
+  python scripts/session_bootstrap.py --json          # raw fields as JSON
 
 The script never raises into the harness: on any failure it degrades to a
 minimal pointer so a session can always start.
@@ -37,6 +41,7 @@ minimal pointer so a session can always start.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import re
 import sys
@@ -130,10 +135,8 @@ def render_text(d: dict) -> str:
 def main(argv: list[str]) -> int:
     # Windows consoles default to cp1252; STATUS.md / our text contain non-ASCII
     # (em dashes, check marks). Force UTF-8 so text mode never crashes a session.
-    try:
+    with contextlib.suppress(Exception):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")  # type: ignore[attr-defined]
-    except Exception:
-        pass
 
     try:
         d = gather()
@@ -160,6 +163,18 @@ def main(argv: list[str]) -> int:
                 "AI_MEMORY_CONTROL_PLANE": d["control_plane"],
                 "AI_MEMORY_STATUS_FILE": d["status_file"],
             },
+        }))
+    elif mode == "--hookspecific":
+        # Shared SessionStart contract for the Claude-derived harness family —
+        # Codex, Gemini CLI, and Grok all read `hookSpecificOutput.additionalContext`
+        # from stdout JSON and inject it as developer/session context. (Codex also
+        # accepts plain stdout, but the explicit JSON shape is the documented one
+        # and is what Gemini requires — its stdout contract is JSON-only.)
+        sys.stdout.write(json.dumps({
+            "hookSpecificOutput": {
+                "hookEventName": "SessionStart",
+                "additionalContext": render_text(d),
+            }
         }))
     elif mode == "--json":
         sys.stdout.write(json.dumps(d, indent=2))

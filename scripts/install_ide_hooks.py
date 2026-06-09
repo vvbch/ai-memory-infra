@@ -3,20 +3,42 @@
 
 WHY THIS EXISTS
 ---------------
-Cursor (and Claude Code) load *project* hooks from ``<workspace root>/.cursor/``
-(resp. ``.claude/``) — the root that is actually open. This project's open root
-is the parent ``ai-memory`` workspace, **not** the ``ai-memory-infra`` repo. A
-``hooks.json`` placed inside ``ai-memory-infra/.cursor/`` is therefore never
-loaded. And the parent workspace is not a git repo, so files written there are
-not versioned and do not survive a re-clone.
+Every coding-agent harness loads *project* hooks from the **open workspace root**
+(Cursor from ``.cursor/``, Claude Code from ``.claude/``, Codex from ``.codex/``,
+Gemini CLI from ``.gemini/``, Grok from ``.grok/``). This project's open root is
+the parent ``ai-memory`` workspace, **not** the ``ai-memory-infra`` repo — and that
+parent is not a git repo, so files written there are not versioned and do not
+survive a re-clone.
 
-The project's answer (same model as ADR 015 for git hooks): keep the canonical
-logic versioned in ``ai-memory-infra`` (``scripts/session_bootstrap.py`` and
-``.cursor/hooks/completion_gate.py``), and keep a *versioned installer* that
-(re)writes the thin per-IDE adapter files at the workspace root. The adapters
-carry no logic — they only invoke the versioned scripts — so this is consistent
-with tenet 2 (editor-agnostic; editor files are thin pointers) and tenet 1
-(everything important is versioned + reproducible).
+The project's answer (same model as ADR 015 for git hooks, ADR 030 for these):
+keep the canonical logic versioned in ``ai-memory-infra`` (``scripts/
+session_bootstrap.py`` and ``scripts/completion_gate.py``), and keep a *versioned
+installer* that (re)writes the thin per-IDE adapter files at the workspace root.
+The adapters carry no logic — they only invoke the versioned scripts with the
+right per-harness flag — so this stays consistent with tenet 2 (editor-agnostic;
+editor files are thin pointers) and tenet 1 (everything important is versioned +
+reproducible).
+
+PER-HARNESS CONTRACTS (verified, tenet 8)
+-----------------------------------------
+The session-start and turn-end *output contracts* differ by harness, so the
+adapters point each event at the matching script mode (one source of truth, no
+drift — tenet 10):
+  * Cursor       sessionStart ``--cursor`` (additional_context + env)
+                 stop         default      (followup_message), loop_limit 4
+  * Claude Code  SessionStart plain text   (stdout injected as context)
+                 Stop         default      (followup_message)
+  * Codex        SessionStart ``--hookspecific`` (hookSpecificOutput.additionalContext)
+                 Stop         ``--decision``     (decision: block + reason)
+  * Gemini CLI   SessionStart ``--hookspecific``
+                 (no blocking per-turn stop — SessionEnd is advisory-only; the
+                  gate is intentionally NOT wired for Gemini. ADR 030.)
+  * Grok         SessionStart ``--hookspecific``
+                 Stop         ``--decision``
+                 (best-effort: the Grok CLI ecosystem is fragmented across
+                  several incompatible config schemas; this writes the common
+                  nested Claude-style ``.grok/settings.json``. Verify with
+                  ``grok inspect`` / ``/hooks`` and adjust if your CLI differs.)
 
 Run after any re-clone or when adding an IDE:
     python ai-memory-infra/scripts/install_ide_hooks.py
@@ -40,40 +62,111 @@ WORKSPACE_ROOT = _HERE.parents[2]
 _BOOTSTRAP = "ai-memory-infra/scripts/session_bootstrap.py"
 _COMPLETION_GATE = "ai-memory-infra/scripts/completion_gate.py"
 
-# Single source of truth for the hook wiring. Each IDE adapter is generated from
-# this so the two surfaces can never drift (tenet 10).
-HOOKS = {
-    # sessionStart -> inject the compact bootstrap (control plane + Next action)
-    # so the agent does not re-read all of STATUS.md to resume (token cost).
-    "sessionStart": f'python "{_BOOTSTRAP}" --cursor',
-    # stop -> deterministic completion gate (commit/push every touched repo).
-    "stop": f'python "{_COMPLETION_GATE}"',
-}
+
+def _py(script: str, *flags: str) -> str:
+    """A `python "<script>" <flags...>` command string for an adapter."""
+    tail = (" " + " ".join(flags)) if flags else ""
+    return f'python "{script}"{tail}'
 
 
-def _cursor_hooks_json() -> dict:
-    return {
+# Single source of truth for the canonical commands. Each adapter is generated
+# from these so the surfaces can never drift (tenet 10).
+BOOT_CURSOR = _py(_BOOTSTRAP, "--cursor")
+BOOT_PLAIN = _py(_BOOTSTRAP)
+BOOT_HOOKSPEC = _py(_BOOTSTRAP, "--hookspecific")
+GATE_CURSOR = _py(_COMPLETION_GATE)
+GATE_DECISION = _py(_COMPLETION_GATE, "--decision")
+
+
+# ---- per-IDE adapter builders ---------------------------------------------
+# Each returns (relative_path, json_payload). The schema is the harness's own.
+
+def _cursor() -> tuple[str, dict]:
+    return ".cursor/hooks.json", {
         "version": 1,
         "hooks": {
-            "sessionStart": [{"command": HOOKS["sessionStart"]}],
-            "stop": [{"command": HOOKS["stop"], "loop_limit": 4}],
+            "sessionStart": [{"command": BOOT_CURSOR}],
+            "stop": [{"command": GATE_CURSOR, "loop_limit": 4}],
         },
     }
 
 
-def _claude_settings_json() -> dict:
-    # Claude Code maps SessionStart/Stop onto the same lifecycle; Cursor also reads
-    # .claude/settings.json (third-party hooks). One file therefore covers Claude
+def _claude() -> tuple[str, dict]:
+    # Claude Code maps SessionStart/Stop onto its lifecycle; Cursor also reads
+    # .claude/settings.json (third-party hooks), so this one file covers Claude
     # Code natively and is a redundant backstop under Cursor.
     def _cmd(c: str) -> dict:
         return {"hooks": [{"type": "command", "command": c}]}
 
-    return {
+    return ".claude/settings.json", {
         "hooks": {
-            "SessionStart": [_cmd(HOOKS["sessionStart"].replace("--cursor", ""))],
-            "Stop": [_cmd(HOOKS["stop"])],
+            "SessionStart": [_cmd(BOOT_PLAIN)],
+            "Stop": [_cmd(GATE_CURSOR)],
         }
     }
+
+
+def _codex() -> tuple[str, dict]:
+    # Codex discovers `.codex/hooks.json` next to a trusted project config layer.
+    # SessionStart matcher fires on fresh start + resume; Stop uses the
+    # decision/block continuation contract.
+    return ".codex/hooks.json", {
+        "hooks": {
+            "SessionStart": [{
+                "matcher": "startup|resume",
+                "hooks": [{
+                    "type": "command",
+                    "command": BOOT_HOOKSPEC,
+                    "statusMessage": "Loading ai-memory session bootstrap",
+                }],
+            }],
+            "Stop": [{
+                "hooks": [{
+                    "type": "command",
+                    "command": GATE_DECISION,
+                    "timeout": 30,
+                }],
+            }],
+        }
+    }
+
+
+def _gemini() -> tuple[str, dict]:
+    # Gemini CLI hooks live in `.gemini/settings.json`. SessionStart injects
+    # context via hookSpecificOutput.additionalContext. Gemini has no blocking
+    # per-turn stop (SessionEnd is advisory-only), so the gate is not wired here.
+    return ".gemini/settings.json", {
+        "hooks": {
+            "SessionStart": [{
+                "matcher": "startup",
+                "hooks": [{
+                    "name": "ai-memory-bootstrap",
+                    "type": "command",
+                    "command": BOOT_HOOKSPEC,
+                    "description": "Inject the ai-memory session bootstrap block",
+                }],
+            }],
+        }
+    }
+
+
+def _grok() -> tuple[str, dict]:
+    # Best-effort: the common nested Claude-style schema. The Grok CLI ecosystem
+    # is fragmented (xAI Grok Build `.grok/hooks.json` + `~/.grok/config.toml`,
+    # `grok-dev` `~/.grok/user-settings.json`, superagent `.grok/settings.json`).
+    # We write the project-scoped nested form; verify with `grok inspect`.
+    def _cmd(c: str) -> dict:
+        return {"hooks": [{"type": "command", "command": c}]}
+
+    return ".grok/settings.json", {
+        "hooks": {
+            "SessionStart": [{"matcher": "startup|resume", **_cmd(BOOT_HOOKSPEC)}],
+            "Stop": [_cmd(GATE_DECISION)],
+        }
+    }
+
+
+ADAPTERS = (_cursor, _claude, _codex, _gemini, _grok)
 
 
 def _write(path: Path, payload: dict) -> None:
@@ -88,14 +181,19 @@ def main() -> int:
     print("installing IDE startup/handoff adapters (thin pointers to")
     print(f"  {_BOOTSTRAP} / {_COMPLETION_GATE}):")
 
-    _write(WORKSPACE_ROOT / ".cursor" / "hooks.json", _cursor_hooks_json())
-    _write(WORKSPACE_ROOT / ".claude" / "settings.json", _claude_settings_json())
+    for build in ADAPTERS:
+        rel, payload = build()
+        _write(WORKSPACE_ROOT / rel, payload)
 
     print("")
-    print("Done. Cursor reloads hooks.json on save (else restart Cursor); verify")
-    print("in Settings -> Hooks or the Hooks output channel.")
-    print("VS Code: no native session hook - add the bootstrap as a folder-open")
-    print("task. See ai-memory-infra/docs/setup.md (IDE startup hooks).")
+    print("Done. Verify in each IDE that's installed:")
+    print("  Cursor  : Settings -> Hooks (reloads hooks.json on save / restart)")
+    print("  Claude  : .claude/settings.json SessionStart/Stop")
+    print("  Codex   : `/hooks` to review + trust (project hooks need trust)")
+    print("  Gemini  : `/hooks` panel (SessionStart only; no blocking stop)")
+    print("  Grok    : `grok inspect` / `/hooks` (schema varies by CLI - see header)")
+    print("VS Code   : no native session hook - add the bootstrap as a folder-open")
+    print("            task. See ai-memory-infra/docs/setup.md (IDE startup hooks).")
     print("Re-run after any re-clone (the parent workspace is not versioned).")
     return 0
 

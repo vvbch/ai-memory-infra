@@ -381,11 +381,29 @@ the thin per-IDE adapters there (same model as the git-hook installer, ADR 015):
 python ai-memory-infra/scripts/install_ide_hooks.py
 ```
 
-This writes `ai-memory/.cursor/hooks.json` (Cursor: `sessionStart` + `stop`) and
-`ai-memory/.claude/settings.json` (Claude Code: `SessionStart` + `Stop`), each a
-thin pointer that just runs the `scripts/` logic. **Re-run after any re-clone** —
-the generated files live at the unversioned parent root and don't survive on their
-own (the installer + the `scripts/` logic are what's versioned).
+This writes one thin adapter per harness at the parent workspace root, each a
+pointer that just runs the `scripts/` logic with the flag matching that harness's
+hook contract (verified, tenet 8):
+
+| Harness | Adapter file | SessionStart | Turn-end gate |
+| --- | --- | --- | --- |
+| Cursor | `.cursor/hooks.json` | `--cursor` (`additional_context`+`env`) | `stop` → `followup_message`, `loop_limit 4` |
+| Claude Code | `.claude/settings.json` | plain text (stdout = context) | `Stop` → `followup_message` |
+| Codex CLI | `.codex/hooks.json` | `--hookspecific` (`hookSpecificOutput.additionalContext`) | `Stop` → `--decision` (`decision: block`) |
+| Gemini CLI | `.gemini/settings.json` | `--hookspecific` | none — Gemini's `SessionEnd` is advisory-only (no blocking per-turn stop) |
+| Grok | `.grok/settings.json` | `--hookspecific` | `Stop` → `--decision` (best-effort; see note) |
+
+The same two `scripts/` files back every adapter (no per-IDE logic, no drift —
+tenet 10); they expose one output mode per contract. **Re-run after any
+re-clone** — the generated files live at the unversioned parent root and don't
+survive on their own (the installer + the `scripts/` logic are what's versioned).
+
+> **Grok note.** The Grok CLI ecosystem is fragmented across several incompatible
+> config schemas (xAI *Grok Build* `.grok/hooks.json` + `~/.grok/config.toml`,
+> `grok-dev` `~/.grok/user-settings.json`, `superagent-ai/grok-cli`
+> `.grok/settings.json`). The installer writes the common nested Claude-style
+> `.grok/settings.json`; confirm with `grok inspect` / `/hooks` and adjust the
+> builder in `install_ide_hooks.py` if your CLI reads a different file/shape.
 
 ### Verify
 
@@ -397,6 +415,17 @@ own (the installer + the `scripts/` logic are what's versioned).
   whole `STATUS.md`) holds regardless.
 - **Claude Code:** `.claude/settings.json` `SessionStart`/`Stop` run the same
   scripts.
+- **Codex CLI:** project `.codex/` hooks load only once **trusted** — run `/hooks`
+  to review + trust them (and confirm `[features] hooks` isn't disabled in
+  `config.toml`; it's on by default). `SessionStart` injects the bootstrap as
+  developer context; `Stop` blocks the turn with `decision: block` until repos are
+  clean (it allows the stop after one nudge — Codex sets `stop_hook_active`).
+- **Gemini CLI:** open the `/hooks` panel; `SessionStart` injects the bootstrap.
+  Gemini has **no blocking per-turn stop** (its `SessionEnd` is advisory-only), so
+  only the bootstrap is wired — the completion gate is enforced on the other
+  harnesses.
+- **Grok:** run `grok inspect` (or `/hooks`) to confirm the adapter was discovered;
+  if not, your Grok CLI uses a different schema — see the Grok note above.
 - **VS Code:** no native agent session hook. Wire the bootstrap as a folder-open
   task instead — run `python ai-memory-infra/scripts/session_bootstrap.py` (plain
   text mode) and read its output, or add it to `.vscode/tasks.json` as a
@@ -404,6 +433,8 @@ own (the installer + the `scripts/` logic are what's versioned).
 
 ### Done when
 
-`python ai-memory-infra/scripts/session_bootstrap.py` prints the bootstrap block,
-the generated adapters exist at the workspace root, and a `{"status":"completed"}`
-piped into `scripts/completion_gate.py` reports any dirty/unpushed repo.
+`python ai-memory-infra/scripts/session_bootstrap.py` prints the bootstrap block
+(and `--hookspecific` emits the `hookSpecificOutput.additionalContext` JSON), the
+five adapters exist at the workspace root, and a `{"status":"completed"}` piped
+into `scripts/completion_gate.py` reports any dirty/unpushed repo — as
+`followup_message` by default and as `{"decision":"block",…}` with `--decision`.

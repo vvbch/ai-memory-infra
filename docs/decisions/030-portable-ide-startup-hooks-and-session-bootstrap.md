@@ -58,14 +58,32 @@ hooks, and apply it to two hooks:
   - `scripts/completion_gate.py` — the ADR 027 gate, **moved out of `.cursor/`**.
 - **Thin per-IDE adapters generated at the workspace root:**
   - `scripts/install_ide_hooks.py` (cross-platform Python) writes, from one
-    definition (no drift, tenet 10): `<root>/.cursor/hooks.json` (`sessionStart` →
-    bootstrap, `stop` → gate, `loop_limit: 4`) and `<root>/.claude/settings.json`
-    (`SessionStart`/`Stop`). The parent workspace is not a git repo, so — exactly
-    like `.git/hooks` (ADR 015) — these generated files are **not** versioned;
-    the installer + the versioned scripts are what survive a re-clone. **Re-run
-    after any re-clone.**
+    declarative definition (no drift, tenet 10), one adapter per harness:
+    `<root>/.cursor/hooks.json`, `.claude/settings.json`, `.codex/hooks.json`,
+    `.gemini/settings.json`, and `.grok/settings.json`. The parent workspace is not
+    a git repo, so — exactly like `.git/hooks` (ADR 015) — these generated files
+    are **not** versioned; the installer + the versioned scripts are what survive a
+    re-clone. **Re-run after any re-clone.**
   - **VS Code** has no native agent session hook; document wiring the bootstrap as
     a folder-open task (`docs/setup.md`). Same canonical script.
+
+### Per-harness contracts are not identical — one script mode per contract
+The session-start and turn-end *output* shapes differ by harness (verified,
+tenet 8), so the canonical scripts expose one mode per contract and the adapters
+select the right flag (the logic stays single-sourced):
+- **sessionStart context:** Cursor wants `{additional_context, env}`
+  (`--cursor`); the Claude-derived family — Claude Code, Codex, Gemini, Grok —
+  uses `hookSpecificOutput.additionalContext` (`--hookspecific`; Claude Code also
+  accepts plain stdout, which is what its adapter uses).
+- **turn-end gate:** Cursor/Claude use `followup_message` (default mode, capped by
+  `loop_limit`); Codex/Grok `Stop` uses `{"decision":"block","reason":…}`
+  (`--decision`). Codex has no follow-up cap, so the gate reads `stop_hook_active`
+  and allows the stop after a single nudge to avoid an infinite loop.
+- **Gemini has no blocking per-turn stop** (`SessionEnd` is advisory-only), so the
+  gate is deliberately *not* wired for Gemini; the bootstrap still is.
+- **Grok is best-effort:** its CLI ecosystem spans several incompatible config
+  schemas; the installer writes the common nested Claude-style `.grok/settings.json`
+  and `docs/setup.md` tells the operator to confirm with `grok inspect`.
 
 ### Why not rely on `additional_context` alone
 The Cursor injection bug means the bootstrap can't *depend* on context injection.
@@ -93,6 +111,11 @@ holds regardless.
   + output-channel print are the stable fallbacks.
 - Requires `python` on PATH (Mac may expose `python3`; adjust the adapter command
   if the surface changes).
+- Codex project (`.codex/`) hooks load only after the operator **trusts** them via
+  `/hooks`; until then only user/system hooks run.
+- Grok coverage is best-effort: the CLI ecosystem is fragmented across several
+  incompatible hook schemas, so the generated `.grok/settings.json` may need to be
+  re-pointed at the file/shape the installed Grok CLI actually reads.
 
 ## Alternatives considered
 - **Keep hooks in `ai-memory-infra/.cursor/` (status quo).** Doesn't load at the

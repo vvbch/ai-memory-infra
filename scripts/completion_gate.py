@@ -28,15 +28,24 @@ NOT in any ``.cursor/`` directory — Cursor does not "own" it. Each harness get
 root) that invokes this script on its turn-end event:
   * Cursor      -> ``stop`` hook   (``<workspace>/.cursor/hooks.json``)
   * Claude Code -> ``Stop`` hook   (``<workspace>/.claude/settings.json``)
-The harness adapter is swappable; this logic is not.
+  * Codex / Grok-> ``Stop`` hook   (``--decision`` mode; see below)
+The harness adapter is swappable; this logic is not. (Gemini CLI has no blocking
+per-turn stop — its ``SessionEnd`` is advisory-only — so the gate is not wired
+there; the bootstrap still is. See ADR 030.)
 
-CONTRACT (Cursor ``stop`` / Claude ``Stop`` hook)
--------------------------------------------------
-- stdin  : ``{"status": "completed"|"aborted"|"error", "loop_count": <int>}``
-- stdout : ``{}``                       -> allow the agent to stop
-           ``{"followup_message": ...}``-> auto-submitted as the next user turn
-- ``loop_count`` starts at 0 and counts prior auto-follow-ups this conversation.
-  Cursor caps total follow-ups at ``loop_limit`` (set to 4 in the adapter).
+CONTRACTS
+---------
+Two stdout shapes, selected by flag, because the turn-end "keep going" contract
+differs by harness. Both read the same stdin and run the same detection.
+- stdin (all)        : ``{"status": ..., "loop_count": <int>, "stop_hook_active": <bool>}``
+- default (Cursor)   : ``{}`` allow stop / ``{"followup_message": ...}`` auto-submitted next turn
+- ``--decision`` (Codex/Claude-family Stop):
+                       ``{}`` allow stop / ``{"decision": "block", "reason": ...}`` ->
+                       the harness creates a continuation turn from ``reason``.
+``loop_count`` (Cursor) starts at 0 and counts prior auto-follow-ups; Cursor caps
+them at ``loop_limit`` (4 in the adapter). Codex instead sends ``stop_hook_active``
+once it has already continued from this gate; we treat that as "stop nagging,
+allow the stop" so a harness without a loop cap cannot loop forever.
 
 CROSS-PLATFORM (tenet 3): pure Python + ``git``; no shell-isms.
 """
@@ -157,12 +166,60 @@ def _emit(payload: dict) -> None:
     sys.stdout.flush()
 
 
-def main() -> int:
+def _normal_message(repo_list: str) -> str:
+    """Enforcement nudge: make the agent finish the Definition of Done itself
+    (keeps good commit messages + STATUS/docs, which a blind script cannot)."""
+    return (
+        "The completion gate is OPEN: you are about to end the turn with work "
+        "not committed/pushed, which violates the AGENTS.md Completion gate "
+        "and tenet 11 (commit+push every session). Finish the Definition of "
+        "Done now, do not ask for confirmation (tenet 17 — reversible):\n\n"
+        f"{repo_list}\n\n"
+        "For EACH repo above: stage the intended changes, commit with a "
+        "Conventional Commit message describing the actual change, then push "
+        "to origin. Update docs/planning/STATUS.md (and BUILD-LOG / "
+        "BUILD-JOURNEY) per the DoD trigger table. If a one-way-door effect, "
+        "secret, or destructive op is the reason you stopped, do NOT commit "
+        "it — instead say so explicitly in your final answer. Then stop."
+    )
+
+
+def _fail_loud_message(repo_list: str) -> str:
+    """Operator-facing handoff after we've nudged a few times and the gate is
+    still open — surfaces the failure loudly instead of looping silently."""
+    return (
+        "STOP — do not attempt another automatic commit/push loop. "
+        "The completion gate is still OPEN after multiple attempts. "
+        "These repositories have uncommitted or unpushed work:\n\n"
+        f"{repo_list}\n\n"
+        "In your FINAL response to the operator, plainly state: which "
+        "repos are not committed/pushed, the exact blocker preventing it "
+        "(e.g. pre-commit/gitleaks rejection, push auth, conflict), and "
+        "the single next action they should take. Do NOT print a Resume "
+        "prompt — this is an open handoff failure (AGENTS.md Final "
+        "response gate)."
+    )
+
+
+def main(argv: list[str]) -> int:
+    # Output contract: default = Cursor `followup_message`; `--decision` = the
+    # Codex/Claude-family `Stop` shape (`decision: block` + `reason`).
+    decision_mode = "--decision" in argv[1:]
+
+    def allow() -> None:
+        _emit({})
+
+    def keep_going(message: str) -> None:
+        if decision_mode:
+            _emit({"decision": "block", "reason": message})
+        else:
+            _emit({"followup_message": message})
+
     try:
         data = json.load(sys.stdin)
     except Exception:
         # Can't parse input -> fail open (never deadlock the agent over our bug).
-        _emit({})
+        allow()
         return 0
 
     status = data.get("status", "completed")
@@ -171,56 +228,32 @@ def main() -> int:
     # Only enforce on a clean completion. On abort/error the user/harness already
     # interrupted; nagging would be noise and could fight a real failure.
     if status != "completed":
-        _emit({})
+        allow()
+        return 0
+
+    # Loop guard for harnesses without a follow-up cap (Codex `Stop` re-fires
+    # after the continuation it creates). `stop_hook_active` means this gate has
+    # already nudged once this turn, so allow the stop now rather than loop
+    # forever. Cursor has its own `loop_limit` cap and never sends this field.
+    if decision_mode and data.get("stop_hook_active"):
+        allow()
         return 0
 
     pending = [s for repo in _candidate_repos() if (s := _repo_state(repo))]
 
     if not pending:
-        _emit({})  # completion gate satisfied — allow stop
+        allow()  # completion gate satisfied — allow stop
         return 0
 
     repo_list = "\n".join(_describe(s) for s in pending)
 
     if loop_count >= FAIL_LOUD_AT:
-        # We've already pushed the agent a few times and it still hasn't closed
-        # the gate. Stop auto-retrying; force a loud, operator-facing handoff so
-        # the failure is visible rather than silently capped by loop_limit.
-        _emit({
-            "followup_message": (
-                "STOP — do not attempt another automatic commit/push loop. "
-                "The completion gate is still OPEN after multiple attempts. "
-                "These repositories have uncommitted or unpushed work:\n\n"
-                f"{repo_list}\n\n"
-                "In your FINAL response to the operator, plainly state: which "
-                "repos are not committed/pushed, the exact blocker preventing it "
-                "(e.g. pre-commit/gitleaks rejection, push auth, conflict), and "
-                "the single next action they should take. Do NOT print a Resume "
-                "prompt — this is an open handoff failure (AGENTS.md Final "
-                "response gate)."
-            )
-        })
+        keep_going(_fail_loud_message(repo_list))
         return 0
 
-    # Normal enforcement: make the agent finish the Definition of Done itself
-    # (keeps good commit messages + STATUS/docs, which a blind script cannot).
-    _emit({
-        "followup_message": (
-            "The completion gate is OPEN: you are about to end the turn with work "
-            "not committed/pushed, which violates the AGENTS.md Completion gate "
-            "and tenet 11 (commit+push every session). Finish the Definition of "
-            "Done now, do not ask for confirmation (tenet 17 — reversible):\n\n"
-            f"{repo_list}\n\n"
-            "For EACH repo above: stage the intended changes, commit with a "
-            "Conventional Commit message describing the actual change, then push "
-            "to origin. Update docs/planning/STATUS.md (and BUILD-LOG / "
-            "BUILD-JOURNEY) per the DoD trigger table. If a one-way-door effect, "
-            "secret, or destructive op is the reason you stopped, do NOT commit "
-            "it — instead say so explicitly in your final answer. Then stop."
-        )
-    })
+    keep_going(_normal_message(repo_list))
     return 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main(sys.argv))
