@@ -4,7 +4,24 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Deterministic completion gate shipped — Cursor `stop` hook
+**Last updated:** 2026-06-09 (**Memory identity + temporal model corrected by operator — ADR 028
+supersedes ADR 026; ADR 029 adds the temporal + open-item model**). The operator rejected ADR 026's
+"hard rule" that allowed a *separate prototype `user_id`*: identity is the wrong layer to
+discriminate on, and a `user_id` split fragments the one curated bank — exactly the hard isolation
+**ADR 003** already rejected. **ADR 028 (supersedes 026):** there is one `user_id="chandrav"` for
+every source (OpenClaw, Cursor, extension, the future todo app); **`source` is the mandatory
+discriminator and must propagate into the graph DB (Neo4j) metadata, not just pgvector**; an adapter
+that can't carry `source`/`agent_id` is a **blocker to fix**, not a license to fork `user_id`.
+**ADR 029 (new):** every memory carries time (`created_at` + optional `occurred_at`) and a `type`
+(`fact` | `decision` | `open_item`); **decisions** are timestamped `:Decision` nodes (ADR 005) with
+supersession edges; **open items** have a lifecycle (`status`, `due_at`/`revisit_at`, and on closure
+`resolution` + `closed_at`) plus an owned **revisit loop** so "check back what happened" is a
+mechanism, not memory; the planned **todo app is a thin projection** over `open_item` memories +
+`:OpenItem` LifeGraph nodes (no new store). Implementation is parked in `BACKLOG.md`; this session
+fixed the *model* (control plane first, tenet 14). Next build action is unchanged (agent-owned
+skills).
+
+**Prior update:** 2026-06-09 (**Deterministic completion gate shipped — Cursor `stop` hook
 (`.cursor/hooks/completion_gate.py`, ADR 027) now enforces commit+push for any model; this is
 the long-promised repo handoff verifier and closes COE
 `2026-06-09-model-dependent-completion-gate.md`**). Root cause of the recurring
@@ -19,11 +36,12 @@ AGENTS.md now name the hook as the hard layer; the git pre-commit hook stays the
 layer (integrity + gitleaks). The hook is versioned (survives re-clone, unlike `.git/hooks`).
 
 **Prior update:** 2026-06-09 (**OpenClaw prototype write-tagging decision recorded; next =
-build first COE-driven skills under the defined agents**). ADR 026 records the hard rule for
-OpenClaw: shared personal `user_id="chandrav"` is allowed only when every OpenClaw write carries
-`source="openclaw"` plus `agent_id` through Mem0 and graph metadata; if
-`serenichron/openclaw-memory-mem0` cannot pass those tags, OpenClaw must use its own prototype
-`user_id` instead. Parent workspace `ai-memory` now has a root `AGENTS.md` plus
+build first COE-driven skills under the defined agents**). ADR 026 originally recorded a "hard rule"
+for OpenClaw — shared `user_id="chandrav"` *only if* the adapter passed `source`/`agent_id`, else a
+separate prototype `user_id`. **This was superseded the same day by ADR 028** (one `user_id`;
+`source` is the mandatory discriminator into Mem0 + graph; a non-conforming adapter is a blocker to
+fix, never a `user_id` split); see the latest update above. Parent workspace `ai-memory` now has a
+root `AGENTS.md` plus
 `.cursor/rules/00-workspace-control-plane.mdc`,
 both thin pointers that route future agents directly to `ai-memory-infra` as the control
 plane before they spend time rediscovering the folder layout. Live OpenAPI showed
@@ -447,12 +465,13 @@ supporting hygiene role. **Next:** build the first COE-driven skills under those
 session checkpoint, Build Agent repo handoff verifier, then Operator Assistant concierge action
 formatter.
 
-**OpenClaw prototype (ADR 026).** OpenClaw is a prototype consumer of the memory layer for
-communications from Chandra's desk, starting with email processing only. It may read curated
-personal memories through the shared `user_id="chandrav"`, but its writes must be tagged
-`source="openclaw"` and carry `agent_id` through Mem0 and graph metadata. Adapter verification is a
-blocker: if `serenichron/openclaw-memory-mem0` does not preserve those fields, give OpenClaw a
-separate prototype `user_id` instead. ClawPack/fallback config is prototype reasoning plumbing only;
+**OpenClaw prototype (ADR 026 → superseded by ADR 028).** OpenClaw is a prototype consumer of the
+memory layer for communications from Chandra's desk, starting with email processing only. It reads
+*and writes* through the shared `user_id="chandrav"` like every other source — there is no separate
+prototype `user_id` (ADR 028). Its writes must be tagged `source="openclaw"` and carry `agent_id`
+through Mem0 **and into Neo4j graph metadata**. Adapter verification is still a gate, but the
+consequence changed: if `serenichron/openclaw-memory-mem0` does not preserve those fields, **patch
+the adapter** — do not fork `user_id`. ClawPack/fallback config is prototype reasoning plumbing only;
 Mem0 extraction stays unchanged.
 
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
@@ -751,16 +770,31 @@ extension fork).**
   Tested the script across completed/aborted/loop-cap/bad-input cases. Sharpened tenet 11 +
   AGENTS.md to name the hook as the hard layer (git pre-commit stays the validation layer).
 
+## Last decisions (2026-06-09, memory identity + temporal model)
+
+- **ADR 028 — one `user_id`; `source` is the discriminator (supersedes ADR 026).** Operator
+  correction: do **not** distinguish at the `user_id` level. There is one `user_id="chandrav"` for
+  every source. `source` is the mandatory discriminator and **must propagate into the graph DB
+  (Neo4j) metadata, not just pgvector**. An adapter that can't carry `source`/`agent_id` is a
+  **blocker to fix** (patch it), never a reason to fork `user_id`. This restores ADR 003 (soft
+  separation) — a `user_id` split is the hard isolation ADR 003 already rejected.
+- **ADR 029 — temporal tagging + open-item lifecycle (todo-app foundation).** Every memory carries
+  `created_at` + optional `occurred_at` and a `type` (`fact` | `decision` | `open_item`).
+  **Decisions** are timestamped `:Decision` nodes (ADR 005) with supersession edges. **Open items**
+  have a lifecycle (`status`, optional `due_at`/`revisit_at`, and on closure `resolution` +
+  `closed_at`) and an owned **revisit loop** (Operator Assistant / Memory Steward) so "check back
+  what happened" is a mechanism, not memory. The planned **todo app is a thin projection** over
+  `open_item` memories + `:OpenItem` LifeGraph nodes — no new datastore (tenets 4/7). All of this is
+  metadata on the single `user_id` (ADR 028), discriminated the same way as `source` and the venture
+  categories. Implementation parked in `BACKLOG.md`.
+
 ## Last decisions (2026-06-09, OpenClaw prototype)
 
-- **ADR 026 — OpenClaw writes must be source-tagged.** OpenClaw is a prototype on top of the
-  shared memory bank, not a new memory silo. It should use the shared personal `user_id="chandrav"`
-  so it can read curated context, but every write must carry `source="openclaw"` plus `agent_id`
-  through Mem0 and graph metadata. If `serenichron/openclaw-memory-mem0` cannot pass those fields,
-  the fallback is a separate prototype `user_id`; one or the other is mandatory so prototype noise
-  never lands as indistinguishable curated memory. Email processing only for now; no LinkedIn
-  crawling. ClawPack + frontier-key fallbacks are prototype config, not load-bearing memory
-  decisions.
+- **ADR 026 — OpenClaw writes must be source-tagged. → SUPERSEDED by ADR 028 (above).** The
+  source-tagging requirement survives; the `user_id`-split fallback is removed. OpenClaw uses the
+  shared `user_id="chandrav"` like every source; non-conforming adapters get patched, not forked.
+  Email processing only for now; no LinkedIn crawling. ClawPack + frontier-key fallbacks are
+  prototype config, not load-bearing memory decisions.
 
 ## Last clarification (2026-06-07, session-resume)
 
@@ -789,10 +823,10 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Open blockers / risks
 
-- **OpenClaw adapter gate (ADR 026):** before enabling shared-user prototype writes, confirm
+- **OpenClaw adapter gate (ADR 028, supersedes ADR 026):** before enabling OpenClaw writes, confirm
   `serenichron/openclaw-memory-mem0` passes `source` and `agent_id` through to Mem0 and that
-  `source="openclaw"` reaches graph metadata. If not, use a separate prototype `user_id`; do not
-  allow untagged prototype writes into `user_id="chandrav"`.
+  `source="openclaw"` reaches Neo4j graph metadata. If not, **patch the adapter** — do not fork
+  `user_id`. No untagged writes into `user_id="chandrav"`.
 - ✅ **`chandrav.dev` registered** at Cloudflare (2026-06-07, Active, 10-yr prepay).
 - **Local tooling:** `docker` + `make` still not installed (Compose stack runs on
   VPS; optional locally). `terraform` v1.15.5 works.
@@ -908,9 +942,11 @@ pre-commit is now DONE** (gitleaks gate).
 >    pushed commit.
 > 6. Keep every client a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
-> 7. OpenClaw prototype gate when that work resumes: verify `serenichron/openclaw-memory-mem0`
->    preserves `source="openclaw"` and `agent_id` through Mem0 writes and graph metadata; otherwise
->    use a separate prototype `user_id`. No untagged OpenClaw writes under `user_id="chandrav"`.
+> 7. OpenClaw prototype gate when that work resumes (ADR 028): verify `serenichron/openclaw-memory-mem0`
+>    preserves `source="openclaw"` and `agent_id` through Mem0 writes and into Neo4j graph metadata;
+>    if it doesn't, **patch the adapter** — there is one `user_id="chandrav"`, never a fork. No
+>    untagged writes. Temporal tags + open-item lifecycle (ADR 029) and the todo app are parked in
+>    `BACKLOG.md`.
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
 > drill timer live (`30 19 1 * *` UTC ≈ 01:00 IST on the 1st), both watched by healthchecks.io. The

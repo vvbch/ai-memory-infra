@@ -82,6 +82,30 @@
 > action" (steps 3–4). Do not re-add `make bootstrap` here — it would stand up a
 > conflicting second DB stack (ADR 020).
 
+## P2 — memory model implementation (ADR 028 / 029)
+
+- **`[memory]` Enforce `source` into Mem0 *and* Neo4j graph metadata (ADR 028).** Writes must carry a
+  mandatory `source` (and `agent_id` where present) that lands in *both* pgvector and the graph, so
+  origin is queryable in either store and prototype/disposable writes stay filterable, editable, and
+  removable by `source`. Includes: confirm the Mem0 write path propagates `metadata.source` to Neo4j
+  nodes/edges (patch if not); add the OpenClaw adapter check (`serenichron/openclaw-memory-mem0`) —
+  patch the adapter if it drops the fields, never fork `user_id`. Verify with a `source="openclaw"`
+  probe visible via `/search` metadata **and** on the Neo4j node. Tie: ADR 028 (supersedes 026),
+  ADR 003.
+- **`[memory]` Temporal tagging — `type` + timestamps on every write (ADR 029).** Tag each memory
+  `type` (`fact` | `decision` | `open_item`); carry `created_at` (Mem0) + optional `occurred_at`
+  when event time ≠ capture time. Model `decision` as `:Decision` LifeGraph nodes (ADR 005) with
+  supersession edges. Tie: ADR 029, ADR 005.
+- **`[memory]` Open-item lifecycle + revisit loop (ADR 029).** Add the `:OpenItem` node type with
+  `status` (`open`/`in_progress`/`done`/`dropped`), optional `due_at`/`revisit_at`, and on closure
+  `resolution` + `closed_at`. Build the **revisit pass** (Operator Assistant / Memory Steward,
+  `docs/agent-personas.md`) that surfaces open items whose `revisit_at`/`due_at` has passed (or that
+  are stale) and records progress / closes with a resolution / re-schedules — so "check back what
+  happened" is a mechanism, not memory. Tie: ADR 029, tenet 14.
+- **`[product]` Todo app as a thin projection over open items (ADR 029).** A REST/MCP client that
+  renders, filters, and updates `open_item` memories + `:OpenItem` LifeGraph nodes — **no new
+  datastore** (tenets 4/7). Depends on the three items above. Tie: ADR 029, ADR 028.
+
 ## P2 — governance & quality hardening (fold into CI / eval phases)
 
 - **`[backup]` ⬆ PROMOTED into active Phase 2 (2026-06-08) — no longer parked.** Automating

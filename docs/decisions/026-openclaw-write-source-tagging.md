@@ -4,7 +4,12 @@ Date: 2026-06-09
 
 ## Status
 
-Accepted
+**Superseded by ADR 028.** The source-tagging requirement survives, but the
+`user_id`-split fallback this ADR allowed is removed: there is now exactly one
+`user_id="chandrav"`, and `source` is the discriminator (carried through Mem0 and
+graph metadata). An adapter that cannot pass `source`/`agent_id` is a blocker to
+fix, not a reason to fork `user_id`. See ADR 028 (and ADR 029 for temporal tags +
+open-item lifecycle).
 
 ## Context
 
