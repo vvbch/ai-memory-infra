@@ -4,9 +4,13 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Phase 4 — session 20: agent/persona gate done; next =
-build first COE-driven skills under those agents**). Parent
-workspace `ai-memory` now has a root `AGENTS.md` plus `.cursor/rules/00-workspace-control-plane.mdc`,
+**Last updated:** 2026-06-09 (**OpenClaw prototype write-tagging decision recorded; next =
+build first COE-driven skills under the defined agents**). ADR 026 records the hard rule for
+OpenClaw: shared personal `user_id="chandrav"` is allowed only when every OpenClaw write carries
+`source="openclaw"` plus `agent_id` through Mem0 and graph metadata; if
+`serenichron/openclaw-memory-mem0` cannot pass those tags, OpenClaw must use its own prototype
+`user_id` instead. Parent workspace `ai-memory` now has a root `AGENTS.md` plus
+`.cursor/rules/00-workspace-control-plane.mdc`,
 both thin pointers that route future agents directly to `ai-memory-infra` as the control
 plane before they spend time rediscovering the folder layout. Live OpenAPI showed
 `/memories` + `/search` only, and direct probes to likely `/mcp` routes returned 404, so
@@ -429,6 +433,14 @@ supporting hygiene role. **Next:** build the first COE-driven skills under those
 session checkpoint, Build Agent repo handoff verifier, then Operator Assistant concierge action
 formatter.
 
+**OpenClaw prototype (ADR 026).** OpenClaw is a prototype consumer of the memory layer for
+communications from Chandra's desk, starting with email processing only. It may read curated
+personal memories through the shared `user_id="chandrav"`, but its writes must be tagged
+`source="openclaw"` and carry `agent_id` through Mem0 and graph metadata. Adapter verification is a
+blocker: if `serenichron/openclaw-memory-mem0` does not preserve those fields, give OpenClaw a
+separate prototype `user_id` instead. ClawPack/fallback config is prototype reasoning plumbing only;
+Mem0 extraction stays unchanged.
+
 **Phase 3 — Chrome extension fork → BROWSER-REACH PROVEN (session 17).** Decision made (**ADR 024**): fork
 mem0's MIT `mem0-chrome-extension` into a separate **private** GitHub repo and rewire it to our
 self-hosted server. `ai-memory-infra` keeps only a pointer under `extension/`; extension source now
@@ -708,6 +720,17 @@ extension fork).**
   leave changes hanging**) and reserves the operator's attention for one-way doors (spend,
   lock-in, deletion, scope). In `tenets.md` + `AGENTS.md`.
 
+## Last decisions (2026-06-09, OpenClaw prototype)
+
+- **ADR 026 — OpenClaw writes must be source-tagged.** OpenClaw is a prototype on top of the
+  shared memory bank, not a new memory silo. It should use the shared personal `user_id="chandrav"`
+  so it can read curated context, but every write must carry `source="openclaw"` plus `agent_id`
+  through Mem0 and graph metadata. If `serenichron/openclaw-memory-mem0` cannot pass those fields,
+  the fallback is a separate prototype `user_id`; one or the other is mandatory so prototype noise
+  never lands as indistinguishable curated memory. Email processing only for now; no LinkedIn
+  crawling. ClawPack + frontier-key fallbacks are prototype config, not load-bearing memory
+  decisions.
+
 ## Last clarification (2026-06-07, session-resume)
 
 - **Bitwarden secrets must live in an individual-vault Folder, not a Families
@@ -735,6 +758,10 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Open blockers / risks
 
+- **OpenClaw adapter gate (ADR 026):** before enabling shared-user prototype writes, confirm
+  `serenichron/openclaw-memory-mem0` passes `source` and `agent_id` through to Mem0 and that
+  `source="openclaw"` reaches graph metadata. If not, use a separate prototype `user_id`; do not
+  allow untagged prototype writes into `user_id="chandrav"`.
 - ✅ **`chandrav.dev` registered** at Cloudflare (2026-06-07, Active, 10-yr prepay).
 - **Local tooling:** `docker` + `make` still not installed (Compose stack runs on
   VPS; optional locally). `terraform` v1.15.5 works.
@@ -848,6 +875,9 @@ pre-commit is now DONE** (gitleaks gate).
 >    pushed commit.
 > 6. Keep every client a **thin REST/MCP client** of the live API (tenets 4/7) — no second brain. ChromeOS is
 >    the first-class mobile path (ADR 004); Android best-effort (Kiwi archived Jan 2025).
+> 7. OpenClaw prototype gate when that work resumes: verify `serenichron/openclaw-memory-mem0`
+>    preserves `source="openclaw"` and `agent_id` through Mem0 writes and graph metadata; otherwise
+>    use a separate prototype `user_id`. No untagged OpenClaw writes under `user_id="chandrav"`.
 >
 > **Reminders / still-true context:** Nightly backup timer live (18:30 UTC ≈ 00:00 IST); monthly
 > drill timer live (`30 19 1 * *` UTC ≈ 01:00 IST on the 1st), both watched by healthchecks.io. The
