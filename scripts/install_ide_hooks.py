@@ -195,6 +195,13 @@ def main() -> int:
     print("VS Code   : no native session hook - add the bootstrap as a folder-open")
     print("            task. See ai-memory-infra/docs/setup.md (IDE startup hooks).")
     print("Re-run after any re-clone (the parent workspace is not versioned).")
+    print("")
+    print("!! VERIFY IT ACTUALLY FIRES - 'configured' is NOT 'firing'.")
+    print("   A hook listed as configured only means the file parsed; it is INERT")
+    print("   until an execution is recorded. Fire one real turn, then confirm")
+    print("   Cursor Settings -> Hooks shows a `stop` EXECUTION entry (not just a")
+    print("   configured one). Zero executions = the gate is not protecting you.")
+    print("   (COE 2026-06-09-ide-coupled-completion-gate.md)")
     return 0
 
 

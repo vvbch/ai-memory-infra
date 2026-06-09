@@ -4,7 +4,22 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Memory-identity contract drift fixed in the consumer repos — ADR 031;
+**Last updated:** 2026-06-09 (**Completion gate VERIFIED LIVE end-to-end; prior-session "ended dirty"
+miss closed without a new COE**). Resumed against the OPEN block below. Repo-health green (all three
+repos `0 ahead/0 behind`). Operator confirmed in **Cursor Settings → Hooks** that `sessionStart` + `stop`
+are *configured* but had **zero execution history** — the smoking gun. Firing one real turn then made the
+`stop` hook record; a self-contained dirty-state test proved the gate **blocks** (drops a throwaway
+untracked file → gate emits the commit-forcing `followup_message` naming the repo) and **allows** when
+clean (`{}`). **Conclusion:** the gate is genuinely live and effective now; the prior-session miss was a
+*not-yet-active* gate (built in the ADR 030 session, relied upon the next session before any execution was
+ever observed), **not** a broken one — i.e. an instance of the lesson already in COE
+`2026-06-09-ide-coupled-completion-gate.md` ("a control you can't show *firing* is not a control").
+**Operator decision (this session):** no new COE — fold the one new lesson ("configured ≠ firing; verify a
+real execution after any (re)install") into that existing COE (added as Detect rows + sharpened Lessons) and
+make it a mechanism (`install_ide_hooks.py` now prints a "VERIFY IT ACTUALLY FIRES" reminder). **OPEN items 1
+and 2 below are now resolved; item 3 (browser probe) remains.**
+
+**Prior update:** 2026-06-09 (**Memory-identity contract drift fixed in the consumer repos — ADR 031;
 COE `2026-06-09-extension-memory-identity-drift.md`**). Operator catch: "we decided `user_id`/identity
 for mem0 as `chandrav` — did we change the Chrome plugin? … you've been aggressive about infra and the
 private repo but not the plugin repo — why?" Investigation confirmed the asymmetry was real: **ADR 028
@@ -24,20 +39,23 @@ row; (5) every cross-cutting ADR now ships a "Propagation / conformance" section
 future todo app remain ⬜ pending (tracked). **Post-deploy probe still open:** write from the extension and
 confirm `source="extension"` on `/search` metadata AND the Neo4j node, under `user_id="chandrav"`.
 
-> **OPEN — pick up next session (operator: "commit and push first? how did you miss that again — don't fix it").**
-> Two things to revisit deliberately next session (do NOT fix mid-stream now):
-> 1. **Process miss (recurring handoff class):** when this session opened, the *prior* session's
->    ADR-028 work (extension, MCP proxy) + the COE were sitting **uncommitted** across repos. The
->    right first move was to **commit + push the already-done work atomically**, then decide on more
->    scope — instead the session ballooned (new ADR 031 + check script) before committing. This is the
->    same tenet-11/16 handoff lesson as the atomic-handoff / session-handoff COEs. Decide next session
->    whether this warrants its own COE or is covered by the existing ones.
-> 2. **The completion gate did not prevent it.** `scripts/completion_gate.py` (ADR 027/030) is supposed
->    to block a turn ending with uncommitted/unpushed work — yet the prior session ended dirty across
->    three repos. Likely the same "hook not loading at the real workspace root" failure named in COE
->    `2026-06-09-ide-coupled-completion-gate.md`. **Verify the gate is actually live** (Cursor Hooks
->    tab / fire a test turn) before trusting it again. Until then, commit+push is back to manual discipline.
-> 3. **Still open (needs live browser):** post-deploy probe — write from the extension, confirm
+> **OPEN block — status after the 2026-06-09 gate-verification session:**
+> 1. ✅ **RESOLVED — Process miss (recurring handoff class): no new COE.** The prior session left the
+>    ADR-028 work + COE uncommitted across repos because it kept adding scope (ADR 031 + check script)
+>    before committing the already-done work. Operator decision this session: this is an **instance** of
+>    the lesson already captured in COE `2026-06-09-ide-coupled-completion-gate.md` (and the
+>    atomic-handoff / session-handoff COEs), not a new root cause — so **fold the one new lesson in**
+>    rather than open a new COE. Added two Detect rows + a sharpened "configured ≠ firing" Lessons note to
+>    that COE.
+> 2. ✅ **RESOLVED — the completion gate is VERIFIED LIVE.** Root cause of "the gate didn't prevent it":
+>    it was **not yet active** in the prior session (built in the ADR 030 session, relied on the next
+>    session before any execution was ever observed), **not** broken. Confirmed this session: operator saw
+>    `sessionStart`+`stop` *configured* with **zero executions** (the tell), then firing a real turn made
+>    `stop` record; a self-contained test proved the gate **blocks** dirty repos (emits the commit-forcing
+>    `followup_message`) and **allows** clean ones (`{}`). Prevention made mechanical:
+>    `install_ide_hooks.py` now prints a "VERIFY IT ACTUALLY FIRES — configured ≠ firing" reminder so the
+>    next (re)install is checked for a real execution entry, not just a parsed file.
+> 3. ⬜ **STILL OPEN (needs live browser):** post-deploy probe — write from the extension, confirm
 >    `source="extension"` on `/search` metadata AND on the Neo4j node, under `user_id="chandrav"`.
 
 **Prior update:** 2026-06-09 (**Portable IDE startup/handoff hooks + session bootstrap — ADR 030;

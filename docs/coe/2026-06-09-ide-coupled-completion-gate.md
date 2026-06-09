@@ -84,6 +84,8 @@ violation. Demoting a tenet breach to a footnote is the detection gap.
 | Apply the same pattern to the new `sessionStart` bootstrap (`scripts/session_bootstrap.py`) so the first use of the pattern is a *pair*, proving it generalizes | Prevent | Cursor agent | 2026-06-09 | Done |
 | Verify both hooks fire from the real workspace root (tested gate fail-loud + bootstrap injection from `ai-memory/`) | Detect | Cursor agent | 2026-06-09 | Done |
 | Name the portability requirement in tenet 11 + AGENTS.md ("hooks are portable, not Cursor-owned") so the next hook follows the pattern | Prevent | Cursor agent | 2026-06-09 | Done |
+| **Standing post-(re)install check: "configured ≠ firing."** After `install_ide_hooks.py` (re)writes adapters, fire one real turn and confirm Cursor **Settings → Hooks → execution history** shows a `stop` entry. Configured-but-zero-executions = the hook is inert; do not trust the gate until an execution is observed. `install_ide_hooks.py` now prints this reminder. | Detect | Cursor agent | 2026-06-09 | Done |
+| **End-to-end live verification (this is the prior-session miss's actual close):** confirmed the `stop` hook fires in a real Cursor turn, that the gate **blocks** on a deliberately-dirtied repo (named the repo + emitted the commit-forcing `followup_message`) and **allows** when clean. The earlier "ended dirty despite the gate" was a *not-yet-active* gate (built in the ADR 030 session, relied on in the next session before an execution was ever observed), not a broken one. | Detect | Cursor agent | 2026-06-09 | Done |
 
 ## Lessons learned
 
@@ -92,7 +94,12 @@ event is inherently per-harness, so the only portable design is *editor-agnostic
 logic + a thin, generated per-IDE adapter* — the same shape the repo already uses
 for editor pointer content (ADR 018) and git hooks (ADR 015). And **a control you
 can't show firing is not a control**: placement and load-verification are part of
-shipping a mechanism, not an afterthought. The transferable interview lesson
+shipping a mechanism, not an afterthought. **Sharper still (added the next session):
+"configured" ≠ "firing."** Cursor's Hooks tab listing a hook as *configured* only
+proves the file parsed; the gate is inert until an *execution* is recorded. The
+right verification is to fire a real turn and watch the execution history — which,
+when finally done, showed the gate both blocks dirty repos and allows clean ones,
+proving the prior miss was a never-activated gate, not a broken one. The transferable interview lesson
 (mirrored to `interview_packet.md`): *a corrective action must be checked against
 the rest of the tenets and actually verified live — a fix that breaks portability
 or never loads is a new incident, not a closed one.*

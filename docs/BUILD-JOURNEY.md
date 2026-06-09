@@ -9,6 +9,31 @@
 
 ---
 
+## 2026-06-09 — Verified the "commit before you stop" safety net actually works
+
+**Focus:** prove the deterministic completion gate is genuinely live, after a prior
+session ended with unsaved work despite the gate existing.
+
+**Milestones**
+- **Found the real failure mode: a not-yet-active safety net.** The gate was correctly
+  installed at the workspace root, but the editor's hooks screen showed it as *configured*
+  with **zero execution history** — it had never actually run. The prior miss happened
+  because the gate was built one session and trusted the next, before anyone confirmed it
+  was firing.
+- **Confirmed it fires and enforces.** Ending a real turn recorded the stop hook; a
+  reversible self-test (drop a throwaway file, run the gate, delete it) proved it **blocks**
+  when work is uncommitted and **allows** when everything is clean and pushed.
+- **Turned the lesson into a mechanism.** The hook installer now prints a "verify it
+  actually fires — configured is not firing" reminder, so the next install is checked for a
+  real execution, not just a parsed config file.
+- **No new incident report needed.** This was an instance of an existing lesson ("a control
+  you can't show firing is not a control"), so the one new takeaway was folded into the
+  existing record rather than duplicated.
+
+**Decision**
+- A safety control is only trustworthy once you've *watched it fire* — listing it as
+  configured proves nothing. Make that verification a standing step, not a one-time hope.
+
 ## 2026-06-09 — Made the IDE hooks portable + added a session bootstrap
 
 **Focus:** stop coupling automation to one editor, and stop burning tokens
