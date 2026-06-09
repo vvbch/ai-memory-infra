@@ -9,6 +9,30 @@
 
 ---
 
+## 2026-06-09 — Built the first agent-owned skill: a session checkpoint
+
+**Focus:** turn "write a good handoff at the end of each step" from a hope into a
+mechanism, as the first skill owned by a defined agent persona.
+
+**Milestones**
+- **Shipped the Build Agent session-checkpoint skill.** A small, editor-agnostic
+  command that reads the real git state of every project repo (which branch, any
+  uncommitted changes, anything unpushed, the latest commit) and turns it into a
+  ready-to-paste checkpoint — without dumping a long chat transcript.
+- **Made the handoff contract checkable.** A `--check` mode passes only when every
+  touched repo is committed and pushed and the essential fields (what was done, how
+  it was verified, what's next) are present — so a "done" claim can't quietly skip a
+  repo. It's the *capture* partner to the existing turn-end *trigger* gate.
+- **Kept facts and judgment separate.** The tool owns the verifiable facts (git
+  state, formatting, validation); the agent still writes the human summary. It never
+  auto-overwrites the prose status file and never touches secrets.
+- **Verified live.** The check correctly caught an in-progress repo; the render and
+  machine-readable output were clean; lint clean.
+
+**Decision**
+- Skills are owned mechanisms, not loose commands: each declares its owning persona,
+  what it may store, and a visible success condition before it's built.
+
 ## 2026-06-09 — Verified the "commit before you stop" safety net actually works
 
 **Focus:** prove the deterministic completion gate is genuinely live, after a prior

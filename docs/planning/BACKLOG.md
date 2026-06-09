@@ -25,6 +25,13 @@
   Agent repo handoff verifier, and Operator Assistant concierge action formatter.
   These directly address the repeated handoff/operator-action failures before
   adding broader research or memory-hygiene skills.
+  - ✅ **DONE (2026-06-09):** Build Agent repo handoff verifier =
+    `scripts/completion_gate.py` (ADR 027/030).
+  - ✅ **DONE (2026-06-09):** Build Agent session checkpoint =
+    `scripts/session_checkpoint.py` (spec
+    `docs/skills/build-agent-session-checkpoint.md`).
+  - ⬜ **NEXT:** Operator Assistant concierge action formatter, then Research and
+    Strategy decision capture + Memory Steward hygiene checks.
 
 ## P1 — do at the start of Phase-1 CI work
 

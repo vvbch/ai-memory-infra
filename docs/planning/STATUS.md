@@ -4,7 +4,20 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Completion gate VERIFIED LIVE end-to-end; prior-session "ended dirty"
+**Last updated:** 2026-06-09 (**First agent-owned skill shipped — Build Agent session checkpoint
+(`scripts/session_checkpoint.py`)**). Repo-health green at session start (all three repos `0 ahead/0
+behind`). Built the build-order #1 skill: an editor-agnostic Python CLI that reads git truth for every
+project repo (branch / dirty / ahead / behind / HEAD commit+subject), validates the handoff contract
+(`--check` → exit 1 if any repo is dirty/unpushed or a required `--work`/`--verify`/`--next` field is
+missing), and renders no-drift checkpoint text (a STATUS-ready `Done this session`/`Next action` snippet
++ a private `BUILD-LOG.md` entry, `--write-log` to append) from real facts rather than a chat dump. It is
+the **capture/format** layer that complements the **trigger** layer `completion_gate.py` (ADR 027/030).
+Spec in `docs/skills/build-agent-session-checkpoint.md`; build order #1+#2 now both ✅ in
+`docs/agent-personas.md` + `BACKLOG.md`. Verified live (contract check catches the dirty repo; render +
+`--json` parse clean; ruff/lint clean). **Next: build-order #3 — Operator Assistant concierge action
+formatter.**
+
+**Prior update:** 2026-06-09 (**Completion gate VERIFIED LIVE end-to-end; prior-session "ended dirty"
 miss closed without a new COE**). Resumed against the OPEN block below. Repo-health green (all three
 repos `0 ahead/0 behind`). Operator confirmed in **Cursor Settings → Hooks** that `sessionStart` + `stop`
 are *configured* but had **zero execution history** — the smoking gun. Firing one real turn then made the
@@ -535,9 +548,10 @@ MCP visibility is proven. The current correction tightened concierge/handoff rul
 gave a vague MCP-check instruction and emitted resume prompts while operator action was pending.
 The pre-build persona gate is now done in `docs/agent-personas.md`: **Build Agent**, **Research and
 Strategy Agent**, and **Operator Assistant** own future skills, with **Memory Steward** as a
-supporting hygiene role. **Next:** build the first COE-driven skills under those owners: Build Agent
-session checkpoint, Build Agent repo handoff verifier, then Operator Assistant concierge action
-formatter.
+supporting hygiene role. **Skills shipped so far:** Build Agent repo handoff verifier
+(`scripts/completion_gate.py`, ADR 027/030) and Build Agent session checkpoint
+(`scripts/session_checkpoint.py`, 2026-06-09). **Next:** Operator Assistant concierge action
+formatter, then Research and Strategy decision capture + Memory Steward hygiene checks.
 
 **OpenClaw prototype (ADR 026 → superseded by ADR 028).** OpenClaw is a prototype consumer of the
 memory layer for communications from Chandra's desk, starting with email processing only. It reads
@@ -1017,9 +1031,13 @@ pre-commit is now DONE** (gitleaks gate).
 > role.
 >
 > **NEXT ACTION (next session, one step at a time):**
-> 1. Build the **Build Agent session checkpoint skill**. It should capture current work item,
->    verification, touched repos, and next action into the right repo docs without duplicating long
->    chat context.
+> 1. ✅ **DONE (2026-06-09) — Build Agent session checkpoint skill.** Implemented as
+>    `scripts/session_checkpoint.py` (spec `docs/skills/build-agent-session-checkpoint.md`): gathers
+>    git truth per repo (branch/dirty/ahead/behind/HEAD commit), validates the handoff contract
+>    (`--check`, exit 1 when any repo is dirty/unpushed or a required field is missing), and renders
+>    no-drift STATUS + private BUILD-LOG entries from real facts (no chat-transcript dump). Verified
+>    live (contract check catches a dirty repo; render + `--json` clean; lint clean). **NEXT is now the
+>    Operator Assistant concierge action formatter (step 3 below).**
 > 2. ✅ **DONE (2026-06-09) — Build Agent repo handoff verifier (gate) + session bootstrap.**
 >    The gate is `scripts/completion_gate.py` (ADR 027; **relocated out of `.cursor/` by ADR 030**)
 >    invoked by a harness turn-end adapter; it checks dirty/ahead/no-upstream for every project repo

@@ -142,10 +142,15 @@ later become skills under the Build Agent.
 
 ## First Skill Build Order
 
-1. **Build Agent: session checkpoint skill.** Capture the current work item,
-   verification, touched repos, and next action in the right repo docs.
-2. **Build Agent: repo handoff verifier.** Mechanically check dirty/ahead/behind
-   state for touched repos before final response.
+1. ✅ **DONE (2026-06-09) — Build Agent: session checkpoint skill.** Capture the
+   current work item, verification, touched repos, and next action in the right
+   repo docs. Implemented as `scripts/session_checkpoint.py` (spec:
+   `docs/skills/build-agent-session-checkpoint.md`): gathers git truth per repo,
+   validates the handoff contract (`--check`), and renders no-drift STATUS +
+   BUILD-LOG entries from real facts.
+2. ✅ **DONE (2026-06-09) — Build Agent: repo handoff verifier.** Mechanically
+   check dirty/ahead/behind state for touched repos before final response.
+   Implemented as the turn-end gate `scripts/completion_gate.py` (ADR 027/030).
 3. **Operator Assistant: concierge action formatter.** Turn an unavoidable
    operator step into purpose + exact action + visible success + wait point.
 4. **Research and Strategy Agent: decision capture skill.** Convert a researched
