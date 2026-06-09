@@ -94,6 +94,10 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     truth; commit+push every session (never batch); run `check-repo-health` at
     session start + pre-commit + daily; on any red check **re-clone, don't
     repair**; never commit large firm artifacts (one-way door). See ADR 015.
+    **The commit+push trigger is harness-enforced, not memory-based:** a Cursor
+    `stop` hook (`.cursor/hooks/completion_gate.py`, ADR 027) refuses to let a turn
+    end with a dirty/unpushed repo, for **any** model — the prose gate below is the
+    happy path, the hook is the hard layer.
 12. **Vendors are deliberated, documented, and reversible.** No external
     dependency (registrar, cloud, DNS, SaaS, model API, paid tool) is adopted
     *suddenly*. Before committing, weigh in an ADR: total cost **incl. exit cost**,
@@ -239,11 +243,22 @@ Full diagram: `docs/architecture.md`.
   before acting**, and never edit the same file from two sessions at once.
 - **The safeguard against agent error is the Definition-of-Done verification
   gate below — not a second tool.** Trust comes from the DoD + tests + ADRs +
-  no-drift check, applied every change, not from which editor is open.
+  no-drift check, applied every change, not from which editor is open. The
+  commit/push portion of that gate is now a **deterministic mechanism, not a
+  prose hope**: the Cursor `stop` hook (`.cursor/hooks/completion_gate.py`, ADR
+  027) enforces it for any model (this is the long-promised repo handoff verifier).
 - **Repo integrity (Tenet 11), third/soft layer:** run
   `scripts/check-repo-health.*` **at session start and before every commit**.
   (The hard layers are the git pre-commit hook + the daily scheduled run; this
   line is the human/agent reminder so a missing hook never means a missing check.)
+- **Completion gate, hard layer (ADR 027):** the Cursor `stop` hook
+  `.cursor/hooks/completion_gate.py` checks every project repo at turn-end and, if
+  any is dirty/unpushed, forces the agent to finish the commit/push DoD (and after
+  a few loops, to surface a loud operator-facing blocker). Two distinct hooks: the
+  **git pre-commit** hook *validates* a commit's content (integrity + gitleaks);
+  the **Cursor stop** hook *triggers* the commit/push that would otherwise be
+  skipped. The prose gate is the happy path; the hook is the model-independent
+  guarantee.
 - **Completion gate:** when a reversible work item is done and verified, commit the
   relevant changes and push **every touched repo** to remote in the same session, including
   package repos such as `ai-memory-extension` and private docs repos such as

@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+"""Deterministic completion gate — Cursor ``stop`` hook.
+
+WHY THIS EXISTS
+---------------
+The "commit + push every touched repo before the turn ends" rule lived only as
+prose in ``AGENTS.md`` (Completion gate / Final response gate, tenet 11/17).
+Prose is executed by the *LLM's* judgment, so adherence varies by model — and a
+GPT-5.5-high session ended a turn with work uncommitted/unpushed (COE
+2026-06-09-completion-gate-nonadherence). Rules, skills, and workflows all live
+on that same non-deterministic layer.
+
+A Cursor ``stop`` hook is executed by the *harness*, not the model, and fires on
+every turn completion regardless of which model is driving. That makes it the
+only layer that can *deterministically* enforce the completion gate. This script
+does NOT commit for the agent (a blind auto-commit can't satisfy our Definition
+of Done — STATUS/BUILD-LOG/no-drift). Instead it DETECTS uncommitted or unpushed
+work across every project repo and, if found, refuses to let the turn end
+silently: it returns a ``followup_message`` that forces the agent to finish the
+DoD. After a few failed loops it switches to a loud operator-facing message
+instead of looping forever (loop-guard; see Claude Code ``stop_hook_active``
+lore and Cursor ``loop_limit``).
+
+CONTRACT (Cursor stop hook)
+---------------------------
+- stdin  : ``{"status": "completed"|"aborted"|"error", "loop_count": <int>}``
+- stdout : ``{}``                       -> allow the agent to stop
+           ``{"followup_message": ...}``-> auto-submitted as the next user turn
+- ``loop_count`` starts at 0 and counts prior auto-follow-ups this conversation.
+  Cursor caps total follow-ups at ``loop_limit`` (set to 4 in hooks.json).
+
+Cross-platform (tenet 3): pure Python + ``git``; no shell-isms. Invoked as
+``python .cursor/hooks/completion_gate.py`` from the repo root.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import subprocess
+import sys
+from pathlib import Path
+
+# At loop_count >= this value we stop telling the agent to "just commit" and
+# instead make it surface a loud blocker to the operator. Keep < hooks.json
+# loop_limit so the fail-loud turn is actually delivered.
+FAIL_LOUD_AT = 3
+
+
+def _run_git(repo: Path, *args: str) -> tuple[int, str]:
+    """Run a git command in ``repo``; return (returncode, stdout-stripped)."""
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo), *args],
+            capture_output=True,
+            text=True,
+            timeout=30,
+        )
+        return proc.returncode, proc.stdout.strip()
+    except Exception:  # git missing, timeout, etc. — treat as "can't tell"
+        return 1, ""
+
+
+def _candidate_repos() -> list[Path]:
+    """Union of AI_MEMORY_REPOS (existing convention) and discovered siblings.
+
+    Most-protective by design: a repo the agent touched but that isn't in the
+    env var (e.g. ai-memory-extension) is still guarded.
+    """
+    repos: list[Path] = []
+    seen: set[str] = set()
+
+    def add(p: Path) -> None:
+        try:
+            rp = p.resolve()
+        except OSError:
+            return
+        key = str(rp).lower()
+        if key not in seen and (rp / ".git").exists():
+            seen.add(key)
+            repos.append(rp)
+
+    env = os.environ.get("AI_MEMORY_REPOS", "")
+    for chunk in env.split(";"):
+        chunk = chunk.strip()
+        if chunk:
+            add(Path(chunk))
+
+    # Discover sibling repos relative to this script:
+    #   <workspace>/<repo>/.cursor/hooks/completion_gate.py
+    #   parents[2] = <repo>, parents[3] = <workspace>
+    here = Path(__file__).resolve()
+    try:
+        workspace = here.parents[3]
+        for child in workspace.iterdir():
+            if child.is_dir():
+                add(child)
+    except (IndexError, OSError):
+        pass
+
+    return repos
+
+
+def _repo_state(repo: Path) -> dict | None:
+    """Return dirty/ahead/no-upstream state for ``repo``, or None if not a repo."""
+    rc, _ = _run_git(repo, "rev-parse", "--is-inside-work-tree")
+    if rc != 0:
+        return None
+
+    _, porcelain = _run_git(repo, "status", "--porcelain")
+    dirty = bool(porcelain.strip())
+
+    # Unpushed commits vs upstream. No upstream is itself a "you must push" state
+    # (a freshly created/cloned branch that was committed but never pushed).
+    rc_up, _ = _run_git(repo, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}")
+    if rc_up != 0:
+        no_upstream = True
+        ahead = 0
+    else:
+        no_upstream = False
+        rc_cnt, cnt = _run_git(repo, "rev-list", "--count", "@{u}..HEAD")
+        ahead = int(cnt) if (rc_cnt == 0 and cnt.isdigit()) else 0
+
+    if not dirty and ahead == 0 and not no_upstream:
+        return None  # clean and pushed — nothing to enforce
+
+    return {
+        "name": repo.name,
+        "path": str(repo),
+        "dirty": dirty,
+        "ahead": ahead,
+        "no_upstream": no_upstream,
+    }
+
+
+def _describe(state: dict) -> str:
+    bits = []
+    if state["dirty"]:
+        bits.append("uncommitted changes")
+    if state["ahead"]:
+        bits.append(f"{state['ahead']} unpushed commit(s)")
+    if state["no_upstream"]:
+        bits.append("no upstream/never pushed")
+    return f"- {state['name']} ({state['path']}): {', '.join(bits)}"
+
+
+def _emit(payload: dict) -> None:
+    sys.stdout.write(json.dumps(payload))
+    sys.stdout.flush()
+
+
+def main() -> int:
+    try:
+        data = json.load(sys.stdin)
+    except Exception:
+        # Can't parse input -> fail open (never deadlock the agent over our bug).
+        _emit({})
+        return 0
+
+    status = data.get("status", "completed")
+    loop_count = data.get("loop_count", 0) or 0
+
+    # Only enforce on a clean completion. On abort/error the user/harness already
+    # interrupted; nagging would be noise and could fight a real failure.
+    if status != "completed":
+        _emit({})
+        return 0
+
+    pending = [s for repo in _candidate_repos() if (s := _repo_state(repo))]
+
+    if not pending:
+        _emit({})  # completion gate satisfied — allow stop
+        return 0
+
+    repo_list = "\n".join(_describe(s) for s in pending)
+
+    if loop_count >= FAIL_LOUD_AT:
+        # We've already pushed the agent a few times and it still hasn't closed
+        # the gate. Stop auto-retrying; force a loud, operator-facing handoff so
+        # the failure is visible rather than silently capped by loop_limit.
+        _emit({
+            "followup_message": (
+                "STOP — do not attempt another automatic commit/push loop. "
+                "The completion gate is still OPEN after multiple attempts. "
+                "These repositories have uncommitted or unpushed work:\n\n"
+                f"{repo_list}\n\n"
+                "In your FINAL response to the operator, plainly state: which "
+                "repos are not committed/pushed, the exact blocker preventing it "
+                "(e.g. pre-commit/gitleaks rejection, push auth, conflict), and "
+                "the single next action they should take. Do NOT print a Resume "
+                "prompt — this is an open handoff failure (AGENTS.md Final "
+                "response gate)."
+            )
+        })
+        return 0
+
+    # Normal enforcement: make the agent finish the Definition of Done itself
+    # (keeps good commit messages + STATUS/docs, which a blind script cannot).
+    _emit({
+        "followup_message": (
+            "The completion gate is OPEN: you are about to end the turn with work "
+            "not committed/pushed, which violates the AGENTS.md Completion gate "
+            "and tenet 11 (commit+push every session). Finish the Definition of "
+            "Done now, do not ask for confirmation (tenet 17 — reversible):\n\n"
+            f"{repo_list}\n\n"
+            "For EACH repo above: stage the intended changes, commit with a "
+            "Conventional Commit message describing the actual change, then push "
+            "to origin. Update docs/planning/STATUS.md (and BUILD-LOG / "
+            "BUILD-JOURNEY) per the DoD trigger table. If a one-way-door effect, "
+            "secret, or destructive op is the reason you stopped, do NOT commit "
+            "it — instead say so explicitly in your final answer. Then stop."
+        )
+    })
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

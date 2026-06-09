@@ -138,6 +138,17 @@ Decision, risk, and this mitigation contract are recorded in **ADR 015**; the
 session-start / pre-commit / scheduled firing of the integrity check is the
 operational expression of this tenet.
 
+**Mechanism, not memory (ADR 027).** "Commit and push every session" (point 2) is
+**not** left to the agent remembering it: it is enforced by a Cursor `stop` hook
+(`.cursor/hooks/completion_gate.py`) that fires on every turn-end *regardless of
+which model is driving* and refuses to let a turn end with a dirty/unpushed repo —
+the prose completion gate is the happy path, the hook is the **hard layer**. This
+is the deterministic-execution-layer lesson: rules/skills/`AGENTS.md` are run by
+the LLM (model-dependent), git hooks only *validate* a commit already in flight,
+and only a harness lifecycle hook can *trigger* the action deterministically.
+Added after a GPT-5.5 model switch ended a session unpushed for the fourth time
+(COE `2026-06-09-model-dependent-completion-gate.md`).
+
 ## 12. Vendors are deliberated, documented, and reversible
 No external dependency — registrar, cloud, DNS host, object store, SaaS, model/
 API provider, paid tool — gets adopted *suddenly*. Before committing to one, weigh

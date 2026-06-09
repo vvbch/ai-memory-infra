@@ -769,3 +769,27 @@ and pushed.
 
 **Next**
 - Commit/push the corrected control-plane and private-log changes, then continue from a fresh session.
+
+## 2026-06-09 — Made the commit/push gate deterministic
+
+**Focus:** stop relying on the model to remember to commit and push.
+
+**Milestones**
+- **Diagnosed a wrong-layer problem.** Switching models (GPT-5.5, high reasoning) ended a session
+  with work unpushed. The "commit and push every session" rule lived as prose the model had to
+  choose to follow, so adherence varied by model — confirmed as a known agent behavior, not a
+  config bug.
+- **Researched the industry pattern.** Agent harnesses converge on a `stop` lifecycle hook for this:
+  hooks are deterministic because the *harness* runs them, while rules and skills are run by the
+  model and so vary. Git hooks only validate a commit already happening — they can't start one.
+- **Shipped a harness-level completion gate.** Added a Cursor `stop` hook that checks every project
+  repo when a turn ends and, if anything is uncommitted or unpushed, forces the agent to finish the
+  full Definition of Done (commit, push, update status), and raises a loud operator-facing alert if
+  it still can't after a few tries. It enforces the process rather than blindly auto-committing, so
+  documentation and good commit messages are preserved.
+- **Closed a long-standing item.** This is the "repo handoff verifier" promised across several prior
+  corrections, now implemented as a mechanism instead of a reminder.
+
+**Next**
+- Resume the first agent-owned skill (Build Agent session checkpoint), with the handoff verifier
+  already in place.

@@ -4,7 +4,21 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**OpenClaw prototype write-tagging decision recorded; next =
+**Last updated:** 2026-06-09 (**Deterministic completion gate shipped — Cursor `stop` hook
+(`.cursor/hooks/completion_gate.py`, ADR 027) now enforces commit+push for any model; this is
+the long-promised repo handoff verifier and closes COE
+`2026-06-09-model-dependent-completion-gate.md`**). Root cause of the recurring
+commit/push omission was a wrong-layer problem: the completion gate was prose executed by the
+LLM, so adherence varied by model (a GPT-5.5 reasoning=high session ended unpushed, the 4th
+human catch of this class). Fix moves the *trigger* off the model and onto the harness: a
+project-level `stop` hook checks every project repo at turn-end and, if dirty/unpushed, forces
+the agent to finish the DoD (commit+push+STATUS), then fails loud to the operator after a loop
+cap (`loop_limit: 4`). It enforces the DoD rather than blind-auto-committing (a dumb script
+can't update STATUS/docs/no-drift, and shouldn't push half-finished public work). tenet 11 +
+AGENTS.md now name the hook as the hard layer; the git pre-commit hook stays the *validation*
+layer (integrity + gitleaks). The hook is versioned (survives re-clone, unlike `.git/hooks`).
+
+**Prior update:** 2026-06-09 (**OpenClaw prototype write-tagging decision recorded; next =
 build first COE-driven skills under the defined agents**). ADR 026 records the hard rule for
 OpenClaw: shared personal `user_id="chandrav"` is allowed only when every OpenClaw write carries
 `source="openclaw"` plus `agent_id` through Mem0 and graph metadata; if
@@ -720,6 +734,23 @@ extension fork).**
   leave changes hanging**) and reserves the operator's attention for one-way doors (spend,
   lock-in, deletion, scope). In `tenets.md` + `AGENTS.md`.
 
+## Last decisions (2026-06-09, deterministic completion gate)
+
+- **ADR 027 — completion gate becomes a Cursor `stop` hook (harness-enforced, model-independent).**
+  The "commit+push every session" gate was prose executed by the LLM, so adherence varied by
+  model (GPT-5.5 reasoning=high ended a session unpushed — 4th catch of this class; COE
+  `2026-06-09-model-dependent-completion-gate.md`). **Determinism ladder:** rules/skills/AGENTS.md
+  are run by the LLM (non-deterministic); git hooks only *validate* a commit already in flight;
+  only a **harness `stop` hook** can *trigger* the commit/push regardless of model — the
+  web-verified industry pattern (GitButler, Claude Code, agent-better-checkpoint; tenet 8).
+  Chose **enforce-the-DoD (Design B)** over blind auto-commit (Design A): the hook detects
+  dirty/unpushed repos and forces the agent to finish the DoD itself (so STATUS/docs/no-drift
+  and good commit messages are preserved), failing loud to the operator after `loop_limit: 4`.
+  Built `.cursor/hooks.json` + `.cursor/hooks/completion_gate.py` (Python, tenet 3); union of
+  `AI_MEMORY_REPOS` + discovered sibling repos so unlisted touched repos are still caught.
+  Tested the script across completed/aborted/loop-cap/bad-input cases. Sharpened tenet 11 +
+  AGENTS.md to name the hook as the hard layer (git pre-commit stays the validation layer).
+
 ## Last decisions (2026-06-09, OpenClaw prototype)
 
 - **ADR 026 — OpenClaw writes must be source-tagged.** OpenClaw is a prototype on top of the
@@ -861,8 +892,10 @@ pre-commit is now DONE** (gitleaks gate).
 > 1. Build the **Build Agent session checkpoint skill**. It should capture current work item,
 >    verification, touched repos, and next action into the right repo docs without duplicating long
 >    chat context.
-> 2. Then build the **Build Agent repo handoff verifier**. It should mechanically check dirty/ahead/behind
->    state for touched repos before final response.
+> 2. ✅ **DONE (2026-06-09) — Build Agent repo handoff verifier.** Implemented as the Cursor
+>    `stop` hook `.cursor/hooks/completion_gate.py` (ADR 027): mechanically checks dirty/ahead/
+>    no-upstream for every project repo at turn-end and forces commit+push (or a loud blocker)
+>    for any model. Closed COE `2026-06-09-model-dependent-completion-gate.md`.
 > 3. Then build the **Operator Assistant concierge action formatter**. It should turn unavoidable
 >    operator steps into purpose + exact action + visible success + wait point.
 > 4. After those are working, continue with Research and Strategy decision capture and Memory Steward
