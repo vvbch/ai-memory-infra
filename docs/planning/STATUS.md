@@ -4,7 +4,35 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Memory Daily Driver v0 — Phase 1 COMPLETE: the contract-enforcing
+**Last updated:** 2026-06-10 (**Memory Daily Driver v0 — Phase 2 COMPLETE: the conversational
+operating practice is written, wired, and live-proven; plus a verified upstream finding — the deployed
+Mem0 has NO graph-memory code, so the "Mem0 auto-managed graph" claim in our architecture docs is
+drift (parked as P1 in BACKLOG)**). Repo-health green at session start (both repos `0 ahead/0 behind`).
+**Phase 2 shipped:** the practice now lives canonically in `AGENTS.md` § "Memory Daily Driver —
+conversational practice" (trigger phrases → `scripts/memory.py` verbs: "plan my day"→`agenda`,
+"log/remind/follow up"→`add-open-item`, recruiter reachouts→`--venture career`, "we decided"→
+`add-decision`, reversals→**supersession flow** (new decision "Supersedes <old-id>…: … Reason: …",
+old one never edited — trail = history, latest = snapshot), "done"→`close --resolution`), with a
+**mandatory confirmation contract** (echo exactly what was stored: text/type/dates/ventures/id; silent
+writes are a violation). Spec: `docs/skills/operator-assistant-memory-daily-driver.md`; personas +
+BACKLOG updated (#4 absorbed ✅, #5 stays deferred). MCP-verb exposure consciously skipped (tenet 7,
+BACKLOG). **Verified live:** read-only `agenda` green against the real `chandrav` bank (empty, as
+expected); full round-trip under throwaway `user_id=smoke-phase2-20260610` — capture (due 2026-06-09,
+career) → `agenda` bucketed it OVERDUE → `recruiters` listed it → `close --resolution` → delete →
+bank empty again; **`chandrav` untouched** (one transient connect-timeout on a single call, retried
+clean). **Operator Q&A findings (verified from source, tenet 8):** (1) Mem0 works with Claude **today**
+via Claude Code/Cursor (local MCP proxy) and claude.ai-in-Chrome (extension); Claude iOS still needs
+the future remote HTTP MCP endpoint. (2) Decision-reversal history: the deployed server records every
+ADD/UPDATE/DELETE with old/new values in Mem0's SQLite history table (schema verified at pinned ref),
+and the Daily Driver supersession convention keeps trail+snapshot across surfaces — but **Neo4j gets
+none of it today**: mem0ai 2.0.4 wheel + the pinned `server/` source contain zero graph wiring
+(`NEO4J_*` env vars are dead config; no `graph` extra exists on PyPI). Architecture-doc drift parked
+as **P1 `[docs-drift]`** in BACKLOG (verify droplet Neo4j empty, fix `architecture.md`/`AGENTS.md`/
+Dockerfile comment, ADR on where graph memory really comes from). (3) Bulk import of existing
+ChatGPT/Claude context = Phase 5 migration (planned, after the premise test); structured capture works
+now. **Next action below now points to Phase 3 (the premise test).**
+
+**Prior update:** 2026-06-09 (**Memory Daily Driver v0 — Phase 1 COMPLETE: the contract-enforcing
 read/write helper is built, unit-tested, and live-proven end-to-end**). Repo-health green at session
 start (both repos `0 ahead/0 behind`). Built the Phase 1 plumbing: (1) extended `src/mcp_proxy/client.py`
 — `add_memory` gains an `infer` flag (default `True`; authored items pass `infer:false` for verbatim
@@ -513,13 +541,23 @@ the uncommitted infra changes.**)
 
 ## Plain English — where we are (resume here)
 
-**Right now (Memory Daily Driver v0):** the infrastructure below is all done and live. We've now
-pivoted to *using* it. This session built the tool that lets the agent save and look up your
-to-dos, decisions, and recruiter follow-ups in your memory bank — with the right labels — and
-proved it works against the real server (using a throwaway test account so your real bank stayed
-untouched). You can now, in a chat, say things like *"plan my day"* or *"log this and remind me
-Friday"* once we wire it into the conversation — that wiring is the next step (Phase 2). The
-section just below is the original setup checklist and is kept for history.
+**Right now (Memory Daily Driver v0):** the infrastructure below is all done and live, and the
+conversational wiring is now **done too** (Phase 2, 2026-06-10). You can simply say, in a chat,
+*"plan my day"*, *"log this and remind me Friday"*, *"recruiter X reached out — follow up Monday"*,
+*"we decided X because Y"*, or *"done — here's what happened"*, and the agent will save/look up the
+right thing in your memory bank with the right labels — and **always tell you exactly what it
+stored** so you can catch mistakes immediately. If you later *reverse* a decision, the agent records
+a new decision that says what it replaces and why — the old one stays as history, the newest one is
+the current truth, and this works no matter which tool (Cursor, ChatGPT, Claude) captured each step.
+**One honest discovery this session:** the "knowledge graph" database (Neo4j) is running and backed
+up, but the memory software we deployed turns out to ship **no** graph-writing code in its
+open-source version — so today your history lives in the memory app's own change-log (which records
+every add/edit/delete with before+after values) and in those superseding decision entries, **not** in
+the graph. The graph stays reserved for the LifeGraph build (Phase 6); our architecture docs
+overstated this and a fix is parked at the top of the backlog. **The next step is the fun one
+(Phase 3): put your real to-dos and a couple of real recruiter reachouts in, run "plan my day" for
+a few days, and judge whether it's genuinely useful.** The section just below is the original setup
+checklist and is kept for history.
 
 **The server is up and the website works.** Open
 [https://memory.chandrav.dev/docs](https://memory.chandrav.dev/docs) in a browser — you
@@ -622,7 +660,13 @@ needs your key passphrase (also in Bitwarden). Never paste secrets in chat.
 
 ## Current phase
 
-**Phase 4 — Claude + Cursor/VS Code MCP reach (session 20).** Phase 3 browser reach is proven
+**Memory Daily Driver v0 — Phase 2 done; Phase 3 (premise test) is next (session 23).** The
+conversational practice is live: trigger phrases map to `scripts/memory.py` verbs with a mandatory
+stored-exactly-this confirmation and a decision-supersession flow (see "Last updated" block).
+Discovered + parked: the deployed Mem0 (OSS 2.0.4) ships no graph-memory code, so Neo4j currently
+receives no Mem0 writes — architecture docs overstate this (P1 `[docs-drift]` in BACKLOG).
+
+**Phase-4 context (prior session 20).** Phase 3 browser reach is proven
 enough for the seamless path. The local stdio MCP proxy (`ai-memory-mcp`) is built and proven
 against the live REST API; Cursor/VS Code/Claude Code project configs are present at the parent
 workspace root; the persistent `AI_MEMORY_API_KEY` user env var is already set; and the operator has
@@ -1109,15 +1153,17 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Memory Daily Driver v0, Phase 2.** Phase 0 (de-risk) and Phase 1 (plumbing) are both
-> ✅ DONE (2026-06-09). Phase 1 shipped the contract-enforcing helper: `src/mcp_proxy/client.py` now has
-> the `infer` flag + `filters` + `get`/`update`/`delete` primitives, and `scripts/memory.py` provides
-> `capture_open_item`/`capture_decision`/`capture_fact`/`agenda`/`recruiter_board`/`close_item` — all
-> unit-tested AND live-proven end-to-end under a throwaway user (see the top "Last updated" block).
-> **Next is Phase 2:** a conversational operating-practice skill/rule (Operator Assistant persona) that
-> wires these helpers into "plan my day" / "log this / follow up Friday" so the agent reads/writes memory
-> when Chandra talks to it. (Background: Phase 3 browser reach + Phase 4 local MCP proxy are already
-> built/proven; personas live in `docs/agent-personas.md`.)
+> **RESUME HERE — Memory Daily Driver v0, Phase 3 (the premise test).** Phases 0 (de-risk), 1 (plumbing)
+> and 2 (conversational practice) are all ✅ DONE (Phase 2: 2026-06-10). The practice is canonical in
+> `AGENTS.md` § "Memory Daily Driver — conversational practice": "plan my day" → `agenda`, "log/remind/
+> follow up" → `add-open-item`, "we decided / we're reversing" → `add-decision` (+ supersession flow),
+> "done" → `close --resolution` — every write echoed back verbatim. **Next is Phase 3:** sit with Chandra
+> and capture his REAL open items + 1-2 real recruiter reachouts (concierge: one item at a time), run
+> "plan my day", and judge whether retrieval is genuinely useful; iterate. This is operator-facing work —
+> expect conversation, not code. Also queued: the P1 `[docs-drift]` BACKLOG item (Mem0 ships no graph
+> code; architecture docs overstate Neo4j's role — verify droplet Neo4j is empty of Mem0 writes, then
+> fix docs + ADR). (Background: browser reach + local MCP proxy are built/proven; personas live in
+> `docs/agent-personas.md`.)
 >
 > **NEXT ACTION (next session, one step at a time):**
 > 1. ✅ **DONE (2026-06-09) — Build Agent session checkpoint skill.** Implemented as
@@ -1164,11 +1210,14 @@ pre-commit is now DONE** (gitleaks gate).
 >      --strict` + contract gate, AND a live throwaway-user round-trip (capture→agenda→recruiters→close→
 >      delete; `chandrav` untouched). Reversible code decisions (close=PUT-in-place; client-side date
 >      bucketing) are folded into the Phase 4 v0 ADR rather than a standalone ADR.
->    - **Phase 2 (NEXT):** a conversational operating-practice skill/rule (Operator Assistant persona):
->      "plan my day" -> `agenda` incl. overdue/revisit; "log/follow up" -> `capture_*` with right
->      type/dates; confirm what was stored. Wire `scripts/memory.py` into the agent's conversational flow
->      (and optionally expose the capture/agenda verbs as MCP tools in `src/mcp_proxy/server.py`).
->    - **Phase 3 (the premise test):** capture Chandra's real open items + 1-2 real recruiter reachouts, run
+>    - **Phase 2 (✅ DONE 2026-06-10):** the conversational operating practice is canonical in
+>      `AGENTS.md` § "Memory Daily Driver — conversational practice" (spec
+>      `docs/skills/operator-assistant-memory-daily-driver.md`): trigger phrases → `scripts/memory.py`
+>      verbs, decision-reversal **supersession flow**, and the mandatory stored-exactly-this
+>      confirmation. Live-proven: real-bank read-only `agenda` green; throwaway-user round-trip
+>      capture→agenda(OVERDUE)→recruiters→close→delete; `chandrav` untouched. MCP-verb exposure
+>      consciously skipped (tenet 7, BACKLOG).
+>    - **Phase 3 (NEXT — the premise test):** capture Chandra's real open items + 1-2 real recruiter reachouts, run
 >      "plan my day", judge whether retrieval is genuinely useful, iterate.
 >    - **Phase 4:** ADR for v0 choices; update STATUS/BUILD-LOG/BUILD-JOURNEY/personas; commit+push all
 >      repos; ADR 028 Neo4j-metadata propagation probe is a follow-up, not a v0 blocker.

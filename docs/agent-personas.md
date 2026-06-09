@@ -157,10 +157,17 @@ later become skills under the Build Agent.
    `docs/skills/operator-assistant-concierge-action.md`): validates the four-part
    contract (`--check`), rejecting vague "confirm it"-class verbs and multi-step
    dumps, then renders the single operator action block.
-4. **Research and Strategy Agent: decision capture skill.** Convert a researched
-   choice into an ADR/backlog-ready summary with source dates and revisit trigger.
+4. **(Absorbed into Memory Daily Driver v0, direction pivot 2026-06-09.)**
+   Decision capture now ships as the `add-decision` verb + supersession flow of
+   the Daily Driver practice below, not a standalone skill.
+   ✅ **DONE (2026-06-10) — Operator Assistant: Memory Daily Driver conversational
+   practice.** "plan my day" / "log this, follow up Friday" / "we decided X" /
+   "done" now map to `scripts/memory.py` verbs with a mandatory stored-exactly-this
+   confirmation; decision reversals are captured as superseding decisions (trail +
+   snapshot). Spec: `docs/skills/operator-assistant-memory-daily-driver.md`;
+   canonical practice text in `AGENTS.md`.
 5. **Memory Steward: memory hygiene checks.** Flag secrets, oversized memories,
-   missing owner metadata, and stale facts.
+   missing owner metadata, and stale facts. (Deferred behind real utility.)
 
 This order directly follows the COEs: first fix handoff and operator-action
 mechanics, then expand capability.

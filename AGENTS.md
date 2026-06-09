@@ -299,6 +299,26 @@ Full diagram: `docs/architecture.md`.
   the latest Next action, or explicitly says no resume prompt is valid because the work is
   mid-step or awaiting an operator action. Missing any item is a COE-class handoff failure.
 
+## Memory Daily Driver — conversational practice (Operator Assistant)
+
+The live memory bank is part of every conversation, via `scripts/memory.py`
+(contract-enforcing helper; spec `docs/skills/operator-assistant-memory-daily-driver.md`):
+
+- **"plan my day" / "what's on my plate?"** → run `python scripts/memory.py agenda`,
+  present the buckets plain-English (overdue first), recommend one next action.
+- **"log this / remind me / follow up <day>"** → `add-open-item` with resolved ISO
+  dates (+ `--venture career` for recruiter reachouts); **"show recruiters"** → `recruiters`.
+- **"we decided X because Y"** → `add-decision` (verbatim, `--occurred` date).
+  **Reversals**: never edit the old decision — capture a new one:
+  `"Supersedes <old-id> ('<gist>'): <new decision>. Reason: <why>."` The trail is
+  the history; the latest decision is the snapshot.
+- **"done / that happened"** → `close <id> --resolution "<what happened>"`.
+- **Confirmation contract:** after every write, echo exactly what was stored
+  (verbatim text, type, resolved dates, ventures, short id). Silent writes are a
+  violation — mis-tags must be catchable immediately.
+- Never store secrets or transcript dumps; repo files beat memory for project
+  state (the bank is for *personal operating* items: todos, reachouts, decisions, facts).
+
 ## Documentation discipline / Definition of Done
 
 Tenet 10: restated facts must not drift. A change is **not done** until the docs

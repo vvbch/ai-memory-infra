@@ -9,6 +9,49 @@
 
 ---
 
+## 2026-06-10 — Memory Daily Driver v0, Phase 2: talking to your memory bank
+
+**Focus:** wire the Phase 1 verbs into normal conversation, so "plan my day" or
+"log this and remind me Friday" just works — and answer three product questions
+with evidence: when does this work with Claude, how does past context get in,
+and what happens when a decision is reversed later?
+
+**Milestones**
+- **The conversational practice shipped.** The agent's canonical instructions now
+  map natural phrases to the daily-driver verbs: planning requests render the
+  agenda (overdue first, one recommended next action); "log / remind / follow up"
+  phrases capture open items with resolved dates; recruiter reachouts are tagged
+  to the career category automatically; decisions are captured verbatim with
+  their reasons; "done" closes an item with *what actually happened*. Every write
+  is followed by a confirmation of exactly what was stored — a silent write is
+  defined as a contract violation, so mislabels are catchable in the same breath.
+- **Decision reversals get a supersession flow.** A reversed decision is never
+  edited away: the agent records a *new* decision naming what it supersedes and
+  why. The trail is the history; the latest entry is the current truth — and
+  because every surface (editor agent, ChatGPT via the extension, Claude) writes
+  to the same single bank, this holds across tools and sessions. Underneath, the
+  memory service also keeps its own change-log of every add/edit/delete with
+  before-and-after values (verified from the deployed version's source).
+- **Proven live, safely.** Read-only agenda ran green against the real bank; a
+  full capture → plan → recruiter board → close → delete round-trip ran under a
+  throwaway account, leaving the real bank untouched.
+- **An honest discovery, parked deliberately.** While verifying the history
+  story from source, we found the deployed open-source memory service ships *no*
+  knowledge-graph writing code — the graph database is running and backed up but
+  receives nothing from the memory layer today (the install flag that looked
+  like it enabled graph support is a silent no-op in this version). Our
+  architecture docs overstated this; a top-priority backlog item now tracks
+  verifying the live graph is indeed empty and correcting the docs, rather than
+  derailing this session's goal.
+
+**Next**
+- The premise test (Phase 3): put real open items and a couple of real recruiter
+  follow-ups in, run "plan my day" for a few days, and judge whether the memory
+  layer genuinely earns its keep. Then a short decision record consolidating the
+  v0 choices.
+
+---
+
 ## 2026-06-09 — Memory Daily Driver v0, Phase 1: the helper that the daily features sit on
 
 **Focus:** with the read/write foundation proven (Phase 0), build the thin tool
