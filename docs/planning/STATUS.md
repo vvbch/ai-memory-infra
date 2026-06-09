@@ -4,7 +4,27 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Memory identity + temporal model corrected by operator — ADR 028
+**Last updated:** 2026-06-09 (**Portable IDE startup/handoff hooks + session bootstrap — ADR 030;
+completion gate relocated out of `.cursor/`; COE `2026-06-09-ide-coupled-completion-gate.md`**).
+Operator caught two things: (1) the ADR 027 completion gate was placed in `ai-memory-infra/.cursor/`,
+which **couples it to Cursor (tenet 2)** and — worse — is **not the open workspace root**, so Cursor
+(which loads project hooks from `<root>/.cursor/`) almost certainly never loaded it; (2) startup
+re-discovery (parent `ai-memory` → realize control plane is `ai-memory-infra` → re-read the ~1k-line
+`STATUS.md`) burns tokens every session (tenet 16). **Fix (ADR 030):** the portable pattern already
+used for editor pointers (ADR 018) and git hooks (ADR 015) — **editor-agnostic logic in `scripts/`
++ thin per-IDE adapters generated at the workspace root.** Added `scripts/session_bootstrap.py`
+(emits a compact control-plane + current-phase + Next-action block; `--cursor` JSON / `--text` /
+`--json`; UTF-8-safe; fails open), **moved** the gate to `scripts/completion_gate.py` (deleted
+`ai-memory-infra/.cursor/hooks.json` + `.cursor/hooks/`), and added `scripts/install_ide_hooks.py`
+(cross-platform) that writes `<root>/.cursor/hooks.json` (`sessionStart`+`stop`) and
+`<root>/.claude/settings.json` from one definition (no drift). **Verified:** both hooks fire from the
+real workspace root (bootstrap injects the Next action; gate fail-loud at loop 3). Cursor's
+`sessionStart` `additional_context` has a known injection-timing bug, so the script also exports `env`
+pointers + prints to the Hooks channel. **Re-run `install_ide_hooks.py` after any re-clone** (parent
+workspace is unversioned). tenet 11 + AGENTS.md + `docs/setup.md` updated; ADR 027 marked
+placement-corrected by ADR 030.
+
+**Prior update:** 2026-06-09 (**Memory identity + temporal model corrected by operator — ADR 028
 supersedes ADR 026; ADR 029 adds the temporal + open-item model**). The operator rejected ADR 026's
 "hard rule" that allowed a *separate prototype `user_id`*: identity is the wrong layer to
 discriminate on, and a `user_id` split fragments the one curated bank — exactly the hard isolation
@@ -753,6 +773,26 @@ extension fork).**
   leave changes hanging**) and reserves the operator's attention for one-way doors (spend,
   lock-in, deletion, scope). In `tenets.md` + `AGENTS.md`.
 
+## Last decisions (2026-06-09, portable IDE hooks + session bootstrap)
+
+- **ADR 030 — portable IDE startup/handoff hooks + session bootstrap (corrects ADR 027 placement).**
+  Operator: hooks must be **IDE-independent**, and per-session control-plane re-discovery wastes
+  tokens. Root cause: the project had portable patterns for editor *content* (ADR 018) and *git*
+  hooks (ADR 015) but **none for harness/lifecycle hooks**, so ADR 027's gate was placed ad hoc
+  inside `ai-memory-infra/.cursor/` — coupling it to Cursor (tenet 2) and, since Cursor loads project
+  hooks from the **open workspace root** (the parent `ai-memory`, not the sub-repo), almost certainly
+  **never loading**. Fix = canonical editor-agnostic logic in `scripts/` + thin per-IDE adapters
+  generated at the workspace root by `scripts/install_ide_hooks.py` (re-run per re-clone, like the
+  git-hook installer). Added `scripts/session_bootstrap.py` (sessionStart → compact control-plane +
+  phase + Next-action block; verified-volatile: Cursor `additional_context` has an injection-timing
+  bug, so it also exports `env` + prints to the Hooks channel — tenet 8); **moved** the gate to
+  `scripts/completion_gate.py` and deleted `ai-memory-infra/.cursor/hooks*`. tenet 11 + AGENTS.md +
+  `setup.md` updated.
+- **COE `2026-06-09-ide-coupled-completion-gate.md`.** A fix (ADR 027) introduced a new tenet-2
+  violation and shipped an inert mechanism. Lesson: a corrective action must be checked against the
+  other tenets and **verified live** — placement/load-verification is part of shipping a control, and
+  "deterministic" ≠ "in a Cursor file." Mirrored to `interview_packet.md`.
+
 ## Last decisions (2026-06-09, deterministic completion gate)
 
 - **ADR 027 — completion gate becomes a Cursor `stop` hook (harness-enforced, model-independent).**
@@ -926,10 +966,13 @@ pre-commit is now DONE** (gitleaks gate).
 > 1. Build the **Build Agent session checkpoint skill**. It should capture current work item,
 >    verification, touched repos, and next action into the right repo docs without duplicating long
 >    chat context.
-> 2. ✅ **DONE (2026-06-09) — Build Agent repo handoff verifier.** Implemented as the Cursor
->    `stop` hook `.cursor/hooks/completion_gate.py` (ADR 027): mechanically checks dirty/ahead/
->    no-upstream for every project repo at turn-end and forces commit+push (or a loud blocker)
->    for any model. Closed COE `2026-06-09-model-dependent-completion-gate.md`.
+> 2. ✅ **DONE (2026-06-09) — Build Agent repo handoff verifier (gate) + session bootstrap.**
+>    The gate is `scripts/completion_gate.py` (ADR 027; **relocated out of `.cursor/` by ADR 030**)
+>    invoked by a harness turn-end adapter; it checks dirty/ahead/no-upstream for every project repo
+>    and forces commit+push (or a loud blocker) for any model. The session-checkpoint/bootstrap
+>    soft layer is `scripts/session_bootstrap.py` (sessionStart adapter). Both are editor-agnostic
+>    and wired by `scripts/install_ide_hooks.py` at the workspace root. Closed COEs
+>    `2026-06-09-model-dependent-completion-gate.md` + `2026-06-09-ide-coupled-completion-gate.md`.
 > 3. Then build the **Operator Assistant concierge action formatter**. It should turn unavoidable
 >    operator steps into purpose + exact action + visible success + wait point.
 > 4. After those are working, continue with Research and Strategy decision capture and Memory Steward

@@ -94,10 +94,11 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     truth; commit+push every session (never batch); run `check-repo-health` at
     session start + pre-commit + daily; on any red check **re-clone, don't
     repair**; never commit large firm artifacts (one-way door). See ADR 015.
-    **The commit+push trigger is harness-enforced, not memory-based:** a Cursor
-    `stop` hook (`.cursor/hooks/completion_gate.py`, ADR 027) refuses to let a turn
-    end with a dirty/unpushed repo, for **any** model — the prose gate below is the
-    happy path, the hook is the hard layer.
+    **The commit+push trigger is harness-enforced, not memory-based:** editor-
+    agnostic logic in `scripts/completion_gate.py` (ADR 027; placement ADR 030),
+    invoked by a harness turn-end adapter (Cursor `stop` / Claude Code `Stop`),
+    refuses to let a turn end with a dirty/unpushed repo, for **any** model — the
+    prose gate below is the happy path, the hook is the hard layer.
 12. **Vendors are deliberated, documented, and reversible.** No external
     dependency (registrar, cloud, DNS, SaaS, model API, paid tool) is adopted
     *suddenly*. Before committing, weigh in an ADR: total cost **incl. exit cost**,
@@ -245,20 +246,39 @@ Full diagram: `docs/architecture.md`.
   gate below — not a second tool.** Trust comes from the DoD + tests + ADRs +
   no-drift check, applied every change, not from which editor is open. The
   commit/push portion of that gate is now a **deterministic mechanism, not a
-  prose hope**: the Cursor `stop` hook (`.cursor/hooks/completion_gate.py`, ADR
-  027) enforces it for any model (this is the long-promised repo handoff verifier).
+  prose hope**: `scripts/completion_gate.py` (ADR 027), invoked by a harness
+  turn-end adapter, enforces it for any model (the long-promised repo handoff
+  verifier). The adapter is generated at the workspace root, not Cursor-owned
+  (tenet 2; ADR 030).
 - **Repo integrity (Tenet 11), third/soft layer:** run
   `scripts/check-repo-health.*` **at session start and before every commit**.
   (The hard layers are the git pre-commit hook + the daily scheduled run; this
   line is the human/agent reminder so a missing hook never means a missing check.)
-- **Completion gate, hard layer (ADR 027):** the Cursor `stop` hook
-  `.cursor/hooks/completion_gate.py` checks every project repo at turn-end and, if
-  any is dirty/unpushed, forces the agent to finish the commit/push DoD (and after
-  a few loops, to surface a loud operator-facing blocker). Two distinct hooks: the
-  **git pre-commit** hook *validates* a commit's content (integrity + gitleaks);
-  the **Cursor stop** hook *triggers* the commit/push that would otherwise be
+- **Session bootstrap, soft layer (ADR 030):** a harness `sessionStart` adapter
+  runs `scripts/session_bootstrap.py`, which injects a compact block (control
+  plane = `ai-memory-infra`, current phase, the Next action from `STATUS.md`) so a
+  fresh session does **not** re-read all of `AGENTS.md`/`STATUS.md` just to learn
+  where it is and what's next (token cost, tenet 16). The script is canonical and
+  editor-agnostic; `additional_context` injection is best-effort (a known Cursor
+  timing bug can drop it), so the script also exports `env` pointers and prints the
+  same block to the Hooks output channel.
+- **Completion gate, hard layer (ADR 027; placement ADR 030):** `scripts/
+  completion_gate.py` checks every project repo at turn-end and, if any is dirty/
+  unpushed, forces the agent to finish the commit/push DoD (and after a few loops,
+  surfaces a loud operator-facing blocker). Two distinct mechanisms: the **git
+  pre-commit** hook *validates* a commit's content (integrity + gitleaks); the
+  **harness turn-end** adapter *triggers* the commit/push that would otherwise be
   skipped. The prose gate is the happy path; the hook is the model-independent
   guarantee.
+- **Hooks are portable, not Cursor-owned (tenet 2, ADR 030).** Both the bootstrap
+  and the completion gate live as editor-agnostic Python in `scripts/`. Cursor
+  reads project hooks from the **workspace root** (`ai-memory/.cursor/hooks.json`),
+  not from `ai-memory-infra/.cursor/`, and the parent workspace is not a git repo —
+  so `scripts/install_ide_hooks.py` (versioned) generates the thin per-IDE adapters
+  (`<root>/.cursor/hooks.json` for Cursor, `<root>/.claude/settings.json` for
+  Claude Code) from one definition. **Re-run it after any re-clone** (same model as
+  the git-hook installer, ADR 015). VS Code has no native session hook — wire the
+  bootstrap as a folder-open task (see `docs/setup.md`).
 - **Completion gate:** when a reversible work item is done and verified, commit the
   relevant changes and push **every touched repo** to remote in the same session, including
   package repos such as `ai-memory-extension` and private docs repos such as

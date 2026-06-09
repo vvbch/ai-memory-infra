@@ -138,16 +138,23 @@ Decision, risk, and this mitigation contract are recorded in **ADR 015**; the
 session-start / pre-commit / scheduled firing of the integrity check is the
 operational expression of this tenet.
 
-**Mechanism, not memory (ADR 027).** "Commit and push every session" (point 2) is
-**not** left to the agent remembering it: it is enforced by a Cursor `stop` hook
-(`.cursor/hooks/completion_gate.py`) that fires on every turn-end *regardless of
-which model is driving* and refuses to let a turn end with a dirty/unpushed repo —
-the prose completion gate is the happy path, the hook is the **hard layer**. This
-is the deterministic-execution-layer lesson: rules/skills/`AGENTS.md` are run by
-the LLM (model-dependent), git hooks only *validate* a commit already in flight,
-and only a harness lifecycle hook can *trigger* the action deterministically.
-Added after a GPT-5.5 model switch ended a session unpushed for the fourth time
-(COE `2026-06-09-model-dependent-completion-gate.md`).
+**Mechanism, not memory (ADR 027; placement corrected by ADR 030).** "Commit and
+push every session" (point 2) is **not** left to the agent remembering it: it is
+enforced by editor-agnostic logic in `scripts/completion_gate.py` that a harness
+turn-end hook fires *regardless of which model is driving*, refusing to let a turn
+end with a dirty/unpushed repo — the prose completion gate is the happy path, the
+hook is the **hard layer**. This is the deterministic-execution-layer lesson:
+rules/skills/`AGENTS.md` are run by the LLM (model-dependent), git hooks only
+*validate* a commit already in flight, and only a harness lifecycle hook can
+*trigger* the action deterministically. Added after a GPT-5.5 model switch ended a
+session unpushed for the fourth time (COE
+`2026-06-09-model-dependent-completion-gate.md`). **The gate is portable, not
+Cursor-owned (tenet 2):** the logic lives in `scripts/`, and each IDE gets a thin
+turn-end adapter generated at the workspace root by `scripts/install_ide_hooks.py`
+(Cursor `stop`, Claude Code `Stop`). The same pattern carries the `sessionStart`
+bootstrap (ADR 030). The placement was corrected after the original adapter was
+written into a `.cursor/` directory that the open workspace root never loads
+(COE `2026-06-09-ide-coupled-completion-gate.md`).
 
 ## 12. Vendors are deliberated, documented, and reversible
 No external dependency — registrar, cloud, DNS host, object store, SaaS, model/

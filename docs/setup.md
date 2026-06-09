@@ -357,3 +357,53 @@ At least one MCP client lists `search_memories`, `add_memory`, and `list_memorie
 then successfully searches for a known live memory without pasting the API key in
 chat. Claude mobile/iOS remains a later step because it needs a remote HTTP MCP
 endpoint, not a local stdio process.
+
+## IDE startup/handoff hooks (session bootstrap + completion gate)
+
+Two lifecycle hooks make sessions cheaper and safer (ADR 030 + ADR 027). Both are
+**editor-agnostic Python in `scripts/`** — no logic lives in any `.cursor/`
+directory (tenet 2):
+
+- `scripts/session_bootstrap.py` — on session start, injects a compact block
+  (control plane = `ai-memory-infra`, current phase, the Next action from
+  `STATUS.md`) so a fresh agent doesn't re-read all of `AGENTS.md`/`STATUS.md` to
+  resume (token cost, tenet 16).
+- `scripts/completion_gate.py` — on turn end, blocks a stop while any project repo
+  is dirty/unpushed and forces the commit/push DoD for any model.
+
+### Install (one-time per machine / after any re-clone)
+
+Each IDE loads *project* hooks from the **open workspace root** — here the parent
+`ai-memory` workspace, which is not a git repo. So a versioned installer generates
+the thin per-IDE adapters there (same model as the git-hook installer, ADR 015):
+
+```powershell
+python ai-memory-infra/scripts/install_ide_hooks.py
+```
+
+This writes `ai-memory/.cursor/hooks.json` (Cursor: `sessionStart` + `stop`) and
+`ai-memory/.claude/settings.json` (Claude Code: `SessionStart` + `Stop`), each a
+thin pointer that just runs the `scripts/` logic. **Re-run after any re-clone** —
+the generated files live at the unversioned parent root and don't survive on their
+own (the installer + the `scripts/` logic are what's versioned).
+
+### Verify
+
+- **Cursor:** reloads `hooks.json` on save (else restart). Check **Settings →
+  Hooks** / the **Hooks** output channel; on a fresh chat the bootstrap block
+  should appear. Note: Cursor's `sessionStart` `additional_context` injection has a
+  known timing bug that can drop it — the script also exports `env` pointers and
+  prints to the Hooks channel, and the structural token win (Next-action excerpt vs
+  whole `STATUS.md`) holds regardless.
+- **Claude Code:** `.claude/settings.json` `SessionStart`/`Stop` run the same
+  scripts.
+- **VS Code:** no native agent session hook. Wire the bootstrap as a folder-open
+  task instead — run `python ai-memory-infra/scripts/session_bootstrap.py` (plain
+  text mode) and read its output, or add it to `.vscode/tasks.json` as a
+  `folderOpen` `runOptions` task. Same canonical script, no duplicated logic.
+
+### Done when
+
+`python ai-memory-infra/scripts/session_bootstrap.py` prints the bootstrap block,
+the generated adapters exist at the workspace root, and a `{"status":"completed"}`
+piped into `scripts/completion_gate.py` reports any dirty/unpushed repo.

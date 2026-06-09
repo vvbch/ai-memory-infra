@@ -1,6 +1,11 @@
 # ADR 027: Deterministic completion gate via a Cursor `stop` hook
 
-**Status:** Accepted
+**Status:** Accepted — **placement corrected by ADR 030** (the decision to make
+the gate a deterministic harness hook stands; the *file location* was wrong — the
+hook was written into `ai-memory-infra/.cursor/`, which the open workspace root
+never loads, and coupled the gate to Cursor against tenet 2. ADR 030 moves the
+logic to `scripts/completion_gate.py` and generates thin per-IDE adapters at the
+workspace root.)
 **Date:** 2026-06-09
 **Deciders:** Chandra (operator), Cursor agent
 **Related:** Tenets 1, 2, 11, 14, 16, 17; ADR 015 (git pre-commit hook / repo
