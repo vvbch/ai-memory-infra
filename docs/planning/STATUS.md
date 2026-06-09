@@ -24,6 +24,22 @@ row; (5) every cross-cutting ADR now ships a "Propagation / conformance" section
 future todo app remain ⬜ pending (tracked). **Post-deploy probe still open:** write from the extension and
 confirm `source="extension"` on `/search` metadata AND the Neo4j node, under `user_id="chandrav"`.
 
+> **OPEN — pick up next session (operator: "commit and push first? how did you miss that again — don't fix it").**
+> Two things to revisit deliberately next session (do NOT fix mid-stream now):
+> 1. **Process miss (recurring handoff class):** when this session opened, the *prior* session's
+>    ADR-028 work (extension, MCP proxy) + the COE were sitting **uncommitted** across repos. The
+>    right first move was to **commit + push the already-done work atomically**, then decide on more
+>    scope — instead the session ballooned (new ADR 031 + check script) before committing. This is the
+>    same tenet-11/16 handoff lesson as the atomic-handoff / session-handoff COEs. Decide next session
+>    whether this warrants its own COE or is covered by the existing ones.
+> 2. **The completion gate did not prevent it.** `scripts/completion_gate.py` (ADR 027/030) is supposed
+>    to block a turn ending with uncommitted/unpushed work — yet the prior session ended dirty across
+>    three repos. Likely the same "hook not loading at the real workspace root" failure named in COE
+>    `2026-06-09-ide-coupled-completion-gate.md`. **Verify the gate is actually live** (Cursor Hooks
+>    tab / fire a test turn) before trusting it again. Until then, commit+push is back to manual discipline.
+> 3. **Still open (needs live browser):** post-deploy probe — write from the extension, confirm
+>    `source="extension"` on `/search` metadata AND on the Neo4j node, under `user_id="chandrav"`.
+
 **Prior update:** 2026-06-09 (**Portable IDE startup/handoff hooks + session bootstrap — ADR 030;
 completion gate relocated out of `.cursor/`; COE `2026-06-09-ide-coupled-completion-gate.md`**).
 Operator caught two things: (1) the ADR 027 completion gate was placed in `ai-memory-infra/.cursor/`,
