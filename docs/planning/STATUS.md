@@ -4,7 +4,22 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**First agent-owned skill shipped — Build Agent session checkpoint
+**Last updated:** 2026-06-09 (**Operator Assistant concierge action formatter shipped — build-order #3
+(`scripts/operator_action.py`)**). Repo-health green at session start (all three repos `0 ahead/0
+behind`). Built the build-order #3 skill: an editor-agnostic Python CLI that turns an unavoidable
+operator step into the AGENTS.md four-part concierge format (ELI5 **purpose** + exact **action** +
+visible **success** + **wait** point). `--check` validates the contract (exit 1 if any of the three
+required parts is missing, if a part is **vague** — the "confirm it"/"make sure"/"do the needful" class —
+or if the `--action` is really **multi-step**: contains "then"/"after that"/a numbered or bulleted
+list/semicolon-chained imperatives), so a delegated action can't reach the operator vague or as a dump.
+It renders the single operator block and supports `--json`. This makes COE
+`2026-06-09-concierge-handoff-regression.md`'s rule a mechanism, mirroring how `completion_gate.py`/
+`session_checkpoint.py` mechanized the repo-handoff rules. Spec in
+`docs/skills/operator-assistant-concierge-action.md`; build order #1–#3 now all ✅ in
+`docs/agent-personas.md`. Verified live (valid render clean; `--check` catches vague + missing + multi-step;
+`--json` parses; ruff clean). **Next: build-order #4 — Research and Strategy decision capture.**
+
+**Prior update:** 2026-06-09 (**First agent-owned skill shipped — Build Agent session checkpoint
 (`scripts/session_checkpoint.py`)**). Repo-health green at session start (all three repos `0 ahead/0
 behind`). Built the build-order #1 skill: an editor-agnostic Python CLI that reads git truth for every
 project repo (branch / dirty / ahead / behind / HEAD commit+subject), validates the handoff contract
@@ -14,8 +29,7 @@ missing), and renders no-drift checkpoint text (a STATUS-ready `Done this sessio
 the **capture/format** layer that complements the **trigger** layer `completion_gate.py` (ADR 027/030).
 Spec in `docs/skills/build-agent-session-checkpoint.md`; build order #1+#2 now both ✅ in
 `docs/agent-personas.md` + `BACKLOG.md`. Verified live (contract check catches the dirty repo; render +
-`--json` parse clean; ruff/lint clean). **Next: build-order #3 — Operator Assistant concierge action
-formatter.**
+`--json` parse clean; ruff/lint clean).
 
 **Prior update:** 2026-06-09 (**Completion gate VERIFIED LIVE end-to-end; prior-session "ended dirty"
 miss closed without a new COE**). Resumed against the OPEN block below. Repo-health green (all three
@@ -549,9 +563,10 @@ gave a vague MCP-check instruction and emitted resume prompts while operator act
 The pre-build persona gate is now done in `docs/agent-personas.md`: **Build Agent**, **Research and
 Strategy Agent**, and **Operator Assistant** own future skills, with **Memory Steward** as a
 supporting hygiene role. **Skills shipped so far:** Build Agent repo handoff verifier
-(`scripts/completion_gate.py`, ADR 027/030) and Build Agent session checkpoint
-(`scripts/session_checkpoint.py`, 2026-06-09). **Next:** Operator Assistant concierge action
-formatter, then Research and Strategy decision capture + Memory Steward hygiene checks.
+(`scripts/completion_gate.py`, ADR 027/030), Build Agent session checkpoint
+(`scripts/session_checkpoint.py`, 2026-06-09), and Operator Assistant concierge action formatter
+(`scripts/operator_action.py`, 2026-06-09). **Next:** Research and Strategy decision capture, then
+Memory Steward hygiene checks.
 
 **OpenClaw prototype (ADR 026 → superseded by ADR 028).** OpenClaw is a prototype consumer of the
 memory layer for communications from Chandra's desk, starting with email processing only. It reads
@@ -1045,10 +1060,14 @@ pre-commit is now DONE** (gitleaks gate).
 >    soft layer is `scripts/session_bootstrap.py` (sessionStart adapter). Both are editor-agnostic
 >    and wired by `scripts/install_ide_hooks.py` at the workspace root. Closed COEs
 >    `2026-06-09-model-dependent-completion-gate.md` + `2026-06-09-ide-coupled-completion-gate.md`.
-> 3. Then build the **Operator Assistant concierge action formatter**. It should turn unavoidable
->    operator steps into purpose + exact action + visible success + wait point.
-> 4. After those are working, continue with Research and Strategy decision capture and Memory Steward
->    hygiene checks from `docs/agent-personas.md`.
+> 3. ✅ **DONE (2026-06-09) — Operator Assistant concierge action formatter.** Implemented as
+>    `scripts/operator_action.py` (spec `docs/skills/operator-assistant-concierge-action.md`): turns an
+>    unavoidable operator step into purpose + exact action + visible success + wait point; `--check`
+>    rejects missing/vague/multi-step actions before they reach the operator; `--json` supported.
+>    Verified live (valid render clean; check catches vague + missing + multi-step; ruff clean).
+>    **NEXT is now build-order #4 — Research and Strategy decision capture (step 4 below).**
+> 4. Then build the **Research and Strategy decision capture** skill, then **Memory Steward hygiene
+>    checks**, from `docs/agent-personas.md`.
 > 5. **Handoff rule reminder:** when the next reversible session step is done and verified, update
 >    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
 >    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos

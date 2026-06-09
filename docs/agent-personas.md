@@ -151,8 +151,12 @@ later become skills under the Build Agent.
 2. ✅ **DONE (2026-06-09) — Build Agent: repo handoff verifier.** Mechanically
    check dirty/ahead/behind state for touched repos before final response.
    Implemented as the turn-end gate `scripts/completion_gate.py` (ADR 027/030).
-3. **Operator Assistant: concierge action formatter.** Turn an unavoidable
-   operator step into purpose + exact action + visible success + wait point.
+3. ✅ **DONE (2026-06-09) — Operator Assistant: concierge action formatter.** Turn
+   an unavoidable operator step into purpose + exact action + visible success +
+   wait point. Implemented as `scripts/operator_action.py` (spec:
+   `docs/skills/operator-assistant-concierge-action.md`): validates the four-part
+   contract (`--check`), rejecting vague "confirm it"-class verbs and multi-step
+   dumps, then renders the single operator action block.
 4. **Research and Strategy Agent: decision capture skill.** Convert a researched
    choice into an ADR/backlog-ready summary with source dates and revisit trigger.
 5. **Memory Steward: memory hygiene checks.** Flag secrets, oversized memories,

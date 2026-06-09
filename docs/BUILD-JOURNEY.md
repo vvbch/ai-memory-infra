@@ -9,6 +9,30 @@
 
 ---
 
+## 2026-06-09 — Built a concierge guardrail for operator handoffs
+
+**Focus:** stop the agent from ever handing a human a vague or overstuffed
+instruction, by turning the "concierge mode" rule into a mechanism.
+
+**Milestones**
+- **Shipped the Operator Assistant concierge action formatter.** A small,
+  editor-agnostic command that takes any step the agent must delegate to a person
+  and renders it in one fixed shape: a plain-English reason, the exact single
+  thing to do, what success looks like, and a "tell me what you see" pause.
+- **Made vague and multi-step instructions fail loudly.** A `--check` mode refuses
+  to pass when a part is missing, when the wording is hand-wavy ("confirm it",
+  "make sure", "do the needful"), or when the "one action" is really several steps
+  chained with "then" or a numbered list — so a sloppy delegation can't reach the
+  operator.
+- **Kept secrets out by design.** The instruction may *point at* where a credential
+  lives (a password-vault folder) but can never contain the secret itself.
+- **Verified live.** A valid action rendered cleanly; the check correctly caught
+  vague, missing, and multi-step inputs; lint clean.
+
+**Decision**
+- The recurring "be a good concierge" rule is now enforced by a tool, not trusted
+  to memory — the same move already applied to repo handoffs.
+
 ## 2026-06-09 — Built the first agent-owned skill: a session checkpoint
 
 **Focus:** turn "write a good handoff at the end of each step" from a hope into a
