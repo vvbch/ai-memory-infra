@@ -17,7 +17,28 @@ It renders the single operator block and supports `--json`. This makes COE
 `session_checkpoint.py` mechanized the repo-handoff rules. Spec in
 `docs/skills/operator-assistant-concierge-action.md`; build order #1–#3 now all ✅ in
 `docs/agent-personas.md`. Verified live (valid render clean; `--check` catches vague + missing + multi-step;
-`--json` parses; ruff clean). **Next: build-order #4 — Research and Strategy decision capture.**
+`--json` parses; ruff clean). **THEN the operator flagged the skills sequence as a digression from the
+actual product buildout — direction decision this session (see "Direction decision" below): pivot to
+utility-first. Next is NOT skills #4/#5; it is the Memory Daily Driver v0 (use the live memory layer to
+plan work/day + track recruiter reachouts).**
+
+> **Direction decision (2026-06-09) — utility leads; stop the agent-tooling detour.** Operator: "are we
+> delayed on actual buildout? isn't this a digression?" — correct catch. Phases 1-4 (infra + reach) are
+> done, but the last 3 sessions shipped agent process-hygiene skills that don't even touch the memory
+> layer, while the product premise (*does self-hosted memory make my AI tools better?*) is still
+> **untested in real use**. Operator goal: "both, but utility leads" + "I desperately want to use the
+> memory layers to plan my work/day and help with recruiter reachouts." **Decision: build the Memory
+> Daily Driver v0** — implement the already-decided [ADR 029](docs/decisions/029-temporal-tagging-and-open-item-lifecycle.md)
+> open-item/decision model as a **thin conversational projection** over the live API (no LifeGraph, no
+> migration, no new datastore, no todo UI, no eval — those stay BACKLOG). **Surface = conversational**
+> (the agent reads/writes memory when Chandra talks to it: "plan my day" / "log recruiter X, follow up
+> Friday"); recruiter data is fine in the normal bank under `user_id="chandrav"`. Skills build-order #4
+> (decision capture) is **absorbed** into this; #5 (memory hygiene) is **deferred** behind real utility.
+> **Top risk to clear first:** in a CLI-agent session the `ai-memory` MCP server is not in the toolset,
+> so step 1 is proving a real read/write path (REST via `AI_MEMORY_API_KEY`) + verifying the live API
+> stores/returns a verbatim `open_item` (`infer:False`) with ADR 029 metadata. Full plan saved locally at
+> `~/.cursor/plans/memory_daily_driver_v0_df347331.plan.md` (machine-local; this STATUS block is the
+> durable copy).
 
 **Prior update:** 2026-06-09 (**First agent-owned skill shipped — Build Agent session checkpoint
 (`scripts/session_checkpoint.py`)**). Repo-health green at session start (all three repos `0 ahead/0
@@ -565,8 +586,10 @@ Strategy Agent**, and **Operator Assistant** own future skills, with **Memory St
 supporting hygiene role. **Skills shipped so far:** Build Agent repo handoff verifier
 (`scripts/completion_gate.py`, ADR 027/030), Build Agent session checkpoint
 (`scripts/session_checkpoint.py`, 2026-06-09), and Operator Assistant concierge action formatter
-(`scripts/operator_action.py`, 2026-06-09). **Next:** Research and Strategy decision capture, then
-Memory Steward hygiene checks.
+(`scripts/operator_action.py`, 2026-06-09). **Next (direction pivot 2026-06-09):** NOT more skills —
+the **Memory Daily Driver v0** (use the live memory layer conversationally to plan work/day + track
+recruiter reachouts; ADR 029 as a thin projection). See the "Direction decision" block up top and the
+"Next action" block below. Decision-capture (old skill #4) is absorbed; hygiene (#5) deferred.
 
 **OpenClaw prototype (ADR 026 → superseded by ADR 028).** OpenClaw is a prototype consumer of the
 memory layer for communications from Chandra's desk, starting with email processing only. It reads
@@ -1066,8 +1089,32 @@ pre-commit is now DONE** (gitleaks gate).
 >    rejects missing/vague/multi-step actions before they reach the operator; `--json` supported.
 >    Verified live (valid render clean; check catches vague + missing + multi-step; ruff clean).
 >    **NEXT is now build-order #4 — Research and Strategy decision capture (step 4 below).**
-> 4. Then build the **Research and Strategy decision capture** skill, then **Memory Steward hygiene
->    checks**, from `docs/agent-personas.md`.
+> 4. **DIRECTION PIVOT (2026-06-09) — utility leads; this supersedes the old "build skills #4/#5" path.**
+>    Build the **Memory Daily Driver v0**: make the live memory layer actually usable, **conversationally**,
+>    to (a) plan Chandra's work/day and (b) track recruiter reachouts. Implement the already-decided
+>    [ADR 029](docs/decisions/029-temporal-tagging-and-open-item-lifecycle.md) `fact`/`decision`/`open_item`
+>    model (status, `due_at`, `revisit_at`, `resolution`/`closed_at`, revisit loop) as a **thin projection**
+>    over the live API — no LifeGraph, no migration, no new datastore, no todo UI, no eval, no cron (all stay
+>    BACKLOG). Sequence:
+>    - **Phase 0 (de-risk first, no product code):** prove the agent's read/write path to the live API
+>      (REST via `AI_MEMORY_API_KEY`; the `ai-memory` MCP server may not be in a CLI-agent's toolset, so
+>      don't assume MCP). Verify the live API stores+returns a **verbatim** `open_item` (`infer:False`) with
+>      ADR 029 metadata `{type,status,due_at,revisit_at,ventures,source}`, and whether `/search` supports
+>      metadata filters or we filter client-side. (`src/mcp_proxy/client.py` currently always sends
+>      `infer:True` — wrong for authored todos.)
+>    - **Phase 1:** extend `src/mcp_proxy/client.py` (infer flag + filtered read) + a thin internal helper
+>      `scripts/memory.py` (capture_open_item / capture_decision / capture_fact / agenda / recruiter_board /
+>      close_item) enforcing the ADR 028/029 metadata contract. One `user_id="chandrav"`; recruiters tagged
+>      `ventures=[career]`.
+>    - **Phase 2:** a conversational operating-practice skill/rule (Operator Assistant persona): "plan my
+>      day" -> agenda incl. overdue/revisit; "log/follow up" -> capture with right type/dates; confirm what
+>      was stored.
+>    - **Phase 3 (the premise test):** capture Chandra's real open items + 1-2 real recruiter reachouts, run
+>      "plan my day", judge whether retrieval is genuinely useful, iterate.
+>    - **Phase 4:** ADR for v0 choices; update STATUS/BUILD-LOG/BUILD-JOURNEY/personas; commit+push all
+>      repos; ADR 028 Neo4j-metadata propagation probe is a follow-up, not a v0 blocker.
+>    Full plan (machine-local convenience copy): `~/.cursor/plans/memory_daily_driver_v0_df347331.plan.md`.
+> 5. **(Deferred behind v0)** Memory Steward hygiene checks (old skill #5) from `docs/agent-personas.md`.
 > 5. **Handoff rule reminder:** when the next reversible session step is done and verified, update
 >    `STATUS.md`/logs, run repo-health, then commit and push **every touched repo** before final response:
 >    control plane (`ai-memory-infra`), private log repo (`ai-memory-infra-private`), and package repos
