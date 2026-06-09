@@ -1,0 +1,106 @@
+# Weekly repo scan — Saturday 09:00 IST (03:30 UTC).
+#
+# Deliberately NOT tied to any IDE (tenet 2): orchestration is plain GitHub
+# Actions; the agentic step runs through an agent CLI whose prompt lives
+# versioned in docs/automation/. Swapping the agent vendor = swapping the
+# install/run lines below; the prompts and this schedule survive unchanged.
+#
+# Job 1 (scan): redundancy/inconsistency pass over all files, test run,
+#   architecture benchmark vs industry standards -> report + two-way-door
+#   fixes as a PR. The agent must never touch live data/infra (read-only
+#   guardrails are in the prompt; the runner has no droplet/API credentials).
+# Job 2 (interview): regenerates the per-track interview packets in the
+#   private repo from current repo state -> PR on the private repo.
+#
+# Required repository secrets:
+#   CURSOR_API_KEY    — agent CLI auth (swap with another vendor's key+CLI).
+#   PRIVATE_REPO_PAT  — fine-grained PAT, contents:read+write on
+#                       vvbch/ai-memory-infra-private (job 2 only).
+name: weekly-scan
+
+on:
+  schedule:
+    - cron: "30 3 * * 6" # Saturday 09:00 IST
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install
+        run: pip install -e ".[dev]"
+
+      - name: Install agent CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Run weekly scan agent
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+          SCAN_DATE: ${{ github.run_started_at }}
+        run: |
+          agent -p "Today is $SCAN_DATE. $(cat docs/automation/weekly-scan-prompt.md)" \
+            --force --output-format text
+
+      - name: Open PR with report + two-way-door fixes
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: weekly-scan/${{ github.run_id }}
+          commit-message: "chore(weekly-scan): report + two-way-door fixes"
+          title: "Weekly scan: report + two-way-door fixes"
+          body: |
+            Automated weekly scan (see `docs/reports/weekly-scan/`).
+            Contains ONLY two-way-door changes (revertible via git). One-way
+            doors are listed in the report for operator decision, never applied.
+          delete-branch: true
+
+  interview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ai-memory-infra
+
+      - uses: actions/checkout@v4
+        with:
+          repository: vvbch/ai-memory-infra-private
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          path: ai-memory-infra-private
+
+      - name: Install agent CLI
+        run: |
+          curl https://cursor.com/install -fsS | bash
+          echo "$HOME/.cursor/bin" >> "$GITHUB_PATH"
+
+      - name: Refresh interview packets from current repo state
+        env:
+          CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
+        run: |
+          agent -p "$(cat ai-memory-infra/docs/automation/interview-refresh-prompt.md)" \
+            --force --output-format text
+
+      - name: Open PR on the private repo
+        uses: peter-evans/create-pull-request@v7
+        with:
+          path: ai-memory-infra-private
+          token: ${{ secrets.PRIVATE_REPO_PAT }}
+          branch: weekly-scan/interview-${{ github.run_id }}
+          commit-message: "docs(interview): weekly refresh of track packets from repo state"
+          title: "Weekly interview-packet refresh"
+          body: |
+            Automated weekly regeneration of the per-track interview packets
+            from the current state of ai-memory-infra (agents, skills, COEs,
+            ADRs, metrics). Review for tone/accuracy before merging.
+          delete-branch: true

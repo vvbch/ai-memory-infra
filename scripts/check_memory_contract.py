@@ -183,7 +183,10 @@ def main(argv: list[str]) -> int:
         )
         return 1
 
-    print("MEMORY CONTRACT CONFORMANCE: OK — every checked consumer upholds the contract (ADR 028/031)")
+    print(
+        "MEMORY CONTRACT CONFORMANCE: OK — every checked consumer upholds "
+        "the contract (ADR 028/031)"
+    )
     return 0
 
 

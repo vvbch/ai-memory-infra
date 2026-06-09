@@ -169,9 +169,42 @@ def _grok() -> tuple[str, dict]:
 ADAPTERS = (_cursor, _claude, _codex, _gemini, _grok)
 
 
+# ---- slash commands ---------------------------------------------------------
+# /resume — the canonical session-resume prompt as a one-word command. The
+# prompt string is the SAME thin pointer documented in STATUS.md ("How to talk
+# to the next agent"); this just saves pasting it into every fresh chat. The
+# content is versioned HERE (single source of truth, tenet 10) and installed to
+# each harness's command folder at the workspace root, like the hook adapters.
+
+RESUME_PROMPT = (
+    "Resume ai-memory-infra — read docs/planning/STATUS.md (Plain English + "
+    "Next action) and AGENTS.md, run repo-health, then do the Next action. "
+    "Concierge mode: one step at a time, plain English."
+)
+
+RESUME_COMMAND_MD = (
+    "---\n"
+    "description: Resume ai-memory-infra from STATUS.md (concierge mode)\n"
+    "---\n\n"
+    f"{RESUME_PROMPT}\n"
+)
+
+# Cursor and Claude Code both read project commands from <root>/<dir>/commands.
+COMMAND_FILES = (
+    ".cursor/commands/resume.md",
+    ".claude/commands/resume.md",
+)
+
+
 def _write(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(f"  wrote {path}")
+
+
+def _write_text(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
     print(f"  wrote {path}")
 
 
@@ -184,6 +217,10 @@ def main() -> int:
     for build in ADAPTERS:
         rel, payload = build()
         _write(WORKSPACE_ROOT / rel, payload)
+
+    print("installing slash commands (/resume):")
+    for rel in COMMAND_FILES:
+        _write_text(WORKSPACE_ROOT / rel, RESUME_COMMAND_MD)
 
     print("")
     print("Done. Verify in each IDE that's installed:")

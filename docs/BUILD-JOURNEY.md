@@ -1031,3 +1031,32 @@ and pushed.
 **Next**
 - A post-deploy probe to confirm a browser-written memory shows the right source tag in both the
   search results and the knowledge graph, under the single identity.
+
+---
+
+## 2026-06-10 — Documents are code too; the repo gets a standing maintenance crew
+
+**Milestones**
+- **Caught a planning file silently decaying into a log.** The project's "read this first to
+  resume" file is meant to be a snapshot, overwritten each session — but across ~20 sessions it had
+  quietly grown 9x by accumulating old updates, duplicating the real journal. The root cause was
+  systemic: code contracts had machine validators (lint, types, secret scans), document contracts
+  were policed by prose and good intentions. Wrote it up blamelessly, trimmed the file (history was
+  already safe in the journal and git), and shipped a test-driven shape validator that now runs
+  before every commit and in CI — so this class of drift can't land again.
+- **Continuous integration went from claimed to real.** Lint, types, tests, and both contract
+  gates now run on every push and pull request; a lint failure had in fact been sitting on main
+  with nothing to catch it.
+- **The repo gained a standing maintenance crew, deliberately not tied to any IDE.** Orchestration
+  is plain GitHub Actions with the agent prompts versioned in the repo: when CI fails, an agent
+  investigates and opens a fix PR within minutes; every Saturday morning a scan agent reviews the
+  whole repo — redundancies, inconsistencies, tests, and an architecture benchmark against industry
+  standards — and files a report plus a PR of safe fixes. Hard guardrails are structural: the
+  runners hold zero live credentials, everything lands as a reviewable PR, and irreversible changes
+  are recommended but never applied.
+- **A one-word session resume.** The canonical resume prompt is now a `/resume` slash command,
+  generated per-IDE by the same versioned installer that manages the lifecycle hooks.
+
+**Next**
+- One-time setup of the two automation secrets, then back to the product: the Memory Daily Driver
+  premise test.
