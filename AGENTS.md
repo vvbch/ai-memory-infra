@@ -309,6 +309,7 @@ docs to update:
 |---|---|
 | Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, `docs/interview_packet.md` (arch-at-a-glance + decision log) |
 | A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), `interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |
+| A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport) | The decision is **a contract, not a document** (ADR 031): verify — and patch where needed — in **every** consumer repo (`ai-memory-extension`, MCP proxy `src/mcp_proxy/client.py`, the OpenClaw adapter, the future todo app) before it is done; add a "Propagation / conformance" section to the ADR; `scripts/check_memory_contract.py` must pass. A clean control-plane repo with a violating consumer is **not** done |
 | A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md` — **never** restate it in the editor pointer files (they stay pure pointers; see next row + ADR 018) |
 | An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`) | Keep it a **pure pointer** — frontmatter + "read `AGENTS.md`"; it carries **zero** tenets/rules/decisions (tenet 2, ADR 018). If you're adding substance here, it belongs in `AGENTS.md` instead |
 | Infra/IaC (terraform, compose, Caddy, `.env`) | `docs/runbook.md` / `docs/setup.md` if ops or commands change, `README.md` quick-start if commands change, `STATUS.md` |

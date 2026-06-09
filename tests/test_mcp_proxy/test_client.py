@@ -25,7 +25,7 @@ def test_config_reads_env_with_defaults(monkeypatch: pytest.MonkeyPatch) -> None
     assert config == MemoryApiConfig(
         base_url="https://memory.chandrav.dev",
         api_key="test-key",
-        user_id="chrome-extension-user",
+        user_id="chandrav",
     )
 
 

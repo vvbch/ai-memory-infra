@@ -9,7 +9,9 @@ from typing import Any
 import httpx
 
 DEFAULT_BASE_URL = "https://memory.chandrav.dev"
-DEFAULT_USER_ID = "chrome-extension-user"
+# ADR 028: one `user_id="chandrav"` for the person across every source; identity
+# is never the discriminator. Overridable via AI_MEMORY_USER_ID for tests/probes.
+DEFAULT_USER_ID = "chandrav"
 
 
 class MemoryApiConfigError(RuntimeError):

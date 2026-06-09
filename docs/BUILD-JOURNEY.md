@@ -822,3 +822,27 @@ and pushed.
 **Next**
 - Resume the first agent-owned skill (Build Agent session checkpoint), with the handoff verifier
   already in place.
+
+---
+
+## 2026-06-09 — A decision is a contract, not a document (ADR 031)
+
+**Milestones**
+- **Caught a cross-repo blind spot.** A settled rule — every memory uses one identity (`chandrav`)
+  and is tagged by a `source` that must reach both stores — had been written and committed in the
+  control-plane repo but never applied to the browser extension or the local API proxy, the clients
+  that actually write memories. So most browser-captured memories were landing under the wrong
+  identity with their source tag silently dropped.
+- **Named the real bug as a pattern, not an instance.** The project's automated gates enforce a
+  repo's git *hygiene* (everything committed and pushed, no secrets) but nothing checked that a
+  cross-cutting decision was actually *true* in every repo it governs. A clean control-plane repo
+  was hiding a sibling that quietly violated the decision.
+- **Fixed both layers.** Routed every extension write through a single normalizing path (correct
+  identity + source in metadata, with old values auto-healed) and corrected the proxy default; then
+  closed the systemic gap with a new decision record (a cross-cutting decision is a *contract* that
+  must hold in every consumer repo), a Definition-of-Done row, and a small conformance check script
+  that fails if a client drifts — so this is caught by a machine next time, not by a person noticing.
+
+**Next**
+- A post-deploy probe to confirm a browser-written memory shows the right source tag in both the
+  search results and the knowledge graph, under the single identity.

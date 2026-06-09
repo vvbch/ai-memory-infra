@@ -4,7 +4,27 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Portable IDE startup/handoff hooks + session bootstrap — ADR 030;
+**Last updated:** 2026-06-09 (**Memory-identity contract drift fixed in the consumer repos — ADR 031;
+COE `2026-06-09-extension-memory-identity-drift.md`**). Operator catch: "we decided `user_id`/identity
+for mem0 as `chandrav` — did we change the Chrome plugin? … you've been aggressive about infra and the
+private repo but not the plugin repo — why?" Investigation confirmed the asymmetry was real: **ADR 028
+(one `user_id="chandrav"`; `source` is the discriminator in `metadata`, reaching pgvector AND Neo4j) was
+committed in the control plane but never propagated to the consumer repos.** The Chrome extension kept the
+upstream-fork defaults (`user_id="chrome-extension-user"`, a top-level `source="OPENMEMORY_CHROME_EXTENSION"`
+that the self-hosted `/memories` contract silently drops) and the MCP proxy carried the same legacy
+`DEFAULT_USER_ID` — and those fixes, plus the COE, were sitting **uncommitted** while infra/private were
+clean. **Root cause (systemic):** a decision was treated as a *document in one repo*, not a *contract that
+must hold across every consumer*; our gates police a repo's git *hygiene* (completion gate, gitleaks), never
+cross-repo *conformance*. **Fix (ADR 031 — a cross-cutting decision is a contract):** (1) extension routes
+every write through one normalizing chokepoint (`postMemory` + background relay `normalizeMemoryWriteBody`)
+with canonical `DEFAULT_USER_ID="chandrav"` / `SOURCE="extension"` + auto-heal of legacy id/source; (2) MCP
+proxy `client.py` `DEFAULT_USER_ID="chandrav"`; (3) new `scripts/check_memory_contract.py` detect gate
+(canonical constants + no `fetch('/memories')` bypass) — **passes**; (4) AGENTS.md DoD gains a conformance
+row; (5) every cross-cutting ADR now ships a "Propagation / conformance" section. OpenClaw adapter +
+future todo app remain ⬜ pending (tracked). **Post-deploy probe still open:** write from the extension and
+confirm `source="extension"` on `/search` metadata AND the Neo4j node, under `user_id="chandrav"`.
+
+**Prior update:** 2026-06-09 (**Portable IDE startup/handoff hooks + session bootstrap — ADR 030;
 completion gate relocated out of `.cursor/`; COE `2026-06-09-ide-coupled-completion-gate.md`**).
 Operator caught two things: (1) the ADR 027 completion gate was placed in `ai-memory-infra/.cursor/`,
 which **couples it to Cursor (tenet 2)** and — worse — is **not the open workspace root**, so Cursor
