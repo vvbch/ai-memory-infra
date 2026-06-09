@@ -9,6 +9,44 @@
 
 ---
 
+## 2026-06-09 — Memory Daily Driver v0, Phase 1: the helper that the daily features sit on
+
+**Focus:** with the read/write foundation proven (Phase 0), build the thin tool
+layer that captures and retrieves to-dos, decisions, and recruiter follow-ups —
+with the right labels enforced automatically — so the conversational features
+have something safe to call.
+
+**Milestones**
+- **Taught the shared API client three new tricks.** It can now store text
+  *verbatim* (for authored to-dos) or let the service summarize it (for raw
+  notes); filter searches on structured fields server-side; and fetch, update, or
+  delete a single item by id. The "update in place" path was verified against the
+  memory service's published update contract before relying on it.
+- **Built the daily-driver helper.** A small, dependency-light tool with plain
+  verbs: log an open item / a decision / a fact; *plan the day* (it sorts open
+  items into overdue, due today, needs-a-follow-up, and upcoming — sorted by date
+  on the client so it works regardless of server-side date filtering); show the
+  recruiter board (open items tagged as career); and close an item with a note of
+  *what actually happened*, which updates it in place so its id and original
+  creation time are preserved.
+- **Made the labelling non-optional.** Every write goes in under the single
+  identity with a mandatory source tag and a validated kind/status/category and
+  ISO dates — bad input is rejected before it can reach the bank, so the memory
+  stays queryable and consistent.
+- **Verified two ways.** A unit-test suite (client + helper, using a mock
+  transport) plus type and lint gates all pass; then the whole flow was exercised
+  *live* against the real service under a throwaway test account — capture, plan,
+  recruiter board, close, confirm the closure stuck with all fields intact, delete
+  — leaving the real bank untouched.
+
+**Next**
+- Wire these verbs into normal conversation (Phase 2): saying "plan my day" or
+  "log this and remind me Friday" should just work, with the agent confirming what
+  it stored. Then a real-use test, then a short decision record capturing the v0
+  choices.
+
+---
+
 ## 2026-06-09 — Memory Daily Driver v0, Phase 0: proving the memory layer is usable
 
 **Focus:** before writing any product code, prove that an agent can actually

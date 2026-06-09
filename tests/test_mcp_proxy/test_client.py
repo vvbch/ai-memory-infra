@@ -108,6 +108,119 @@ def test_add_memory_posts_message_payload() -> None:
     }
 
 
+def _client_with(handler: object) -> MemoryApiClient:
+    return MemoryApiClient(
+        MemoryApiConfig(
+            base_url="https://memory.example.test",
+            api_key="test-key",
+            user_id="default-user",
+        ),
+        http_client=httpx.Client(transport=httpx.MockTransport(handler)),  # type: ignore[arg-type]
+    )
+
+
+def test_search_with_filters_sends_filters_only_when_present() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"results": []})
+
+    client = _client_with(handler)
+
+    client.search_memories("todos", filters={"type": "open_item"})
+
+    assert captured["body"] == {
+        "query": "todos",
+        "user_id": "default-user",
+        "top_k": 5,
+        "filters": {"type": "open_item"},
+    }
+
+
+def test_add_memory_supports_infer_false_for_verbatim_writes() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"results": [{"event": "ADD"}]})
+
+    client = _client_with(handler)
+
+    client.add_memory(
+        "Follow up with recruiter Acme Corp",
+        metadata={"type": "open_item", "source": "cursor"},
+        infer=False,
+    )
+
+    assert captured["body"] == {
+        "messages": [{"role": "user", "content": "Follow up with recruiter Acme Corp"}],
+        "user_id": "default-user",
+        "metadata": {"type": "open_item", "source": "cursor"},
+        "infer": False,
+    }
+
+
+def test_get_memory_fetches_by_id() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["method"] = request.method
+        return httpx.Response(200, json={"id": "m1", "memory": "hello"})
+
+    client = _client_with(handler)
+
+    result = client.get_memory("m1")
+
+    assert result == {"id": "m1", "memory": "hello"}
+    assert captured == {
+        "url": "https://memory.example.test/memories/m1",
+        "method": "GET",
+    }
+
+
+def test_update_memory_puts_text_and_optional_metadata() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["url"] = str(request.url)
+        captured["method"] = request.method
+        captured["body"] = json.loads(request.content)
+        return httpx.Response(200, json={"message": "updated"})
+
+    client = _client_with(handler)
+
+    result = client.update_memory(
+        "m1",
+        "Follow up with recruiter Acme Corp",
+        metadata={"status": "done", "resolution": "they passed"},
+    )
+
+    assert result == {"message": "updated"}
+    assert captured == {
+        "url": "https://memory.example.test/memories/m1",
+        "method": "PUT",
+        "body": {
+            "text": "Follow up with recruiter Acme Corp",
+            "metadata": {"status": "done", "resolution": "they passed"},
+        },
+    }
+
+
+def test_delete_memory_handles_empty_body() -> None:
+    captured: dict[str, object] = {}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        captured["method"] = request.method
+        return httpx.Response(204)
+
+    client = _client_with(handler)
+
+    assert client.delete_memory("m1") == {"message": "deleted"}
+    assert captured == {"method": "DELETE"}
+
+
 def test_list_memories_uses_default_user_and_api_key() -> None:
     captured: dict[str, object] = {}
 

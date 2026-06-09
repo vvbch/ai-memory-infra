@@ -4,7 +4,30 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Memory Daily Driver v0 — Phase 0 de-risk COMPLETE; the agent's REST
+**Last updated:** 2026-06-09 (**Memory Daily Driver v0 — Phase 1 COMPLETE: the contract-enforcing
+read/write helper is built, unit-tested, and live-proven end-to-end**). Repo-health green at session
+start (both repos `0 ahead/0 behind`). Built the Phase 1 plumbing: (1) extended `src/mcp_proxy/client.py`
+— `add_memory` gains an `infer` flag (default `True`; authored items pass `infer:false` for verbatim
+storage), `search_memories` gains optional server-side `filters`, and new `get_memory` / `update_memory`
+/ `delete_memory` primitives (`PUT /memories/{id}` shape verified against mem0ai/mem0 `MemoryUpdate` =
+`{text required, metadata optional}`, tenet 8); (2) added the thin `scripts/memory.py` helper —
+`capture_open_item` / `capture_decision` / `capture_fact` (authored = `infer:false` verbatim), `agenda`
+(client-side overdue / due-today / revisit-due / upcoming bucketing — Phase 0's date-range-filter open
+question is sidestepped, correct at v0 size), `recruiter_board` (open items tagged `ventures=[career]`),
+and `close_item` (in-place `PUT` that merges `status` / `resolution` / `closed_at` while preserving
+id / created_at / text / existing tags). All paths enforce the ADR 028/029 contract (one
+`user_id="chandrav"`; mandatory `source`; validated `type` / `status` / `ventures` / ISO dates).
+**Verified:** 22 unit tests green (client + helper via httpx MockTransport; src coverage 90%),
+ruff + `mypy --strict` clean, memory-contract conformance OK; **and live end-to-end under a throwaway
+`user_id=smoke-phase1-20260609`** — capture → `agenda` bucketed it OVERDUE → `recruiter_board` listed it
+→ `close` → `get_memory` confirmed `status:done` + `resolution` + `closed_at` round-trip with original
+tags/text intact → deleted. **`chandrav`'s real bank was never touched (still empty).** **Decisions
+(reversible, no ADR yet — folded into the Phase 4 v0 ADR):** `close_item` = in-place `PUT` update (not
+delete+recreate, so id/created_at/history survive); date bucketing is client-side until the bank is big
+enough to need server-side ranges (parked). **Next action below now points to Phase 2** (the
+conversational operating-practice skill/rule).
+
+**Prior update:** 2026-06-09 (**Memory Daily Driver v0 — Phase 0 de-risk COMPLETE; the agent's REST
 read/write path to the live API is proven end-to-end**). Repo-health green at session start (both repos
 `0 ahead/0 behind`). Proved, via **raw REST using `AI_MEMORY_API_KEY`** (no MCP toolset dependency — the
 CLI-agent risk in the Direction-decision block is cleared): (1) authenticated `GET /memories` → HTTP 200;
@@ -489,6 +512,14 @@ create admin/API key + verify model config, then a `POST /memories` round-trip; 
 the uncommitted infra changes.**)
 
 ## Plain English — where we are (resume here)
+
+**Right now (Memory Daily Driver v0):** the infrastructure below is all done and live. We've now
+pivoted to *using* it. This session built the tool that lets the agent save and look up your
+to-dos, decisions, and recruiter follow-ups in your memory bank — with the right labels — and
+proved it works against the real server (using a throwaway test account so your real bank stayed
+untouched). You can now, in a chat, say things like *"plan my day"* or *"log this and remind me
+Friday"* once we wire it into the conversation — that wiring is the next step (Phase 2). The
+section just below is the original setup checklist and is kept for history.
 
 **The server is up and the website works.** Open
 [https://memory.chandrav.dev/docs](https://memory.chandrav.dev/docs) in a browser — you
@@ -1078,13 +1109,15 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — Memory Daily Driver v0, Phase 1.** Phase 0 de-risk is ✅ DONE (2026-06-09): the agent's
-> raw-REST read/write path to the live API is proven end-to-end (verbatim `infer:false` writes, all six
-> ADR 029 metadata fields round-trip, server-side `/search` `filters` work, DELETE works) — see the top
-> "Last updated" block and step 4 below. **Next is Phase 1:** add the `infer` flag + filtered read to
-> `src/mcp_proxy/client.py` (it currently hardcodes `infer:True`) and a thin `scripts/memory.py` helper
-> enforcing the ADR 028/029 contract. (Background: Phase 3 browser reach + Phase 4 local MCP proxy are
-> already built/proven; personas live in `docs/agent-personas.md`.)
+> **RESUME HERE — Memory Daily Driver v0, Phase 2.** Phase 0 (de-risk) and Phase 1 (plumbing) are both
+> ✅ DONE (2026-06-09). Phase 1 shipped the contract-enforcing helper: `src/mcp_proxy/client.py` now has
+> the `infer` flag + `filters` + `get`/`update`/`delete` primitives, and `scripts/memory.py` provides
+> `capture_open_item`/`capture_decision`/`capture_fact`/`agenda`/`recruiter_board`/`close_item` — all
+> unit-tested AND live-proven end-to-end under a throwaway user (see the top "Last updated" block).
+> **Next is Phase 2:** a conversational operating-practice skill/rule (Operator Assistant persona) that
+> wires these helpers into "plan my day" / "log this / follow up Friday" so the agent reads/writes memory
+> when Chandra talks to it. (Background: Phase 3 browser reach + Phase 4 local MCP proxy are already
+> built/proven; personas live in `docs/agent-personas.md`.)
 >
 > **NEXT ACTION (next session, one step at a time):**
 > 1. ✅ **DONE (2026-06-09) — Build Agent session checkpoint skill.** Implemented as
@@ -1122,13 +1155,19 @@ pre-commit is now DONE** (gitleaks gate).
 >      bank untouched. Confirmed `src/mcp_proxy/client.py` hardcodes `infer:True` (Phase 1 fix). Still-open Phase 1
 >      questions: does `GET /memories` accept `filters`, and do `filters` support range ops for `due_at`/`revisit_at`
 >      (else compare client-side)?
->    - **Phase 1 (NEXT):** extend `src/mcp_proxy/client.py` (infer flag + filtered read) + a thin internal helper
->      `scripts/memory.py` (capture_open_item / capture_decision / capture_fact / agenda / recruiter_board /
->      close_item) enforcing the ADR 028/029 metadata contract. One `user_id="chandrav"`; recruiters tagged
->      `ventures=[career]`.
->    - **Phase 2:** a conversational operating-practice skill/rule (Operator Assistant persona): "plan my
->      day" -> agenda incl. overdue/revisit; "log/follow up" -> capture with right type/dates; confirm what
->      was stored.
+>    - **Phase 1 (✅ DONE 2026-06-09):** extended `src/mcp_proxy/client.py` (`infer` flag + `filters` +
+>      `get`/`update`/`delete` primitives) and added the thin helper `scripts/memory.py`
+>      (`capture_open_item` / `capture_decision` / `capture_fact` / `agenda` / `recruiter_board` /
+>      `close_item`) enforcing the ADR 028/029 contract — one `user_id="chandrav"`, mandatory `source`,
+>      validated `type`/`status`/`ventures`/ISO dates; recruiters tagged `ventures=[career]`. `close_item`
+>      updates in place via `PUT` (preserves id/created_at). Verified: 22 unit tests + ruff + `mypy
+>      --strict` + contract gate, AND a live throwaway-user round-trip (capture→agenda→recruiters→close→
+>      delete; `chandrav` untouched). Reversible code decisions (close=PUT-in-place; client-side date
+>      bucketing) are folded into the Phase 4 v0 ADR rather than a standalone ADR.
+>    - **Phase 2 (NEXT):** a conversational operating-practice skill/rule (Operator Assistant persona):
+>      "plan my day" -> `agenda` incl. overdue/revisit; "log/follow up" -> `capture_*` with right
+>      type/dates; confirm what was stored. Wire `scripts/memory.py` into the agent's conversational flow
+>      (and optionally expose the capture/agenda verbs as MCP tools in `src/mcp_proxy/server.py`).
 >    - **Phase 3 (the premise test):** capture Chandra's real open items + 1-2 real recruiter reachouts, run
 >      "plan my day", judge whether retrieval is genuinely useful, iterate.
 >    - **Phase 4:** ADR for v0 choices; update STATUS/BUILD-LOG/BUILD-JOURNEY/personas; commit+push all
