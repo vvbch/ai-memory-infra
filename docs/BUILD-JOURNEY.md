@@ -9,6 +9,37 @@
 
 ---
 
+## 2026-06-09 — Memory Daily Driver v0, Phase 0: proving the memory layer is usable
+
+**Focus:** before writing any product code, prove that an agent can actually
+read from and write to the live memory service, and that a hand-authored "open
+item" (a todo with a due date and a follow-up date) survives the round-trip with
+all of its structure intact.
+
+**Why this first:** the whole point of the Daily Driver is to *use* the memory
+layer conversationally (plan the day, track recruiter follow-ups). That premise
+is worthless if the agent can't reliably talk to the service, so this session was
+pure de-risking — no feature code.
+
+**What was proven (all against the live service, over plain REST):**
+- The agent can authenticate and read the memory bank.
+- Writing a todo *verbatim* works — the service stores the exact words instead of
+  running them through its AI summarizer, which is what you want for an authored
+  to-do item.
+- Every structured field on the todo (its kind, its status, its due date, its
+  follow-up date, its category tags, and where it came from) comes back intact on
+  both a direct read and a search — and the service auto-stamps when it was
+  created.
+- Search can filter on those fields on the server side, so "show me only the open
+  recruiter items" won't require pulling everything down and sifting locally.
+- Deleting a todo works, so the full lifecycle is reachable.
+
+**Outcome:** the read/write foundation is solid. The probe ran against throwaway
+test data that was deleted afterward, leaving the real bank untouched. Next step
+is the thin helper layer that the conversational features will sit on.
+
+---
+
 ## 2026-06-09 — Built a concierge guardrail for operator handoffs
 
 **Focus:** stop the agent from ever handing a human a vague or overstuffed

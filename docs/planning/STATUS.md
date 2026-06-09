@@ -4,7 +4,24 @@
 > resume.** Full reasoning lives in `docs/decisions/` and the private
 > `interview_packet.md`. Working model + teaching prefs: `AGENTS.md`.
 
-**Last updated:** 2026-06-09 (**Operator Assistant concierge action formatter shipped — build-order #3
+**Last updated:** 2026-06-09 (**Memory Daily Driver v0 — Phase 0 de-risk COMPLETE; the agent's REST
+read/write path to the live API is proven end-to-end**). Repo-health green at session start (both repos
+`0 ahead/0 behind`). Proved, via **raw REST using `AI_MEMORY_API_KEY`** (no MCP toolset dependency — the
+CLI-agent risk in the Direction-decision block is cleared): (1) authenticated `GET /memories` → HTTP 200;
+(2) `POST /memories` with **`infer:false` stores an authored todo verbatim** ("Follow up with recruiter
+Acme Corp about the SDM role" came back byte-for-byte — no extraction/rewording); (3) **all six ADR 029
+metadata fields round-trip** intact on both `GET /memories` and `POST /search`
+(`type=open_item, status=open, due_at=2026-06-12, revisit_at=2026-06-11, ventures=[career], source=cursor`),
+with `created_at` auto-stamped; (4) **`/search` supports server-side metadata filtering** — discriminating
+pair `filters={type:fact}`→0 results, `filters={type:open_item}`→1 result, so Phase 1 read helpers can push
+filters server-side instead of fetching-all-then-filtering; (5) `DELETE /memories/{id}` → HTTP 200. The probe
+used a throwaway `user_id=phase0-probe-20260609`, deleted after — **`chandrav`'s real bank was never touched
+(still empty)**. **Confirms the known `src/mcp_proxy/client.py` gap:** it hardcodes `infer:True` (wrong for
+authored todos) — that is the Phase 1 fix. **Open for Phase 1 (not blockers):** whether `GET /memories`
+accepts the same `filters`, and whether `filters` supports range operators for `due_at`/`revisit_at`
+(overdue/revisit queries) or those must be compared client-side. **Next action below now points to Phase 1.**
+
+**Prior update:** 2026-06-09 (**Operator Assistant concierge action formatter shipped — build-order #3
 (`scripts/operator_action.py`)**). Repo-health green at session start (all three repos `0 ahead/0
 behind`). Built the build-order #3 skill: an editor-agnostic Python CLI that turns an unavoidable
 operator step into the AGENTS.md four-part concierge format (ELI5 **purpose** + exact **action** +
@@ -1061,12 +1078,13 @@ pre-commit is now DONE** (gitleaks gate).
 
 ## Next action
 
-> **RESUME HERE — build the first agent-owned skills.** Phase 3 browser reach is proven enough for
-> the seamless path. Phase 4 local MCP proxy is built and proven against the live API. Cursor lists a
-> workspace MCP server named `ai-memory`, so Cursor-side MCP visibility is proven. The pre-build
-> product gate is now closed in `docs/agent-personas.md`: the primary personas are **Build Agent**,
-> **Research and Strategy Agent**, and **Operator Assistant**, with a supporting **Memory Steward**
-> role.
+> **RESUME HERE — Memory Daily Driver v0, Phase 1.** Phase 0 de-risk is ✅ DONE (2026-06-09): the agent's
+> raw-REST read/write path to the live API is proven end-to-end (verbatim `infer:false` writes, all six
+> ADR 029 metadata fields round-trip, server-side `/search` `filters` work, DELETE works) — see the top
+> "Last updated" block and step 4 below. **Next is Phase 1:** add the `infer` flag + filtered read to
+> `src/mcp_proxy/client.py` (it currently hardcodes `infer:True`) and a thin `scripts/memory.py` helper
+> enforcing the ADR 028/029 contract. (Background: Phase 3 browser reach + Phase 4 local MCP proxy are
+> already built/proven; personas live in `docs/agent-personas.md`.)
 >
 > **NEXT ACTION (next session, one step at a time):**
 > 1. ✅ **DONE (2026-06-09) — Build Agent session checkpoint skill.** Implemented as
@@ -1096,13 +1114,15 @@ pre-commit is now DONE** (gitleaks gate).
 >    model (status, `due_at`, `revisit_at`, `resolution`/`closed_at`, revisit loop) as a **thin projection**
 >    over the live API — no LifeGraph, no migration, no new datastore, no todo UI, no eval, no cron (all stay
 >    BACKLOG). Sequence:
->    - **Phase 0 (de-risk first, no product code):** prove the agent's read/write path to the live API
->      (REST via `AI_MEMORY_API_KEY`; the `ai-memory` MCP server may not be in a CLI-agent's toolset, so
->      don't assume MCP). Verify the live API stores+returns a **verbatim** `open_item` (`infer:False`) with
->      ADR 029 metadata `{type,status,due_at,revisit_at,ventures,source}`, and whether `/search` supports
->      metadata filters or we filter client-side. (`src/mcp_proxy/client.py` currently always sends
->      `infer:True` — wrong for authored todos.)
->    - **Phase 1:** extend `src/mcp_proxy/client.py` (infer flag + filtered read) + a thin internal helper
+>    - **Phase 0 (de-risk first, no product code): ✅ DONE (2026-06-09).** Proved via raw REST + `AI_MEMORY_API_KEY`
+>      (no MCP dependency): `GET /memories` 200; `POST /memories infer:false` stores authored text **verbatim**;
+>      **all six ADR 029 metadata fields round-trip** on both `GET` and `/search` + `created_at` auto-stamped;
+>      **`/search` supports server-side `filters`** (discriminating pair `{type:fact}`→0 vs `{type:open_item}`→1);
+>      `DELETE /memories/{id}` 200. Probe ran under throwaway `user_id=phase0-probe-...`, deleted after; `chandrav`
+>      bank untouched. Confirmed `src/mcp_proxy/client.py` hardcodes `infer:True` (Phase 1 fix). Still-open Phase 1
+>      questions: does `GET /memories` accept `filters`, and do `filters` support range ops for `due_at`/`revisit_at`
+>      (else compare client-side)?
+>    - **Phase 1 (NEXT):** extend `src/mcp_proxy/client.py` (infer flag + filtered read) + a thin internal helper
 >      `scripts/memory.py` (capture_open_item / capture_decision / capture_fact / agenda / recruiter_board /
 >      close_item) enforcing the ADR 028/029 metadata contract. One `user_id="chandrav"`; recruiters tagged
 >      `ventures=[career]`.
