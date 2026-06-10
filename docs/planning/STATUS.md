@@ -6,46 +6,48 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (ADR 028 Neo4j source probe closed; pgvector ✅).
+**Last updated:** 2026-06-11 (MCP droplet redeploy ✅; ADR 037 tools live).
 Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
-up nightly + restore-drilled monthly. **ADR 036 complete.** **ADR 037 closed.**
-**ADR 028 pgvector source tagging live** on all in-workspace writers; Neo4j graph
-`source` propagation is **N/A until LifeGraph (Phase 6)** — Mem0 writes no graph
-(ADR 032; droplet confirmed 0 nodes before/after probe).
+up nightly + restore-drilled monthly. **Remote MCP** at `https://mcp.chandrav.dev`
+now ships **five tools** incl. `delete_memory` / `update_memory` (ADR 037).
+Production add → update → delete verified on droplet.
 
 **Curated bank (`user_id=chandrav`):** extension auto-capture off by policy; MCP
 primary write surface.
 
+**Active build track:** Phase 5 migration pipeline (phases 5–8 stubs).
+
 ## Current phase
 
-**Infra phases 0–4 live; ADR 036 + ADR 037 closed.** Phases 5–8 stubs — **active
-build track**.
+**Infra phases 0–4 live.** Phase 5 migration — **start design + TDD**.
 
 ## Done this session (2026-06-11)
 
-- **ADR 028 Neo4j source probe** — live verify: `metadata.source` round-trips on
-  pgvector; Neo4j `node_count=0` before and after tagged write (no Mem0 graph —
-  not a dropped field). Added `scripts/verify_source_propagation.py` + tests;
-  closed ADR 032 belt-and-suspenders droplet confirm.
+- **MCP droplet redeploy** — `git pull` to `7ea9d6e`, rebuilt `mcp-proxy` image,
+  container recreated; `https://mcp.chandrav.dev/health` OK.
+- **ADR 037 production verify** — throwaway add → update → delete round-trip on
+  droplet Mem0 API (`scripts/deploy_probe_roundtrip.sh`).
+- **Market world model** — architecture debate prompt written; **parked** (see
+  BACKLOG); resume after operator runs frontier-model review.
 
 ## Last decisions
 
-- Neo4j `metadata.source` enforcement is **deferred to LifeGraph Phase 6**, not a
-  Mem0-server patch today (graph store absent at pinned mem0ai ref).
-- OpenClaw adapter stays parked until repo checkout — never fork `user_id`.
+- MCP redeploy closes the ADR 037 production gap; no connector re-consent needed
+  (`mcp_oauth_state` volume preserved).
+- Market-analysis world-build stays **out of scope** until explicitly unparked —
+  parallel private repo, not a blocker for Phase 5.
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. Top: **MCP droplet redeploy** (ADR 037
-delete/update tools live); OpenClaw adapter gate.
+See **`docs/planning/BACKLOG.md`**. Top active: **Phase 5 migration TDD**.
+Parked: market world model debate; OpenClaw adapter gate.
 
 ## Open blockers / risks
 
-- **MCP droplet behind git** — ADR 037 delete/update tools until redeploy.
 - **OpenClaw adapter** — not in workspace; conformance audit blocked on checkout.
 
 ## Environment notes
@@ -55,11 +57,11 @@ delete/update tools live); OpenClaw adapter gate.
 
 ## Next action
 
-> **RESUME HERE — MCP droplet redeploy (ADR 037 tools on production):**
-> Redeploy the MCP proxy container on the droplet so `delete_memory` /
-> `update_memory` (ADR 037) are live in production — `make deploy` or equivalent
-> SSH pull + compose up on `168.144.145.29`. Verify with a throwaway add →
-> update → delete round-trip via remote MCP or `scripts/memory.py`.
+> **RESUME HERE — Phase 5 migration (TDD start):**
+> Write `docs/design/migration-pipeline.md` (short), then add the first failing
+> test `tests/test_migration/test_import_md.py` for `.md` heading-split parsing;
+> implement `src/migration/import_md.py` to pass. Follow setup-prompt Phase 5
+> order: tests first, then code.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 

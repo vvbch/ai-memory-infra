@@ -46,6 +46,13 @@
 
 ## Parked until build complete (operator 2026-06-10)
 
+- **`[firm]` Market-analysis world model (`market-analysis-world-build`) — PARKED
+  (2026-06-11).** Separate private repo + workspace; Neo4j `MW_*` namespace on
+  shared droplet; Perplexity → graph ingest skill; 5-day MVP deferred. Frontier-model
+  architecture debate prompt at workspace root
+  `market-world-architecture-debate-prompt.txt`. **Trigger:** operator unparks after
+  multi-model review; not sequential on Phase 5–8 unless explicitly re-scoped.
+
 - **`[product]` Phase 3 premise / usefulness test — PARKED.** Multi-day Daily Driver
   exercise + one-page verdict (*does self-hosted memory make my AI tools better?*).
   **Trigger:** resume after phases **5–8** are implemented (migration, LifeGraph,
