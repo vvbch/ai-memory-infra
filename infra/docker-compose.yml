@@ -2,9 +2,9 @@
 #
 # Topology (verified against mem0ai/mem0 server/docker-compose.yaml on main):
 #   caddy           reverse proxy + auto-HTTPS (only thing that faces the net)
-#   mem0            FastAPI REST; built-in JWT auth (AUTH_DISABLED=false)
+#   mem0            FastAPI REST; X-API-Key auth (ADR 020; AUTH_DISABLED=false)
 #   postgres        PostgreSQL + pgvector (vector store)
-#   neo4j           knowledge graph (Mem0 graph + LifeGraph), APOC enabled
+#   neo4j           LifeGraph (Phase 6); Mem0 does not write graph at pinned ref
 #   mem0-dashboard  Next.js admin UI (ships in the OSS server compose)
 #
 # Prometheus + Grafana are intentionally NOT here yet — they're Phase 8

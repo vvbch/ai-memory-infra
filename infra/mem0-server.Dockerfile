@@ -2,10 +2,10 @@
 #
 # Why this exists: the published `mem0/mem0-api-server:latest` image is
 # arm64-only (no linux/amd64 manifest), so it cannot run on the amd64 droplet.
-# We build from the mem0ai/mem0 `server/` directory instead. We also add the
-# Neo4j graph-store extras the stock requirements.txt omits (`mem0ai[graph]`,
-# `langchain-neo4j`, `rank-bm25`) — required because our stack uses Neo4j for
-# the Mem0 auto-graph + LifeGraph. (Matches the Mem0 self-host guide's patch.)
+# We build from the mem0ai/mem0 `server/` directory instead. We also install
+# `mem0ai[graph]`, `langchain-neo4j`, and `rank-bm25` per the Mem0 self-host
+# guide — but at the pinned ref (mem0ai 2.0.4) the server never configures a
+# graph store, so Neo4j is reserved for LifeGraph (Phase 6), not Mem0 writes.
 #
 # Build context = the mem0 source `server/` dir:
 #   docker build -f mem0-server.Dockerfile -t mem0-api-server:local /opt/mem0-src/server

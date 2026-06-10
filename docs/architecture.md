@@ -22,7 +22,7 @@ flowchart TB
         subgraph Compose["Docker Compose"]
             API["mem0-api<br/>FastAPI REST"]
             PG[("PostgreSQL 16<br/>+ pgvector")]
-            NEO[("Neo4j<br/>dual namespace:<br/>Mem0 graph + LifeGraph")]
+            NEO[("Neo4j<br/>LifeGraph (Phase 6);<br/>Mem0 does not write graph today")]
             DASH["mem0-dash"]
             PROM["prometheus"]
             GRAF["grafana"]
@@ -105,7 +105,7 @@ Neo4j moves local — projected ~₹1,000/mo. See `docs/planning/setup-prompt.md
 
 | Subdomain | Service | Notes |
 |---|---|---|
-| `memory.{domain}` | Mem0 REST API | JWT auth; CORS allowlist |
+| `memory.{domain}` | Mem0 REST API | X-API-Key auth (ADR 020); guardrails pending (ADR 009) |
 | `dash.{domain}`   | Mem0 dashboard | basic auth |
 | `graph.{domain}`  | Neo4j Browser | basic auth |
 | `monitor.{domain}`| Grafana | basic auth |

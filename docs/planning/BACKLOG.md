@@ -40,22 +40,15 @@
 
 ## P1 — discovered drift / verification
 
-- **`[docs-drift]` Architecture docs claim a "Mem0 auto-managed graph" in Neo4j —
-  source says the deployed stack has none (found 2026-06-10, tenet 8/10).**
-  Verified from upstream source at our pinned ref (`MEM0_REF=3669459…`) and the
-  mem0ai 2.0.4 PyPI wheel: the `server/` REST app never reads `NEO4J_*` and never
-  configures a `graph_store`, and the 2.0.4 library ships **zero** graph-memory
-  code (no `graph` extra exists — `pip install "mem0ai[graph]"` in
-  `infra/mem0-server.Dockerfile` installs plain mem0ai with a warning). So the
-  compose `NEO4J_URI/USERNAME/PASSWORD` env vars into the mem0 container are dead
-  config, and Neo4j currently serves only the **future LifeGraph** (Phase 6) —
-  it is running, backed up, but not written to by Mem0. Actions: (1) confirm on
-  the droplet that the live Neo4j has no Mem0-written nodes; (2) fix the drift in
-  `docs/architecture.md` + `AGENTS.md` ("dual namespace" claim) + the Dockerfile
-  comment; (3) decide in an ADR whether graph memory comes from LifeGraph only
-  (current plan) or a Mem0 version/extra that actually ships it. Until then,
-  decision-supersession history lives in the Mem0 SQLite history table + the
-  Daily Driver supersession convention, not in Neo4j.
+- **`[docs-drift]` Mem0→Neo4j graph claim — partial fix (weekly scan 2026-06-10).**
+  Source-verified (mem0ai 2.0.4 / pinned ref): server never configures `graph_store`;
+  `NEO4J_*` env vars are dead config; Neo4j is LifeGraph-only until Phase 6.
+  **Done:** `docs/architecture.md`, `AGENTS.md`, `README.md`, `infra/docker-compose.yml`,
+  `infra/mem0-server.Dockerfile`, `docs/market-fit-validation.md`.
+  **Still open:** (1) operator droplet check — confirm live Neo4j has no Mem0 nodes;
+  (2) supersede or amend ADR 005 (still claims Mem0 auto-namespace); (3) historical
+  `docs/planning/setup-prompt.md` interview script still says dual namespace — leave
+  or annotate when ADR 005 is settled.
 
 ## P1 — do at the start of Phase-1 CI work
 

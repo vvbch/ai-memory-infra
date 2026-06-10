@@ -165,7 +165,7 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 ## Architecture (summary)
 
 Caddy (auto-HTTPS) → Mem0 (FastAPI REST) over PostgreSQL/pgvector, plus
-Neo4j (dual namespace: Mem0 auto-managed graph + LifeGraph). A local stdio MCP
+Neo4j (LifeGraph, Phase 6 — Mem0 does not write graph at the pinned ref). A local stdio MCP
 proxy (ADR 025) lets Claude Code, Cursor, and VS Code call the live REST API.
 Prometheus + Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
 Claude remote MCP connector still needs a later HTTP endpoint for iOS; Claude Code +
@@ -187,10 +187,13 @@ Full diagram: `docs/architecture.md`.
 
 - **IaC**: Terraform for all infra. No manual console clicks.
 - **TDD**: tests before implementation; 80%+ coverage on `src/`.
-- **CI** on every PR: ruff + mypy + pytest against an ephemeral Docker stack.
-- **CD** on push to main: SSH deploy → health check → rollback on failure.
+- **CI** on every PR: ruff + mypy + pytest + contract gates (no compose stack
+  yet — `ci.yml` runs unit tests only).
+- **CD** on push to main: SSH deploy → health check → rollback on failure
+  (`cd.yml` stub — not implemented).
 - **Eval framework**: retrieval (precision@k, MRR), extraction (cross-LLM),
-  categorization, guardrails. Weekly CI run; blocks on regression.
+  categorization, guardrails. Weekly CI run (`eval-suite.yml` stub — not
+  implemented); blocks on regression when built.
 - **Security**: JWT auth, PII filter (Aadhaar/PAN/keys), HTTPS, CORS allowlist,
   rate limiting, basic auth on admin UIs. Stack ships with none of this — add it.
 - **ADRs** in `docs/decisions/` for every major choice.
