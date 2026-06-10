@@ -1,6 +1,8 @@
 # ADR 034: Remote MCP HTTP endpoint for Claude mobile
 
-**Status:** Accepted
+**Status:** Accepted — **§2 (auth v1 = static bearer) superseded by ADR 035**
+(claude.ai's connector UI accepts only OAuth/no-auth; see COE
+2026-06-10-claude-connector-auth-assumption). Endpoint architecture stands.
 **Date:** 2026-06-10
 **Deciders:** Chandra (operator goal 2 of 2026-06-10 day plan)
 **Supersedes / extends:** ADR 025 (local stdio proxy only)

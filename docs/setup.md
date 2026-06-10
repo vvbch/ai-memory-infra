@@ -358,25 +358,33 @@ then successfully searches for a known live memory without pasting the API key i
 chat. Claude mobile/iOS uses the remote HTTP endpoint below instead of a local
 stdio process.
 
-### Remote MCP connector for Claude (incl. iPhone) — ADR 034
+### Remote MCP connector for Claude (incl. iPhone) — ADR 034/035
 
 The droplet serves the same three tools over Streamable HTTP at
-`https://mcp.chandrav.dev/` (Caddy → `mcp-proxy` container), gated by a dedicated
-bearer token (`MCP_CONNECTOR_BEARER_TOKEN` in the droplet `infra/.env`; master
-copy in Bitwarden — not the admin API key).
+`https://mcp.chandrav.dev/` (Caddy → `mcp-proxy` container) behind self-hosted
+OAuth 2.1 — the only auth model claude.ai custom connectors accept (ADR 035).
+`MCP_CONNECTOR_BEARER_TOKEN` (droplet `infra/.env`; master copy in Bitwarden —
+not the admin API key) is the **consent password** for the OAuth approval page,
+and still works as a plain bearer token for curl-style verification.
 
 Register it once on the web (mobile inherits connectors from web/desktop):
 
 1. Open `claude.ai` → **Settings** → **Connectors** → **Add custom connector**.
-2. Name: `ai-memory`. URL: `https://mcp.chandrav.dev/`.
-3. In the advanced/auth field, paste the bearer token from Bitwarden
-   (`MCP_CONNECTOR_BEARER_TOKEN`).
-4. Save, then enable the connector in a chat (search-and-tools menu). On the
-   iPhone Claude app it appears after the web registration syncs.
+2. Name: `ai-memory`. URL: `https://mcp.chandrav.dev/`. Leave the optional
+   OAuth Client ID / Client Secret fields **empty** (Claude registers itself
+   via DCR).
+3. Save — Claude redirects to `mcp.chandrav.dev/consent`. Paste the connector
+   secret from Bitwarden (`MCP_CONNECTOR_BEARER_TOKEN`) and click **Approve**.
+4. You land back on claude.ai with the connector connected. Enable it in a chat
+   (search-and-tools menu). On the iPhone Claude app it appears after the web
+   registration syncs.
 
 Verify: ask Claude to search memories for a known live fact; writes land with
-`metadata.source=mcp`. Token rotation = regenerate, update droplet `.env`,
-`docker compose up -d mcp-proxy`, re-paste in the connector settings.
+`metadata.source=mcp`. Tokens auto-refresh (access 1 h / refresh 60 d) and
+survive redeploys (`mcp_oauth_state` volume). Revoke/rotate = regenerate the
+secret, update droplet `.env`, `docker compose up -d mcp-proxy`, delete the
+volume's `oauth_state.json` if revoking issued tokens, then reconnect on
+claude.ai (one consent).
 
 ## IDE startup/handoff hooks (session bootstrap + completion gate)
 

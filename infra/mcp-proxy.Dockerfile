@@ -1,4 +1,4 @@
-# Remote Streamable HTTP MCP server (ADR 034) — serves mcp.{domain} behind Caddy.
+# Remote Streamable HTTP MCP server (ADR 034/035) — serves mcp.{domain} behind Caddy.
 # Installs only what mcp_proxy needs (tenet 7): the full project pulls mem0ai/
 # neo4j/psycopg, none of which this proxy uses. Build from the repo root:
 #   docker compose -f infra/docker-compose.yml build mcp-proxy

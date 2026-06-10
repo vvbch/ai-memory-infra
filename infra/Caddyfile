@@ -39,10 +39,11 @@ memory.{$DOMAIN} {
 	reverse_proxy mem0:8000
 }
 
-# --- Remote MCP for Claude connector clients (ADR 034) ---------------------
-# Streamable HTTP MCP at the subdomain root; auth is the bearer gate inside
-# the mcp-proxy container (dedicated MCP_CONNECTOR_BEARER_TOKEN, not the admin
-# key). Rate limiting stays a tracked hardening follow-up (see header note).
+# --- Remote MCP for Claude connector clients (ADR 034/035) -----------------
+# Streamable HTTP MCP at the subdomain root; auth is self-hosted OAuth 2.1
+# inside the mcp-proxy container (DCR + PKCE; MCP_CONNECTOR_BEARER_TOKEN acts
+# as consent password + fallback token — never the admin key). Rate limiting
+# stays a tracked hardening follow-up (see header note).
 mcp.{$DOMAIN} {
 	import security_headers
 	encode gzip

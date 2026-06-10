@@ -12,7 +12,7 @@ flowchart TB
     subgraph Devices["Devices — native LLM UIs, unchanged"]
         D1["Desktop / ChromeOS Chromium<br/>OpenMemory extension — FULL coverage"]
         D2["Android<br/>best-effort (Kiwi archived Jan-2025;<br/>Edge Canary / Quetta) — see ADR 004"]
-        D3["iOS<br/>Claude app remote MCP<br/>mcp.chandrav.dev (ADR 034)"]
+        D3["iOS<br/>Claude app remote MCP<br/>mcp.chandrav.dev (ADR 034/035)"]
         D4["Claude Code / Cursor / VS Code<br/>local MCP proxy"]
         D5["Future tools<br/>via REST API"]
     end
@@ -130,7 +130,7 @@ Docker internal network (ADR 009).
 |---|---|---|
 | Desktop / ChromeOS | OpenMemory Chrome extension | Full |
 | Android | Edge Canary / Quetta + extension | Best-effort (ADR 004) |
-| iOS — Claude | Remote MCP connector (`mcp.{domain}`, Streamable HTTP) | Deployed + live-verified (ADR 034); connector registration pending |
+| iOS — Claude | Remote MCP connector (`mcp.{domain}`, Streamable HTTP, self-hosted OAuth 2.1) | Deployed + live-verified (ADR 034/035); connector registration pending |
 | iOS — ChatGPT/Gemini/DeepSeek | none | Known gap |
 | Claude Code / Cursor / VS Code | Local stdio MCP proxy to live REST API | Full |
 | Any future tool | REST API | Full |

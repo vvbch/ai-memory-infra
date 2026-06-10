@@ -85,7 +85,9 @@ services:
 
   mcp-proxy:
     # Remote Streamable HTTP MCP for Claude's connector clients, incl. iPhone
-    # (ADR 034). Same tool code as the local stdio proxy; bearer-token gated.
+    # (ADR 034). Same tool code as the local stdio proxy; self-hosted OAuth 2.1
+    # (DCR + PKCE — the only auth claude.ai custom connectors accept, ADR 035),
+    # with MCP_CONNECTOR_BEARER_TOKEN as consent password + fallback token.
     # Internal-only — Caddy terminates TLS at mcp.{$DOMAIN}.
     build:
       context: ..
@@ -99,6 +101,11 @@ services:
       - AI_MEMORY_API_KEY=${ADMIN_API_KEY}
       - MCP_CONNECTOR_BEARER_TOKEN=${MCP_CONNECTOR_BEARER_TOKEN}
       - MCP_ALLOWED_HOSTS=mcp.${DOMAIN}
+      - MCP_PUBLIC_BASE_URL=https://mcp.${DOMAIN}
+    volumes:
+      # OAuth state (registered clients + hashed tokens) survives redeploys so
+      # the Claude connector doesn't need re-consent on every deploy (ADR 035).
+      - mcp_oauth_state:/data
     depends_on:
       mem0:
         condition: service_started
@@ -178,6 +185,7 @@ volumes:
   caddy_data:
   caddy_config:
   mem0_history:
+  mcp_oauth_state:
 
 networks:
   mem0_network:

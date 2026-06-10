@@ -181,18 +181,27 @@
 - **What:** Streamable HTTP MCP at `https://mcp.chandrav.dev/` for Claude's
   remote-connector clients (incl. iPhone). Same three tools as §3 (shared
   `src/mcp_proxy/server.py` tool code, `metadata.source=mcp` on writes, default
-  `user_id=chandrav`). Every request must carry
-  `Authorization: Bearer <MCP_CONNECTOR_BEARER_TOKEN>` (dedicated token, **not**
-  `ADMIN_API_KEY`); missing/wrong token ⇒ `401` + `WWW-Authenticate: Bearer`.
-  `/health` is the only open route. Transport keeps DNS-rebinding protection
+  `user_id=chandrav`). **Auth is self-hosted OAuth 2.1** (ADR 035 — the only
+  model claude.ai custom connectors accept): discovery at
+  `/.well-known/oauth-authorization-server` + `/.well-known/oauth-protected-resource`,
+  DCR at `/register`, PKCE S256 `/authorize` → operator `/consent`
+  (password = `MCP_CONNECTOR_BEARER_TOKEN`) → `/token` (access 1 h, refresh
+  60 d rotated; opaque, SHA-256-hashed in `/data/oauth_state.json` on the
+  `mcp_oauth_state` volume). The static `MCP_CONNECTOR_BEARER_TOKEN` (dedicated
+  token, **not** `ADMIN_API_KEY`) remains valid as an access token for
+  verification/API-path callers. Missing/wrong token ⇒ `401` +
+  `WWW-Authenticate: Bearer ... resource_metadata=...`. `/health` and the OAuth
+  endpoints are the only open routes. Transport keeps DNS-rebinding protection
   scoped to the subdomain; runs stateless (no session affinity behind Caddy).
-- **Schema lives in:** `src/mcp_proxy/http_server.py` (bearer gate + app),
+- **Schema lives in:** `src/mcp_proxy/http_server.py` (app wiring),
+  `src/mcp_proxy/oauth.py` (provider + state store + consent),
   `infra/mcp-proxy.Dockerfile`, `infra/docker-compose.yml` (`mcp-proxy` service),
-  `infra/Caddyfile` (`mcp.{$DOMAIN}`), Terraform `subdomains`.
-- **ADR:** 034 (remote MCP HTTP endpoint; bearer auth v1, OAuth as v2 path).
-- **Enforcement:** `tests/test_mcp_proxy/test_http_server.py` (401/health/
-  initialize-through-gate); live-verified 2026-06-10 (search round-trip over
-  HTTPS). Caddy rate limiting for this route stays in BACKLOG.
+  `infra/Caddyfile` (`mcp.{$DOMAIN}`), Terraform `subdomains`;
+  design: `docs/design/remote-mcp-oauth.md`.
+- **ADR:** 034 (endpoint) + 035 (OAuth auth model, supersedes 034 §2).
+- **Enforcement:** `tests/test_mcp_proxy/test_oauth.py` (full DCR→PKCE→consent→
+  token→MCP flow + failure paths) and `test_http_server.py` (401/health/
+  initialize); live-verified 2026-06-10. Caddy rate limiting stays in BACKLOG.
 
 ## Coverage at a glance
 
