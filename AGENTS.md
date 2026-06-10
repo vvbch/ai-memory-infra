@@ -383,6 +383,10 @@ COE 2026-06-10-delayed-memory-buildout):
   novel or ambiguous; after clarification, follow the workspace rule and fix the
   control plane in the **same session** (update the global rule text + any doc
   drift + commit+push). Do not default to the conservative "don't commit" habit.
+  **`cursor_dialog` MCP is not exposed in this harness** (Cursor feature gate) —
+  use `python scripts/cursor_user_rules.py copy commit` to copy the canonical
+  global-rule replacement to the clipboard for the operator to paste in Settings
+  → Rules (COE `2026-06-10-global-workspace-rule-conflict.md`).
 - **Final response gate:** before any final answer, explicitly verify and satisfy all
   handoff requirements: (1) every touched git repo is committed and pushed, or the blocker
   is named plainly; (2) `STATUS.md` and required logs have been updated to a logical

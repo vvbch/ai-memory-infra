@@ -55,7 +55,7 @@ were insufficient without updating the global rule source.
    global Cursor user rule in Settings.
 3. Why wasn't the global rule updated? → No mechanism assigned an owner for
    cross-layer rule hygiene; agents cannot edit Cursor Settings programmatically
-   (`cursor_dialog` MCP not exposed in this environment).
+   (`cursor_dialog` MCP not exposed — see § cursor_dialog limitation below).
 4. Why did agents not ask the operator? → Git safety is a conservative default;
    conflict was rationalized as "being helpful" rather than escalated.
 5. Why is that possible? → **Root cause (systemic):** two instruction layers
@@ -71,7 +71,8 @@ were insufficient without updating the global rule source.
 | Sharpen `AGENTS.md`: park semantics + rule-conflict protocol | Prevent | Cursor agent | 2026-06-10 | Done |
 | Write this COE + index | Prevent | Cursor agent | 2026-06-10 | Done |
 | Replace global Cursor user rules per § Global rule replacement below | Prevent | Operator | 2026-06-10 | Open |
-| Commit+push control-plane + private BUILD-LOG | Mitigate | Cursor agent | 2026-06-10 | In progress |
+| Add `scripts/cursor_user_rules.py` clipboard workaround (cursor_dialog substitute) | Mitigate | Cursor agent | 2026-06-10 | Done |
+| Commit+push control-plane + private BUILD-LOG | Mitigate | Cursor agent | 2026-06-10 | Done |
 
 ## Lessons learned
 
@@ -79,6 +80,21 @@ were insufficient without updating the global rule source.
 a contradictory global user rule is half a fix — the model sees both. Workspace
 rules win for ai-memory, but the global rule must be updated to match so agents
 stop re-litigating every handoff.
+
+## cursor_dialog limitation (cannot fix from this repo)
+
+Cursor 3.6.x ships `cursor_dialog` inside the built-in `cursor-app-control` MCP,
+but the agent harness only exposes a subset of tools (`move_agent_to_root`,
+`create_project`, `rename_chat`, …). `cursor_dialog` is **not** in
+`listOfferings()` and is gated behind the `cursor_skill_enabled` feature flag —
+so `CallMcpTool(cursor_dialog)` fails even though INSTRUCTIONS.md mentions it.
+
+User rules are stored in Cursor's cloud KnowledgeBase API (`knowledgeBaseAdd` /
+`List` / `Update`), not in a local file agents can edit.
+
+**Workaround (versioned):** from `ai-memory-infra`, run
+`python scripts/cursor_user_rules.py copy commit` — copies the replacement block
+below to the clipboard for paste into **Cursor Settings → Rules**.
 
 ## Global rule replacement
 
