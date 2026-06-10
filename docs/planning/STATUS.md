@@ -64,6 +64,11 @@ registration not started.** Infra phases 0–4 live; phases 5–8 stubs.
   contract unchanged (coexists on ChatGPT); honest-coverage rule (architecture.md
   updates only after live verification); plan-tier gate flagged as operator decision.
 - **Interview packet decision log** appended (ADR 036 entry, private repo).
+- **Plan-tier gate cleared (operator):** ChatGPT = Plus+, Perplexity = Pro+ — both
+  platforms are go; no new subscription spend needed.
+- **Consent page generalized + deployed + live-verified:** TDD (2 new tests incl.
+  hostile client_name escaping; 105 passed, 94% cov), deployed to droplet, smoke-tested
+  live — consent page now names the requesting client; old "Claude" copy gone.
 
 ## Last decisions
 
@@ -111,17 +116,16 @@ connector spot-check (quick, operator, non-blocking).
 
 ## Next action
 
-> **RESUME HERE — register the connectors (ADR 036 is the design; build = mostly
-> operator registration, concierge mode):** (1) get the operator's ChatGPT and
-> Perplexity plan tiers (asked 2026-06-10; if free tier on either, that platform
-> waits on his paid-subscription decision — tenet 12/15). (2) Generalize the
-> consent-page copy in `src/mcp_proxy/oauth.py` ("Approve Claude connector access" →
-> name the requesting client), test, deploy. (3) Concierge the Perplexity
+> **RESUME HERE — register the connectors (ADR 036; plan tiers confirmed, consent
+> page generalized + deployed; concierge mode):** (1) Concierge the Perplexity
 > registration (Account settings → Connectors → + Custom connector → Remote; OAuth
-> 2.0; Streamable HTTP; URL `https://mcp.chandrav.dev/`), live-verify with a real
-> memory search, then update architecture.md coverage. (4) Same for ChatGPT
-> (Settings → Apps → Advanced → Developer mode → create app; OAuth; web). (5) Verify
-> mobile availability on both before claiming it anywhere.
+> 2.0; Streamable HTTP; URL `https://mcp.chandrav.dev/`; consent password =
+> `MCP_CONNECTOR_BEARER_TOKEN` from Bitwarden) — **in progress 2026-06-10 evening,
+> operator was handed the registration step**; live-verify with a real memory
+> search, then update architecture.md coverage + setup.md walkthrough. (2) Same for
+> ChatGPT (web Settings → Apps & Connectors → Advanced settings → Developer mode →
+> create app; OAuth). (3) Verify mobile availability on both before claiming it
+> anywhere.
 >
 > Parked behind this: Goal 3 (memory-bank snapshot + honest graph report); iPhone
 > Claude connector spot-check (operator, 1 min, anytime).
