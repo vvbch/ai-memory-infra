@@ -1335,3 +1335,16 @@ inherit the web-registered ai-memory connector and can call it.
 
 **Next**
 - Goal 3: memory-bank snapshot + honest knowledge-graph status report (ADR 032).
+
+## 2026-06-10 — Goal 3: honest memory-bank snapshot
+
+**Focus:** count what's actually in production — vector memories and graph nodes —
+without overstating capabilities.
+
+**Findings**
+- **56 Mem0 memories** (2026-06-08 → 2026-06-10); 47 from the Chrome extension;
+  only 3/56 carry explicit `source` metadata (ADR 028 debt).
+- **Neo4j node count = 0** — no knowledge graph written today (ADR 032).
+
+**Next**
+- ADR 028: enforce `source` on writes; OpenClaw adapter gate before enabling writes.

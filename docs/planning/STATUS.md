@@ -6,54 +6,49 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-10 (ADR 036 **complete** — iPhone mobile inherit
-verified for Perplexity, ChatGPT, and Claude; operator confirmed connector
-calls on all three). Repo-health green at session end.
+**Last updated:** 2026-06-10 (Goal 3 done — memory-bank snapshot + honest graph
+report; ADR 036 iPhone mobile verified earlier this session). Repo-health green;
+committed+pushed.
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
-up nightly + restore-drilled monthly. **ADR 036 is done on every surface we
-targeted:** Claude (web + iPhone remote MCP + OAuth), Perplexity (web + iPhone),
-and ChatGPT (web + iPhone developer-mode app). One server (`https://mcp.chandrav.dev/`),
-one OAuth story (ADR 035). Desktop Chrome extension still auto-captures alongside
-all of the above.
+up nightly + restore-drilled monthly. **ADR 036 is complete** on every targeted
+surface (Claude, Perplexity, ChatGPT — web + iPhone). One server
+(`https://mcp.chandrav.dev/`), one OAuth story (ADR 035). Chrome extension still
+auto-captures on desktop.
 
-**iPhone spot-check (this session):** operator confirmed **ai-memory** connector
-visible and live on Perplexity and ChatGPT mobile apps (inherited from web
-registration). On Claude iPhone: **Load all connectors** enabled, query made a
-real connector call. ADR 036 mobile inherit is **verified**, not third-party-reported.
+**Goal 3 snapshot (this session):** **56 memories** in Mem0 (mostly extension
+captures under `chrome-extension-user`; only 3/56 have explicit `source` metadata
+yet). **Neo4j node count = 0** — no graph in production today (ADR 032 honest
+truth). Full report: `docs/reports/memory-bank-snapshot-2026-06-10.md`.
 
-**Operator tips (unchanged):** ChatGPT — toggle **ai-memory ON per chat** under
-Developer mode; force `search_memories` by name. Perplexity — turn connector ON
-per thread; don't trust profile-only answers. Server logs remain the honest proof
-when UIs show abbreviated snippets.
+**What's next:** memory contract hardening — tag `source`/`agent_id` on writes
+(ADR 028) and verify the OpenClaw adapter before enabling it.
 
 ## Current phase
 
-**Multi-LLM remote integrations (ADR 036) — complete (web + iPhone).** Infra
-phases 0–4 live; phases 5–8 stubs. Next: Goal 3 (memory-bank snapshot + honest
-graph report).
+**Infra phases 0–4 live; ADR 036 closed.** Phases 5–8 stubs. Active work shifts to
+memory-model implementation (ADR 028/029) and P1 hardening from BACKLOG.
 
-## Done this session (2026-06-10, ADR 036 iPhone mobile verify)
+## Done this session (2026-06-10)
 
-- Repo-health green at start (both repos clean, 0 ahead/behind).
-- **Perplexity iPhone:** ai-memory connector inherited from web — visible and live.
-- **ChatGPT iPhone:** ai-memory connector inherited from web — visible and live.
-- **Claude iPhone:** Load all connectors ON; operator query triggered connector call.
+- **ADR 036 iPhone:** Perplexity + ChatGPT connectors inherited from web; Claude
+  iPhone connector call confirmed.
+- **Goal 3:** live Mem0 snapshot (56 memories, source breakdown) + Neo4j count
+  (0 nodes); honest report written.
 
 ## Last decisions
 
-- **ADR 036 mobile inherit verified live (2026-06-10):** Perplexity + ChatGPT apps
-  inherit web connectors on iPhone; Claude iPhone uses the same remote MCP connector
-  registered on claude.ai web. Coverage table updated accordingly.
-- **ADR 036 — one server, three platforms** (unchanged): all three on ADR 035 OAuth.
+- **ADR 036 mobile inherit verified live (2026-06-10):** all three platforms on iPhone.
+- **Graph honesty (ADR 032 reaffirmed):** Neo4j has zero nodes; Mem0 does not write
+  a graph at the pinned deployment — report documents this explicitly.
 
 ## Backlog (parked work)
 
-Prioritized backlog in **`docs/planning/BACKLOG.md`**. Next up: **Goal 3**
-(memory-bank snapshot + honest graph report per ADR 032). Then infra hardening
-(P1 supply chain, OpenClaw adapter gate, etc.).
+Prioritized backlog in **`docs/planning/BACKLOG.md`**. Top candidates: ADR 028
+`source` tagging on writes + OpenClaw adapter gate; P1 supply-chain pinning;
+ADR 032 graph-source one-way-door (LifeGraph-only vs Mem0 graph).
 
 ## Open blockers / risks
 
@@ -73,17 +68,16 @@ Prioritized backlog in **`docs/planning/BACKLOG.md`**. Next up: **Goal 3**
   works non-interactively (`BatchMode=yes`). Droplet `root@168.144.145.29`; stack
   `/opt/ai-memory-infra/infra`.
 - **Token handling:** `MCP_CONNECTOR_BEARER_TOKEN` is in Bitwarden (master), Windows
-  *user* env vars, and both `.env` files; never print it. Clipboard handoff via
-  tkinter `clipboard_append` (verified); agent clears after use.
+  *user* env vars, and both `.env` files; never print it.
 - **OAuth endpoint:** consent page `https://mcp.chandrav.dev/consent` (password = the
   connector secret); state file on the `mcp_oauth_state` Docker volume.
 
 ## Next action
 
-> **RESUME HERE — Goal 3: memory-bank snapshot + honest graph report:**
-> query the live Mem0 bank (memory count, sources, sample) and Neo4j node count
-> (expect 0 per ADR 032); write a short honest report (no graph claims). Agent
-> can run via SSH/API; no operator steps unless auth fails.
+> **RESUME HERE — ADR 028 write-path: `source` metadata on Mem0 writes:**
+> audit extension + MCP proxy + OpenClaw adapter for `metadata.source` propagation;
+> patch if missing; add/extend tests. OpenClaw adapter gate: verify before enabling
+> writes. Agent-led; no operator steps unless a live write probe is needed.
 
 **How to talk to the next agent:** type **`/resume`** in a new chat — or paste:
 
