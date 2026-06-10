@@ -34,6 +34,30 @@ def list_memories(user_id: str | None = None) -> Any:
     return _client().list_memories(user_id=user_id)
 
 
+@mcp.tool()
+def delete_memory(memory_id: str) -> dict[str, Any]:
+    """Delete a memory by id from Chandra's live ai-memory store."""
+    return _client().delete_memory(memory_id)
+
+
+@mcp.tool()
+def update_memory(
+    memory_id: str,
+    text: str,
+    metadata_json: str | None = None,
+) -> dict[str, Any]:
+    """Update a memory's text (and optional metadata JSON object)."""
+    metadata: dict[str, Any] | None = None
+    if metadata_json:
+        import json
+
+        parsed = json.loads(metadata_json)
+        if not isinstance(parsed, dict):
+            raise ValueError("metadata_json must decode to a JSON object")
+        metadata = parsed
+    return _client().update_memory(memory_id, text, metadata=metadata)
+
+
 def main() -> None:
     mcp.run()
 

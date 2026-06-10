@@ -35,6 +35,22 @@ class FakeClient:
         self.calls.append(("list", {"user_id": user_id}))
         return [{"memory": "hello"}]
 
+    def delete_memory(self, memory_id: str) -> dict[str, str]:
+        self.calls.append(("delete", {"memory_id": memory_id}))
+        return {"message": "deleted"}
+
+    def update_memory(
+        self,
+        memory_id: str,
+        text: str,
+        *,
+        metadata: dict[str, Any] | None = None,
+    ) -> dict[str, str]:
+        self.calls.append(
+            ("update", {"memory_id": memory_id, "text": text, "metadata": metadata})
+        )
+        return {"message": "updated"}
+
 
 def test_search_memories_tool_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
     fake = FakeClient()
@@ -60,3 +76,21 @@ def test_list_memories_tool_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
 
     assert server.list_memories(user_id="u1") == [{"memory": "hello"}]
     assert fake.calls == [("list", {"user_id": "u1"})]
+
+
+def test_delete_memory_tool_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = FakeClient()
+    monkeypatch.setattr(server, "_client", lambda: fake)
+
+    assert server.delete_memory("m1") == {"message": "deleted"}
+    assert fake.calls == [("delete", {"memory_id": "m1"})]
+
+
+def test_update_memory_tool_delegates(monkeypatch: pytest.MonkeyPatch) -> None:
+    fake = FakeClient()
+    monkeypatch.setattr(server, "_client", lambda: fake)
+
+    assert server.update_memory("m1", "revised") == {"message": "updated"}
+    assert fake.calls == [
+        ("update", {"memory_id": "m1", "text": "revised", "metadata": None})
+    ]

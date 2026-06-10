@@ -44,6 +44,16 @@
     `scripts/install_ide_hooks.py` (ADR 030 model) so any model — incl. Composer
     2.5 — auto-discovers them. Registered as `docs/interfaces.md` §12.
 
+## Parked until build complete (operator 2026-06-10)
+
+- **`[product]` Phase 3 premise / usefulness test — PARKED.** Multi-day Daily Driver
+  exercise + one-page verdict (*does self-hosted memory make my AI tools better?*).
+  **Trigger:** resume after phases **5–8** are implemented (migration, LifeGraph,
+  eval, observability) — not before. Supersedes the premise-first gate in COE
+  `2026-06-10-delayed-memory-buildout`. Spec: `docs/skills/operator-assistant-memory-daily-driver.md`
+  § "Phase 3 (the premise test)". Daily Driver tooling stays live for ad-hoc use;
+  it is not the active `STATUS.md` goal until the trigger fires.
+
 ## P1 — discovered drift / verification
 
 - ◑ **`[docs-drift]` Architecture docs claimed a "Mem0 auto-managed graph" in Neo4j —
@@ -233,6 +243,14 @@
   alert. Closes the COE's human-catch detection gap.
 - ✅ **`[governance]` Final all-repo handoff verifier — PROMOTED to P1
   (2026-06-09).** Repeat human-caught handoff failures made this soon-blocking; see P1.
+
+- **`[memory-hygiene]` Weekly compaction review + remaining metrics seed (ADR 037).**
+  Run `scripts/memory_compaction.py --report …` on a schedule; **review clusters before
+  any merge** (operator ruling 2026-06-10 — Neo4j 0-nodes vs node-count lines may stay
+  distinct). Seed missing portfolio metrics via `bulk_seed_importer.py` with fresh
+  `external_id`s (18 tenets, 56 memories, ₹3,370, 24h RPO, restore drill, CI/CD,
+  precision@5) — do not MCP-retry. Blocked: conflict-question answers + sensitive-cluster
+  namespace ruling before compaction merge writes.
 
 ## P3 — valuable, non-blocking / personal
 

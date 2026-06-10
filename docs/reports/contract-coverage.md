@@ -7,7 +7,7 @@
 > **prose** (relies on the agent reading and honoring it — the model-dependent
 > surface ADR 033 exists to shrink).
 
-**Summary:** 38 rules — 12 enforced · 0 tested · 26 prose.
+**Summary:** 39 rules — 12 enforced · 0 tested · 27 prose.
 
 ## Tenets
 | id | rule | severity | enforcement | mechanism |
@@ -30,6 +30,7 @@
 | `tenet-16` | Sessions are stateless and disposable — checkpoint to the repo, don't accumulate context | critical | **enforced** | scripts/check_status_snapshot.py (STATUS shape) + completion_gate.py |
 | `tenet-17` | Minimize operator cognitive load — act on reversible (two-way-door) decisions, deliberate only on one-way doors | high | **prose** | agent judgment: reversible-effect -> act; one-way door -> ask (ADR 023) |
 | `tenet-18` | Burn-in before hardening — defer non-critical cleanup to a tracked post-launch pass | normal | **prose** | BACKLOG burn-in trigger ('after ~1 week of full usage'); convention |
+| `tenet-19` | Vector store ≠ dedup; timeout ≠ failure on async memory writes | high | **prose** | ADR 037; scripts/bulk_seed_importer.py; scripts/memory_compaction.py |
 
 ## Engineering practices
 | id | rule | severity | enforcement | mechanism |

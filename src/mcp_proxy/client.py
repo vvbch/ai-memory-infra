@@ -86,10 +86,18 @@ class MemoryApiClient:
         }
         return self._post("/memories", payload)
 
-    def list_memories(self, *, user_id: str | None = None) -> Any:
+    def list_memories(
+        self,
+        *,
+        user_id: str | None = None,
+        limit: int | None = None,
+    ) -> Any:
+        params: dict[str, Any] = {"user_id": user_id or self._config.user_id}
+        if limit is not None:
+            params["limit"] = limit
         response = self._client.get(
             f"{self._config.base_url}/memories",
-            params={"user_id": user_id or self._config.user_id},
+            params=params,
             headers=self._headers(),
         )
         response.raise_for_status()

@@ -49,14 +49,26 @@
 
 ### 3. MCP proxy tool surface — TESTED
 
-- **What:** local stdio MCP tools exposed to Claude Code / Cursor / VS Code:
+- **What:** local stdio + remote OAuth HTTP MCP tools (ADR 034/035):
   `search_memories(query, top_k=5, user_id?)`, `add_memory(text, user_id?)`,
-  `list_memories(user_id?)`.
+  `list_memories(user_id?)`, `delete_memory(memory_id)`,
+  `update_memory(memory_id, text, metadata_json?)`.
 - **Schema lives in:** `src/mcp_proxy/server.py` (`@mcp.tool()`), backed by
   `src/mcp_proxy/client.py`.
-- **ADR:** 025 (local MCP proxy).
+- **ADRs:** 025 (local MCP proxy), 037 (delete/update required for incident cleanup
+  and idempotent write hygiene).
 - **Enforcement:** `tests/test_mcp_proxy/`; no cross-repo gate (proxy is the only
   consumer today).
+
+### 3b. Bulk write idempotency — TESTED
+
+- **What:** scripted bulk seeds carry `metadata.external_id`; existence check before
+  write; timeout → verify-then-skip (never reword-retry). Offline near-dupe clustering
+  is review-first (`memory_compaction.py`).
+- **Schema lives in:** `scripts/bulk_seed_importer.py`, `scripts/memory_compaction.py`.
+- **ADR:** 037.
+- **Enforcement:** `tests/test_scripts/test_bulk_seed_importer.py`; compaction is
+  operator-scheduled (PROSE).
 
 ### 4. Mem0 self-hosted REST API shape — EXTERNAL (pinned)
 

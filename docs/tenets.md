@@ -385,4 +385,26 @@ drift), tenet 14 (the backlog item is the Detect/Mitigate record), and tenet 7
 (don't pay maintenance/attention cost before the value is real). The line it draws —
 *reversible convenience may wait for burn-in; active risk and one-way doors may not* —
 is the same reversibility test as tenet 17, applied to **cleanup timing**.
+
+## 19. Vector store ≠ dedup; timeout ≠ failure on async memory writes
+The pgvector index is a **retrieval** layer — it stores embeddings so `/search` can
+find relevant memories. It is **not** a deduplication engine. Deduplication happens in
+two places with different jobs:
+
+1. **Write-time (online):** Mem0's extraction pipeline chooses ADD / UPDATE / DELETE by
+   comparing new facts against *already-indexed* near neighbors via the LLM.
+2. **Offline compaction:** `scripts/memory_compaction.py` clusters semantic near-dupes
+   for **human review** (first pass is never unsupervised auto-merge — some near-dupes
+   are intentionally distinct facts).
+
+**Never reword on retry.** Rewording changes the content hash, bypasses exact-hash dedup,
+and defeats the write-time neighbor check when the original is not yet indexed. Bulk and
+scripted writes must carry a stable `metadata.external_id` and use
+`scripts/bulk_seed_importer.py`, which checks existence before write.
+
+**`infer=True` writes are async-commit.** A client read timeout is **not** proof the
+write failed — Mem0 may commit extraction seconds later. On timeout: poll for the
+`external_id` (or original verbatim text), then skip if found; if not found after the
+verify window, surface `timeout_unverified` and stop — do not retry with new wording
+(ADR 037; COE 2026-06-10-mcp-timeout-semantic-duplicates).
 <!-- generated:tenets-full end -->

@@ -711,3 +711,46 @@ rules:
     (don't pay maintenance/attention cost before the value is real). The line it draws —
     *reversible convenience may wait for burn-in; active risk and one-way doors may not* —
     is the same reversibility test as tenet 17, applied to **cleanup timing**.
+- id: tenet-19
+  number: 19
+  title: Vector store ≠ dedup; timeout ≠ failure on async memory writes
+  severity: high
+  applies_to:
+  - all
+  enforcement:
+    status: prose
+    mechanism: ADR 037; scripts/bulk_seed_importer.py; scripts/memory_compaction.py
+    gate_id: null
+  source_refs:
+  - ADR 037
+  - COE 2026-06-10-mcp-timeout-semantic-duplicates
+  agents_md: |-
+    19. **Vector store ≠ dedup; timeout ≠ failure on async memory writes.** pgvector
+        stores embeddings for *retrieval* — it does not deduplicate. Write-time dedup is
+        Mem0's LLM ADD/UPDATE pipeline; offline near-dupes are handled by
+        `scripts/memory_compaction.py` (review-first). Bulk/scripted writes must use
+        deterministic `metadata.external_id` (`scripts/bulk_seed_importer.py`). On client
+        timeout during `infer=True` extraction, **verify-then-skip** — never reword and
+        retry (ADR 037).
+  tenets_md: |-
+    ## 19. Vector store ≠ dedup; timeout ≠ failure on async memory writes
+    The pgvector index is a **retrieval** layer — it stores embeddings so `/search` can
+    find relevant memories. It is **not** a deduplication engine. Deduplication happens in
+    two places with different jobs:
+
+    1. **Write-time (online):** Mem0's extraction pipeline chooses ADD / UPDATE / DELETE by
+       comparing new facts against *already-indexed* near neighbors via the LLM.
+    2. **Offline compaction:** `scripts/memory_compaction.py` clusters semantic near-dupes
+       for **human review** (first pass is never unsupervised auto-merge — some near-dupes
+       are intentionally distinct facts).
+
+    **Never reword on retry.** Rewording changes the content hash, bypasses exact-hash dedup,
+    and defeats the write-time neighbor check when the original is not yet indexed. Bulk and
+    scripted writes must carry a stable `metadata.external_id` and use
+    `scripts/bulk_seed_importer.py`, which checks existence before write.
+
+    **`infer=True` writes are async-commit.** A client read timeout is **not** proof the
+    write failed — Mem0 may commit extraction seconds later. On timeout: poll for the
+    `external_id` (or original verbatim text), then skip if found; if not found after the
+    verify window, surface `timeout_unverified` and stop — do not retry with new wording
+    (ADR 037; COE 2026-06-10-mcp-timeout-semantic-duplicates).

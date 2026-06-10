@@ -192,6 +192,13 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     history, data loss, public exposure) — those are fixed *now*; burn-in covers only
     reversible convenience/cosmetic debt. Same reversibility test as tenet 17, applied to
     cleanup *timing*.
+19. **Vector store ≠ dedup; timeout ≠ failure on async memory writes.** pgvector
+    stores embeddings for *retrieval* — it does not deduplicate. Write-time dedup is
+    Mem0's LLM ADD/UPDATE pipeline; offline near-dupes are handled by
+    `scripts/memory_compaction.py` (review-first). Bulk/scripted writes must use
+    deterministic `metadata.external_id` (`scripts/bulk_seed_importer.py`). On client
+    timeout during `infer=True` extraction, **verify-then-skip** — never reword and
+    retry (ADR 037).
 <!-- generated:agents-tenets end -->
 
 ## Architecture (summary)
@@ -257,8 +264,9 @@ COE 2026-06-10-delayed-memory-buildout):
 - **2 backup/restore + drills** — ✅ done (nightly timer, dead-man's-switch, monthly drill)
 - **3 Chrome extension fork** — ✅ live (some polish parked, BACKLOG)
 - **4 Claude + Cursor/VS Code MCP** — ✅ done (local stdio proxy)
-- **3-premise** *(product premise test — the current STATUS Next action)* — ⬜ not started
-- **5 migration (TDD)** — ⬜ stub (`src/migration/` placeholder)
+- **3-premise** *(product premise / usefulness test)* — 🅿️ **parked** until phases
+  5–8 land (operator 2026-06-10; overrides COE premise-first gate)
+- **5 migration (TDD)** — ⬜ stub (`src/migration/` placeholder) — **next build phase**
 - **6 LifeGraph (TDD)** — ⬜ stub (`src/life_graph/` placeholder; Neo4j reserved, ADR 032)
 - **7 eval framework (TDD)** — ⬜ stub (`src/eval/` placeholder; designed in ADR 007/014)
 - **8 observability** — ⬜ stub (`src/observability/`, `src/health/` placeholders; `monitor.` reserved)

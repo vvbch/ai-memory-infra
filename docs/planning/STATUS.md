@@ -6,71 +6,70 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-10 (Goal 3 done — memory-bank snapshot + honest graph
-report; ADR 036 iPhone mobile verified earlier this session). Repo-health green;
-committed+pushed.
+**Last updated:** 2026-06-10 (ADR 037 idempotency hardening + extension-bank
+cleanup). Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
 up nightly + restore-drilled monthly. **ADR 036 is complete** on every targeted
 surface (Claude, Perplexity, ChatGPT — web + iPhone). One server
-(`https://mcp.chandrav.dev/`), one OAuth story (ADR 035). Chrome extension still
-auto-captures on desktop.
+(`https://mcp.chandrav.dev/`), one OAuth story (ADR 035).
 
-**Goal 3 snapshot (this session):** **56 memories** in Mem0 (mostly extension
-captures under `chrome-extension-user`; only 3/56 have explicit `source` metadata
-yet). **Neo4j node count = 0** — no graph in production today (ADR 032 honest
-truth). Full report: `docs/reports/memory-bank-snapshot-2026-06-10.md`.
+**Curated bank (`user_id=chandrav`):** ~21 portfolio/MCP-seeded facts after
+cleanup. **Legacy extension silo (`chrome-extension-user`): 47 memories deleted**
+(2026-06-10) — meta-chatter from auto-capture on Send. **Extension auto-capture
+is off by policy** until opt-in guardrails land; MCP is the primary write surface.
+**Neo4j node count = 0** (ADR 032).
 
-**What's next:** memory contract hardening — tag `source`/`agent_id` on writes
-(ADR 028) and verify the OpenClaw adapter before enabling it.
+**What's next:** build track — ADR 028/029 write-path hardening, then phases 5–8.
+Premise/usefulness test parked until builds land (operator 2026-06-10).
 
 ## Current phase
 
-**Infra phases 0–4 live; ADR 036 closed.** Phases 5–8 stubs. Active work shifts to
-memory-model implementation (ADR 028/029) and P1 hardening from BACKLOG.
+**Infra phases 0–4 live; ADR 036 + ADR 037 closed.** Phases 5–8 stubs — **active
+build track**. Premise test parked post-build.
 
 ## Done this session (2026-06-10)
 
-- **ADR 036 iPhone:** Perplexity + ChatGPT connectors inherited from web; Claude
-  iPhone connector call confirmed.
-- **Goal 3:** live Mem0 snapshot (56 memories, source breakdown) + Neo4j count
-  (0 nodes); honest report written.
+- **ADR 037:** write-path idempotency contract — MCP/CLI `delete_memory` /
+  `update_memory`, `bulk_seed_importer.py`, `memory_compaction.py` (review-first),
+  COE #14, tenet 19.
+- **Incident cleanup:** removed 3 semantic dupes + 3 verification markers from
+  `chandrav`; deleted **47** `chrome-extension-user` extension captures.
+- **MCP deploy note:** delete/update tools need droplet MCP image redeploy to reach
+  `https://mcp.chandrav.dev/`.
 
 ## Last decisions
 
-- **ADR 036 mobile inherit verified live (2026-06-10):** all three platforms on iPhone.
-- **Graph honesty (ADR 032 reaffirmed):** Neo4j has zero nodes; Mem0 does not write
-  a graph at the pinned deployment — report documents this explicitly.
+- **Extension bank cleanup (operator 2026-06-10):** purge legacy
+  `chrome-extension-user` silo; disable extension auto-capture; MCP + scripts for
+  curated writes.
+- **Build-first, premise later:** park product premise eval until phases 5–8 land.
+- **Compaction review-first:** no unsupervised auto-merge on first pass (ADR 037).
 
 ## Backlog (parked work)
 
 Prioritized backlog in **`docs/planning/BACKLOG.md`**. Top candidates: ADR 028
-`source` tagging on writes + OpenClaw adapter gate; P1 supply-chain pinning;
-ADR 032 graph-source one-way-door (LifeGraph-only vs Mem0 graph).
+`source` tagging on writes + OpenClaw adapter gate; weekly compaction review;
+remaining metrics seed via `bulk_seed_importer.py`; MCP droplet redeploy for ADR 037
+tools.
 
 ## Open blockers / risks
 
-- **ChatGPT developer mode is beta** — OpenAI can re-gate it; extension still covers
-  ChatGPT desktop regardless.
-- **ChatGPT Plus read-only custom MCP** — write tools (`add_memory`) may be
-  disabled on Plus; `search_memories` verified read path only.
+- **MCP droplet behind git** — ADR 037 delete/update tools not on live connector
+  until redeploy.
+- **ChatGPT developer mode is beta** — OpenAI can re-gate it.
+- **ChatGPT Plus read-only custom MCP** — write tools may be disabled on Plus.
 - **OpenClaw adapter gate (ADR 028):** verify `source`/`agent_id` before enabling writes.
 - **`gpt-4.1-nano` silent fallback** if `MEM0_DEFAULT_LLM_MODEL` unset on the droplet.
-- **Operator income change risk (end-June 2026):** spend must stay pause-able (`scripts/teardown.py`).
 
 ## Environment notes
 
 - Use `working_directory` param, not raw `cd` (Drive path has spaces/parens). Windows
   PowerShell 5.1 (no `&&`); git push auth cached.
-- **SSH:** Windows `ssh-agent` service is Automatic with the key loaded — droplet SSH
-  works non-interactively (`BatchMode=yes`). Droplet `root@168.144.145.29`; stack
-  `/opt/ai-memory-infra/infra`.
-- **Token handling:** `MCP_CONNECTOR_BEARER_TOKEN` is in Bitwarden (master), Windows
-  *user* env vars, and both `.env` files; never print it.
-- **OAuth endpoint:** consent page `https://mcp.chandrav.dev/consent` (password = the
-  connector secret); state file on the `mcp_oauth_state` Docker volume.
+- **SSH:** droplet `root@168.144.145.29`; stack `/opt/ai-memory-infra/infra`.
+- **Token handling:** `MCP_CONNECTOR_BEARER_TOKEN` in Bitwarden — never print it.
 
 ## Next action
 

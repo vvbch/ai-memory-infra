@@ -52,6 +52,10 @@ USAGE
   # Close an open item with what happened:
   python scripts/memory.py close <memory_id> --resolution "Recruiter passed; reapply Q3"
 
+  # Delete or update a memory by id (ADR 037 — MCP parity):
+  python scripts/memory.py delete-memory <memory_id>
+  python scripts/memory.py update-memory <memory_id> "revised text"
+
 Add ``--json`` for machine-readable output, ``--user-id`` to override the bank
 (e.g. a throwaway id for safe smoke tests, mirroring the Phase 0 probe).
 
@@ -417,6 +421,31 @@ def close_item(
     return client.update_memory(memory_id, text, metadata=_clean(meta))
 
 
+def delete_memory_record(
+    client: MemoryApiClient,
+    memory_id: str,
+) -> dict[str, Any]:
+    """Delete a memory by id."""
+    if not memory_id.strip():
+        raise MemoryContractError("memory_id must not be empty")
+    return client.delete_memory(memory_id)
+
+
+def update_memory_record(
+    client: MemoryApiClient,
+    memory_id: str,
+    text: str,
+    *,
+    metadata: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Update a memory's text and optional metadata."""
+    if not memory_id.strip():
+        raise MemoryContractError("memory_id must not be empty")
+    if not text.strip():
+        raise MemoryContractError("memory text must not be empty")
+    return client.update_memory(memory_id, text, metadata=_clean(metadata or {}))
+
+
 # --------------------------------------------------------------------------- #
 # Rendering (human-readable plain English).
 # --------------------------------------------------------------------------- #
@@ -529,6 +558,18 @@ def _parse(argv: list[str]) -> argparse.Namespace:
     cl.add_argument("--status", default=STATUS_DONE, choices=sorted(CLOSED_STATUSES))
     cl.add_argument("--closed-at", default=None, help="closure date YYYY-MM-DD")
 
+    dm = sub.add_parser("delete-memory", help="delete a memory by id")
+    dm.add_argument("memory_id")
+
+    um = sub.add_parser("update-memory", help="update a memory's text")
+    um.add_argument("memory_id")
+    um.add_argument("text")
+    um.add_argument(
+        "--metadata-json",
+        default=None,
+        help='optional metadata object as JSON, e.g. \'{"type":"fact"}\'',
+    )
+
     return p.parse_args(argv)
 
 
@@ -589,6 +630,20 @@ def main(argv: list[str] | None = None) -> int:
                 closed_at=args.closed_at,
             )
             human = f"Closed {args.memory_id} ({args.status}): {args.resolution}"
+        elif args.command == "delete-memory":
+            payload = delete_memory_record(client, args.memory_id)
+            human = f"Deleted {args.memory_id}"
+        elif args.command == "update-memory":
+            meta = json.loads(args.metadata_json) if args.metadata_json else None
+            if meta is not None and not isinstance(meta, dict):
+                raise MemoryContractError("metadata-json must decode to a JSON object")
+            payload = update_memory_record(
+                client,
+                args.memory_id,
+                args.text,
+                metadata=meta,
+            )
+            human = f"Updated {args.memory_id}: {args.text}"
         else:  # pragma: no cover - argparse enforces a valid command
             raise MemoryContractError(f"unknown command {args.command!r}")
     except MemoryContractError as exc:

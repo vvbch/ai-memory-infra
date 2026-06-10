@@ -81,10 +81,12 @@ def build_app(
         ),
     )
 
-    # Same tool implementations as the local stdio proxy (ADR 025/028).
+    # Same tool implementations as the local stdio proxy (ADR 025/028/037).
     mcp.add_tool(server.search_memories)
     mcp.add_tool(server.add_memory)
     mcp.add_tool(server.list_memories)
+    mcp.add_tool(server.delete_memory)
+    mcp.add_tool(server.update_memory)
 
     @mcp.custom_route("/health", methods=["GET"])  # type: ignore[untyped-decorator]
     async def health(_: Request) -> Response:
