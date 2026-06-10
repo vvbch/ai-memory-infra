@@ -137,8 +137,9 @@ near-zero new code to own.
 
 **Negative / risks:** developer mode is a **beta** OpenAI can change or gate
 (mitigation: extension already covers ChatGPT desktop; coverage table stays
-honest); mobile availability on both platforms is third-party-reported only
-until verified live; possible paid-tier spend gate (§4, operator decision);
+honest); mobile availability on both platforms **verified live on iPhone
+2026-06-10** (connectors inherit from web registration); possible paid-tier
+spend gate (§4, operator decision);
 two more platforms hold refresh tokens to the memory bank (same revocation
 lever as ADR 035: delete the OAuth state file or rotate the consent secret).
 

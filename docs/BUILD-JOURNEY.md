@@ -1320,3 +1320,18 @@ existing `mcp.chandrav.dev` OAuth endpoint (same server as Claude and Perplexity
 
 **Next**
 - Mobile inherit spot-checks (Perplexity + ChatGPT apps); then BACKLOG (Goal 3 or hardening).
+
+## 2026-06-10 — ADR 036 closed on iPhone (all three platforms)
+
+**Focus:** operator spot-check that Perplexity, ChatGPT, and Claude mobile apps
+inherit the web-registered ai-memory connector and can call it.
+
+**Milestones**
+- **Perplexity iPhone:** ai-memory connector visible and live (inherited from web).
+- **ChatGPT iPhone:** ai-memory connector visible and live (inherited from web).
+- **Claude iPhone:** Load all connectors enabled; operator query triggered a real
+  connector call.
+- **Coverage matrix + STATUS** updated — ADR 036 is complete on every targeted surface.
+
+**Next**
+- Goal 3: memory-bank snapshot + honest knowledge-graph status report (ADR 032).

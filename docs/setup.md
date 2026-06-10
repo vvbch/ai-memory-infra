@@ -411,8 +411,8 @@ an answer with no quoted tool output proves nothing either way.
 
 ### ChatGPT developer-mode custom app — ADR 036
 
-Requires ChatGPT Plus or above; registration is **web-only** (mobile reportedly
-inherits — verify before relying on it).
+Requires ChatGPT Plus or above; registration is **web-only** (iPhone app
+inherits the connector from web — operator-verified 2026-06-10).
 
 1. On `chatgpt.com` → **Settings** → **Apps & Connectors** → **Advanced
    settings** → toggle **Developer mode** ON.
