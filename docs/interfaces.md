@@ -178,8 +178,11 @@
 
 ### 13. Remote MCP HTTP surface (`mcp.` subdomain) — TESTED / live
 
-- **What:** Streamable HTTP MCP at `https://mcp.chandrav.dev/` for Claude's
-  remote-connector clients (incl. iPhone). Same three tools as §3 (shared
+- **What:** Streamable HTTP MCP at `https://mcp.chandrav.dev/` for remote
+  OAuth connector clients: claude.ai (incl. iPhone), Perplexity custom
+  connectors (live 2026-06-10), and ChatGPT developer-mode apps (ADR 036 —
+  all three consume the same OAuth 2.1 + DCR surface; the consent page names
+  the requesting client). Same three tools as §3 (shared
   `src/mcp_proxy/server.py` tool code, `metadata.source=mcp` on writes, default
   `user_id=chandrav`). **Auth is self-hosted OAuth 2.1** (ADR 035 — the only
   model claude.ai custom connectors accept): discovery at
@@ -198,7 +201,8 @@
   `infra/mcp-proxy.Dockerfile`, `infra/docker-compose.yml` (`mcp-proxy` service),
   `infra/Caddyfile` (`mcp.{$DOMAIN}`), Terraform `subdomains`;
   design: `docs/design/remote-mcp-oauth.md`.
-- **ADR:** 034 (endpoint) + 035 (OAuth auth model, supersedes 034 §2).
+- **ADR:** 034 (endpoint) + 035 (OAuth auth model, supersedes 034 §2) +
+  036 (ChatGPT/Perplexity clients).
 - **Enforcement:** `tests/test_mcp_proxy/test_oauth.py` (full DCR→PKCE→consent→
   token→MCP flow + failure paths) and `test_http_server.py` (401/health/
   initialize); live-verified 2026-06-10. Caddy rate limiting stays in BACKLOG.

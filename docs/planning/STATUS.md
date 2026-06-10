@@ -69,6 +69,21 @@ registration not started.** Infra phases 0–4 live; phases 5–8 stubs.
 - **Consent page generalized + deployed + live-verified:** TDD (2 new tests incl.
   hostile client_name escaping; 105 passed, 94% cov), deployed to droplet, smoke-tested
   live — consent page now names the requesting client; old "Claude" copy gone.
+- **Perplexity surface LIVE:** operator registered the custom connector (OAuth/DCR,
+  Streamable HTTP), approved consent, and a forced `search_memories` call in a thread
+  quoted the bank's exact verification markers (CallToolRequest confirmed in proxy
+  logs). architecture.md coverage row, setup.md walkthroughs (Perplexity + ChatGPT),
+  and interfaces.md §13 updated.
+- **Hallucination triage (worth remembering):** Perplexity's first "what do you know
+  about me" answer (wrong city etc.) came from **Perplexity's own personalization
+  profile**, not our bank — logs showed zero tool calls; the bank holds only 3
+  verification markers. Lesson now in setup.md: only a quoted tool output proves a
+  connector round-trip.
+- **Clipboard env note corrected:** the agent CAN set the operator's clipboard via
+  Win32 (`ctypes`) and read user-env secrets from `HKCU\Environment` — the old
+  "access denied" note was a PowerShell `Set-Clipboard`/process-env limitation.
+  Secret handoffs to web consoles can now be agent-driven (set clipboard → operator
+  pastes → agent clears).
 
 ## Last decisions
 
@@ -107,25 +122,27 @@ connector spot-check (quick, operator, non-blocking).
   works non-interactively (`BatchMode=yes`). Droplet `root@168.144.145.29`; stack
   `/opt/ai-memory-infra/infra`.
 - **Token handling:** `MCP_CONNECTOR_BEARER_TOKEN` is in Bitwarden (master), Windows
-  *user* env vars, and both `.env` files; never print it. **The agent's shell cannot
-  reach the desktop clipboard** (access denied) — for clipboard handoffs, give the
-  operator the one-line `... | clip` PowerShell command to run himself.
+  *user* env vars, and both `.env` files; never print it. The agent's *process* env
+  lacks user env vars — read them from the `HKCU\Environment` registry key
+  (`winreg`). The agent **can** set/clear the desktop clipboard via Win32
+  `ctypes` (verified 2026-06-10; PowerShell `Set-Clipboard` was the thing that
+  failed) — for secret handoffs: agent sets clipboard, operator pastes, agent
+  clears.
 - **OAuth endpoint:** consent page `https://mcp.chandrav.dev/consent` (password = the
   connector secret); state file on the `mcp_oauth_state` Docker volume; deleting it
   revokes all issued tokens (one re-consent per platform afterwards).
 
 ## Next action
 
-> **RESUME HERE — register the connectors (ADR 036; plan tiers confirmed, consent
-> page generalized + deployed; concierge mode):** (1) Concierge the Perplexity
-> registration (Account settings → Connectors → + Custom connector → Remote; OAuth
-> 2.0; Streamable HTTP; URL `https://mcp.chandrav.dev/`; consent password =
-> `MCP_CONNECTOR_BEARER_TOKEN` from Bitwarden) — **in progress 2026-06-10 evening,
-> operator was handed the registration step**; live-verify with a real memory
-> search, then update architecture.md coverage + setup.md walkthrough. (2) Same for
-> ChatGPT (web Settings → Apps & Connectors → Advanced settings → Developer mode →
-> create app; OAuth). (3) Verify mobile availability on both before claiming it
-> anywhere.
+> **RESUME HERE — ChatGPT registration (ADR 036; Perplexity is DONE/live):**
+> concierge the ChatGPT developer-mode app registration (web Settings → Apps &
+> Connectors → Advanced settings → Developer mode ON → Create app: name
+> `ai-memory`, URL `https://mcp.chandrav.dev/`, Auth OAuth, no client creds —
+> consent password handoff via agent-set clipboard); live-verify with a forced
+> `search_memories` call quoting a verification marker, then update the
+> architecture.md ChatGPT row. After that: verify mobile inherit on both
+> platforms (Perplexity app + ChatGPT app, 1 min each) before claiming mobile
+> anywhere — **in progress 2026-06-10 evening, operator mid-flow in this chat**.
 >
 > Parked behind this: Goal 3 (memory-bank snapshot + honest graph report); iPhone
 > Claude connector spot-check (operator, 1 min, anytime).

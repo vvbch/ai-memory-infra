@@ -386,6 +386,44 @@ secret, update droplet `.env`, `docker compose up -d mcp-proxy`, delete the
 volume's `oauth_state.json` if revoking issued tokens, then reconnect on
 claude.ai (one consent).
 
+### Perplexity custom remote connector — ADR 036
+
+Same endpoint, same OAuth server, same consent password. Requires a Perplexity
+Pro (or higher) plan.
+
+1. On `perplexity.ai` → **Account settings** → **Connectors** → **+ Custom
+   connector** → choose **Remote**.
+2. Name: `ai-memory`. MCP Server URL: `https://mcp.chandrav.dev/`. Under
+   Advanced: Authentication **OAuth 2.0** (Client ID/Secret empty — DCR),
+   Transport **Streamable HTTP** (or default). Tick the risk acknowledgement,
+   click **Add**.
+3. Click the new connector card — Perplexity redirects to
+   `mcp.chandrav.dev/consent` (the page names the requesting client). Paste the
+   connector secret and click **Approve**.
+4. In a thread, switch the connector ON (sources/connectors toggle near the
+   input box) before asking memory questions.
+
+Verify with a forced tool call ("Call the ai-memory connector's
+`search_memories` tool with the query '<known fact>' and quote what it
+returns"). Caution: Perplexity also keeps its **own** personalization profile
+and may answer "about you" questions from it without calling the connector —
+an answer with no quoted tool output proves nothing either way.
+
+### ChatGPT developer-mode custom app — ADR 036
+
+Requires ChatGPT Plus or above; registration is **web-only** (mobile reportedly
+inherits — verify before relying on it).
+
+1. On `chatgpt.com` → **Settings** → **Apps & Connectors** → **Advanced
+   settings** → toggle **Developer mode** ON.
+2. **Create app** (or "Add new connector"): Name `ai-memory`, MCP Server URL
+   `https://mcp.chandrav.dev/`, Authentication **OAuth** (DCR — no client
+   credentials), tick the trust acknowledgement, **Create**.
+3. ChatGPT redirects to the consent page — paste the connector secret,
+   **Approve**.
+4. In a chat, open the **+** (tools) menu → **Developer mode** → toggle the
+   app on, and prompt it to use the `ai-memory` tools explicitly.
+
 ## IDE startup/handoff hooks (session bootstrap + completion gate)
 
 Two lifecycle hooks make sessions cheaper and safer (ADR 030 + ADR 027). Both are
