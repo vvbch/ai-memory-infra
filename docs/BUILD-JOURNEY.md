@@ -1348,3 +1348,17 @@ without overstating capabilities.
 
 **Next**
 - ADR 028: enforce `source` on writes; OpenClaw adapter gate before enabling writes.
+
+## 2026-06-11 — ADR 028 Neo4j source propagation probe
+
+**Focus:** BACKLOG P2 top item — does `metadata.source` reach Neo4j when Mem0 writes?
+
+**Findings**
+- **pgvector ✅** — live probe: `metadata.source="neo4j-probe"` round-trips on `GET /memories/{id}`.
+- **Neo4j N/A today** — `node_count=0` before and after the tagged write; Mem0 ships no graph store (ADR 032). Graph-side `source` moves to LifeGraph Phase 6, not a Mem0 patch.
+
+**Shipped**
+- `scripts/verify_source_propagation.py` + tests for repeatable live checks.
+
+**Next**
+- MCP droplet redeploy so ADR 037 delete/update tools are live in production.

@@ -83,15 +83,18 @@ Audit 2026-06-11: every in-workspace consumer conforms; OpenClaw remains externa
 | OpenClaw adapter (`serenichron/openclaw-memory-mem0`) | pass `source`/`agent_id` into Mem0 **and** graph; patch adapter, never fork `user_id` | ⬜ pending — repo not in workspace; BACKLOG P2 |
 | Future todo app | same `user_id` + `source`/`type` contract | ⬜ N/A until built (ADR 029) |
 
-Mechanical gate: `scripts/check_memory_contract.py` (CI). Neo4j graph propagation of
-`metadata.source` is not yet written (LifeGraph Phase 6); pgvector path is live.
+Mechanical gate: `scripts/check_memory_contract.py` (CI). Live probe
+`scripts/verify_source_propagation.py` (2026-06-11): **pgvector path ✅** —
+`metadata.source` round-trips on `GET /memories/{id}`. **Neo4j graph path N/A
+today** — droplet `node_count=0` before and after a tagged Mem0 write (Mem0
+ships no graph store; ADR 032). Graph-side `source` enforcement moves to
+**LifeGraph (Phase 6)** when Neo4j is actually written.
 
 ## Notes
 
 - Initial OpenClaw scope is unchanged: email processing from Chandra's desk only;
   no LinkedIn crawling. ClawPack/fallback config remains prototype reasoning
   plumbing only; Mem0 extraction is unchanged.
-- Verification one-liner (after adapter work): write a probe memory with
-  `source="openclaw"`, then confirm the tag is present *both* via the REST
-  `/search` result metadata and on the corresponding Neo4j node
-  (`graph.chandrav.dev`).
+- Verification (OpenClaw adapter, when checked out): write a probe with
+  `source="openclaw"`, confirm via `/search` metadata; Neo4j node check applies
+  only after a graph writer lands (LifeGraph or graph-capable Mem0).

@@ -6,18 +6,19 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (Cursor User rules handoff done; ADR 028 audit + gate).
+**Last updated:** 2026-06-11 (ADR 028 Neo4j source probe closed; pgvector ✅).
 Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
-up nightly + restore-drilled monthly. **ADR 036 is complete** on every targeted
-surface. **ADR 037 closed.** **ADR 028 audited** on in-workspace consumers
-(extension ✅, MCP proxy ✅); OpenClaw adapter still pending (external repo).
+up nightly + restore-drilled monthly. **ADR 036 complete.** **ADR 037 closed.**
+**ADR 028 pgvector source tagging live** on all in-workspace writers; Neo4j graph
+`source` propagation is **N/A until LifeGraph (Phase 6)** — Mem0 writes no graph
+(ADR 032; droplet confirmed 0 nodes before/after probe).
 
-**Curated bank (`user_id=chandrav`):** ~21 facts; extension auto-capture off by
-policy; MCP primary write surface.
+**Curated bank (`user_id=chandrav`):** extension auto-capture off by policy; MCP
+primary write surface.
 
 ## Current phase
 
@@ -26,23 +27,21 @@ build track**.
 
 ## Done this session (2026-06-11)
 
-- **Cursor User rules handoff** — operator updated Settings → Rules → User rules
-  with commit/push alignment for ai-memory workspace.
-- **ADR 028 audit** — extension + MCP proxy conform; `metadata.source` enforced on
-  MCP `add_memory`; `check_memory_contract.py` extended + tests added; ADR 028
-  Propagation/conformance section added.
+- **ADR 028 Neo4j source probe** — live verify: `metadata.source` round-trips on
+  pgvector; Neo4j `node_count=0` before and after tagged write (no Mem0 graph —
+  not a dropped field). Added `scripts/verify_source_propagation.py` + tests;
+  closed ADR 032 belt-and-suspenders droplet confirm.
 
 ## Last decisions
 
-- Global Cursor User rules now distinguish default (ask before commit) vs
-  ai-memory workspace (commit+push per `AGENTS.md`).
-- OpenClaw adapter (`serenichron/openclaw-memory-mem0`) stays parked until repo
-  is checked out — never fork `user_id`; patch adapter for `source`/`agent_id`.
+- Neo4j `metadata.source` enforcement is **deferred to LifeGraph Phase 6**, not a
+  Mem0-server patch today (graph store absent at pinned mem0ai ref).
+- OpenClaw adapter stays parked until repo checkout — never fork `user_id`.
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. Top: Neo4j `metadata.source` propagation
-verify; OpenClaw adapter gate; MCP droplet redeploy for ADR 037 tools.
+See **`docs/planning/BACKLOG.md`**. Top: **MCP droplet redeploy** (ADR 037
+delete/update tools live); OpenClaw adapter gate.
 
 ## Open blockers / risks
 
@@ -56,12 +55,11 @@ verify; OpenClaw adapter gate; MCP droplet redeploy for ADR 037 tools.
 
 ## Next action
 
-> **RESUME HERE — BACKLOG P2 top item (Neo4j source propagation) or MCP droplet
-> redeploy:**
-> 1. Verify Mem0 write path propagates `metadata.source` to Neo4j nodes (probe +
->    patch if dropped) — see BACKLOG P2 `[memory] Enforce source into Mem0 and
->    Neo4j graph metadata`.
-> 2. Or: redeploy MCP droplet so ADR 037 delete/update tools are live.
+> **RESUME HERE — MCP droplet redeploy (ADR 037 tools on production):**
+> Redeploy the MCP proxy container on the droplet so `delete_memory` /
+> `update_memory` (ADR 037) are live in production — `make deploy` or equivalent
+> SSH pull + compose up on `168.144.145.29`. Verify with a throwaway add →
+> update → delete round-trip via remote MCP or `scripts/memory.py`.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 

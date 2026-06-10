@@ -161,14 +161,13 @@
 
 ## P2 — memory model implementation (ADR 028 / 029)
 
-- **`[memory]` Enforce `source` into Mem0 *and* Neo4j graph metadata (ADR 028).** Writes must carry a
-  mandatory `source` (and `agent_id` where present) that lands in *both* pgvector and the graph, so
-  origin is queryable in either store and prototype/disposable writes stay filterable, editable, and
-  removable by `source`. Includes: confirm the Mem0 write path propagates `metadata.source` to Neo4j
-  nodes/edges (patch if not); add the OpenClaw adapter check (`serenichron/openclaw-memory-mem0`) —
-  patch the adapter if it drops the fields, never fork `user_id`. Verify with a `source="openclaw"`
-  probe visible via `/search` metadata **and** on the Neo4j node. Tie: ADR 028 (supersedes 026),
-  ADR 003.
+- ◑ **`[memory]` Enforce `source` into Mem0 *and* Neo4j graph metadata (ADR 028).** Writes must carry a
+  mandatory `source` (and `agent_id` where present). **pgvector path ✅** (2026-06-11 live probe via
+  `scripts/verify_source_propagation.py` — `metadata.source` round-trips). **Neo4j graph path N/A
+  today** — Mem0 writes no graph (ADR 032; droplet `node_count=0` before/after probe); graph-side
+  `source` enforcement is **LifeGraph Phase 6**, not a Mem0 patch. **Remaining:** OpenClaw adapter
+  check (`serenichron/openclaw-memory-mem0`) — patch if it drops fields, never fork `user_id`. Tie:
+  ADR 028 (supersedes 026), ADR 003.
 - **`[memory]` Temporal tagging — `type` + timestamps on every write (ADR 029).** Tag each memory
   `type` (`fact` | `decision` | `open_item`); carry `created_at` (Mem0) + optional `occurred_at`
   when event time ≠ capture time. Model `decision` as `:Decision` LifeGraph nodes (ADR 005) with

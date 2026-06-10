@@ -66,8 +66,6 @@ only historical/ADR-title references after this change):
   portfolio repo; the real graph work (LifeGraph) is correctly scoped to Phase 6.
 - **Negative:** Neo4j + its backup run with no current writes (small, deliberate
   idle cost; revisit at Phase 6 / steady-state downsizing).
-- **Open (belt-and-suspenders, not blocking):** confirm on the live droplet that
-  Neo4j holds no Mem0-written nodes —
-  `MATCH (n) RETURN labels(n) AS labels, count(*) AS c` via cypher-shell. Expected:
-  empty (or only a manual probe). Run in the next operator SSH session; record the
-  result here.
+- **Live droplet confirm (2026-06-11):** `MATCH (n) RETURN count(n)` → **0** via
+  `scripts/verify_source_propagation.py` (before and after a tagged Mem0 write).
+  No Mem0-written nodes; belt-and-suspenders item closed.

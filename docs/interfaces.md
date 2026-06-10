@@ -24,7 +24,8 @@
 ### 1. Memory write contract — ENFORCED (cross-repo)
 
 - **What:** one `user_id` per person (`"chandrav"`); `metadata.source` is the
-  mandatory discriminator (lands in pgvector and, in future, the graph); `type` ∈
+  mandatory discriminator (pgvector live — probed 2026-06-11; graph when LifeGraph
+  writes Neo4j); `type` ∈
   `fact | decision | open_item`; `created_at` always, `occurred_at` when event time
   ≠ capture time; authored writes use `infer=False`.
 - **Schema lives in:** `ai-memory-extension/src/types/api.ts`
@@ -38,7 +39,9 @@
 - **Enforcement:** `scripts/check_memory_contract.py` (CI + can run pre-commit) —
   checks extension constants, a single normalizing write path, no direct
   `/memories` bypass, MCP proxy `DEFAULT_USER_ID`, and MCP `add_memory`
-  `metadata.source="mcp"` tagging.
+  `metadata.source="mcp"` tagging. Live pgvector probe:
+  `scripts/verify_source_propagation.py` (ADR 028; Neo4j count expect 0 until
+  LifeGraph).
 
 ### 2. Extension ↔ API identity contract — ENFORCED (cross-repo)
 
