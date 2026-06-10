@@ -51,6 +51,11 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     "select the folder containing `manifest.json`") and the success condition
     ("OpenMemory appears on `chrome://extensions`"). If a prompt is stale, update
     these control-plane instructions and the affected docs in the same session.
+  - **Pre-delegation gate (COE 2026-06-10):** before delegating any action to
+    the operator, verify it cannot be performed via CLI/API (`gh`, `curl`,
+    shell, MCP). Delegate only genuinely operator-exclusive actions
+    (credentials entry, consent, account creation requiring PII). If the agent
+    can describe the UI path, it can almost certainly run the CLI equivalent.
   - Say what each command/click does (**ELI5 → one layer deeper**) *before* he or
     I run it. Do the parts I can do; only delegate clicks I genuinely can't.
 - **Research discipline:** web-verify volatile facts (model IDs, prices, API

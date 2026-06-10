@@ -86,9 +86,10 @@ claims vs implementation reword, delete stub workflows, dependency lockfile + pi
 
 ## Open blockers / risks
 
-- **Operator setup needed for the new automations (one-time):** repo secrets `CURSOR_API_KEY` and
-  `PRIVATE_REPO_PAT` on `vvbch/ai-memory-infra` — see `docs/automation/README.md`. Until set, the
-  weekly scan and autofix jobs will fail (harmlessly) on their agent step.
+- ~~Operator setup for automation secrets~~ **Done 2026-06-10:** `CURSOR_API_KEY` and
+  `PRIVATE_REPO_PAT` (GitHub PAT "ai-memory-interview-refresh", Contents + Pull requests: RW
+  on `vvbch/ai-memory-infra-private`) set as repo secrets; Actions PR-creation permission
+  enabled. Awaiting smoke-test re-run of `weekly-scan.yml` to confirm green.
 - **OpenClaw adapter gate (ADR 028):** before enabling OpenClaw writes, verify the adapter passes
   `source`/`agent_id` through to Mem0 + Neo4j metadata; patch the adapter, never fork `user_id`.
 - **`gpt-4.1-nano` silent fallback** if `MEM0_DEFAULT_LLM_MODEL` ever unset on the droplet —

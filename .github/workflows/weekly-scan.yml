@@ -14,8 +14,10 @@
 #
 # Required repository secrets:
 #   CURSOR_API_KEY    — agent CLI auth (swap with another vendor's key+CLI).
-#   PRIVATE_REPO_PAT  — fine-grained PAT, contents:read+write on
-#                       vvbch/ai-memory-infra-private (job 2 only).
+#   PRIVATE_REPO_PAT  — fine-grained PAT scoped to
+#                       vvbch/ai-memory-infra-private; needs Contents:
+#                       read+write AND Pull requests: read+write (job 2).
+#                       Bitwarden: "PRIVATE_REPO_PAT / ai-memory-interview-refresh".
 name: weekly-scan
 
 on:
