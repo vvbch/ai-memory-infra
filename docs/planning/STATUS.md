@@ -59,6 +59,11 @@ phases 5–8 stubs.
 - **Docs/DoD propagation** — interfaces.md §13, setup.md remote-connector walkthrough,
   architecture.md coverage row, secrets-catalog row (private), ADR 028 user-id drift fix
   in setup.md examples.
+- **Secrets-catalog coverage gate (operator-requested, tenet 14)** — promoted DoD dod-10
+  from prose to enforced: new `scripts/check_secrets_catalog.py` (pre-commit gate 6, TDD,
+  9 tests) blocks any commit declaring a secret placeholder (.env.example /
+  tfvars.example / workflow `secrets.*`) without a row in the private secrets catalog;
+  negative-tested live. Bitwarden half stays operator-verified (external vault).
 
 ## Last decisions
 

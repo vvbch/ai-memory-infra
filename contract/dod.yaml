@@ -86,9 +86,9 @@ rules:
   title: Create / obtain / rotate any account, API token, key, or secret
   severity: critical
   enforcement:
-    status: prose
-    mechanism: gitleaks blocks committing secret values (detect); catalog+Bitwarden rule is prose
-    gate_id: null
+    status: enforced
+    mechanism: 'gitleaks blocks committing secret values; scripts/check_secrets_catalog.py (pre-commit gate 6) blocks declared secrets lacking a private catalog row; the Bitwarden-vault half stays operator-verified (external store)'
+    gate_id: secrets-catalog
   agents_md: '| Create / obtain / rotate any account, API token, key, or secret | Store the value **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017) **and** add/update a row (no value) in the private `docs/security/secrets-catalog.md` (purpose · where it lives · rotation · blast radius); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it''s in the vault **and** the catalog |'
 - id: dod-11
   title: End of any working session

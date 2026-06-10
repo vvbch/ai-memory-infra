@@ -1,10 +1,11 @@
 #!/bin/sh
-# pre-commit guard — FIVE gates, all BLOCK the commit on failure:
+# pre-commit guard — SIX gates, all BLOCK the commit on failure:
 #   1. Tenet 11 / ADR 015 — repo-integrity (FAST subset, Drive-sync corruption).
 #   2. Tenet 14 (Detect) / AGENTS.md secrets rule — secret-scan (gitleaks).
 #   3. Tenet 16 / COE 2026-06-10 — STATUS.md must stay a snapshot, not a log.
 #   4. Tenet 10 / ADR 033 — operating-contract prose must match contract/*.yaml.
 #   5. Tenet 2 / ADR 018 — editor pointer files carry zero canonical content.
+#   6. DoD dod-10 / ADR 017 — every declared secret has a private catalog row.
 #
 # Git runs hooks through its bundled POSIX sh (even on Windows), so this shim is
 # portable. Installed by scripts/install-hooks.ps1 as a COPY, not a symlink
@@ -132,6 +133,27 @@ if [ -f "$pointer_gate" ]; then
     echo "Strip it back to frontmatter + 'read AGENTS.md'; content lives only in AGENTS.md." >&2
     echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
     exit $pgstatus
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Gate 6 — secrets-catalog coverage (DoD dod-10 / ADR 017).
+# Every secret placeholder declared in this repo (.env.example, tfvars.example,
+# workflow ${{ secrets.* }}) must have an index row in the PRIVATE
+# secrets-catalog.md. Skips with a notice if the private sibling clone is
+# absent (e.g. public CI) — pre-commit on the workspace is the enforcement point.
+# ---------------------------------------------------------------------------
+catalog_gate="$repo/scripts/check_secrets_catalog.py"
+if [ -f "$catalog_gate" ]; then
+  python "$catalog_gate" --repo "$repo"
+  scstatus=$?
+  if [ "$scstatus" -ne 0 ]; then
+    echo "" >&2
+    echo "pre-commit BLOCKED: a declared secret has no row in the private secrets catalog (DoD dod-10)." >&2
+    echo "Add the row (purpose / lives-where / rotation / blast radius — NO value) to" >&2
+    echo "ai-memory-infra-private/docs/security/secrets-catalog.md and put the value in Bitwarden (ADR 017)." >&2
+    echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+    exit $scstatus
   fi
 fi
 

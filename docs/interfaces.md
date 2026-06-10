@@ -107,7 +107,8 @@
 - **What:** the editor-agnostic control-plane hooks. `session_bootstrap.py`
   (`--cursor` / `--hookspecific` / `--json`) injects the resume block at session
   start; `completion_gate.py` emits the turn-end block/follow-up JSON; the
-  pre-commit hook runs repo-health + gitleaks + STATUS-shape gates.
+  pre-commit hook runs repo-health + gitleaks + STATUS-shape + contract-render +
+  pointer-purity + secrets-catalog-coverage gates.
 - **Schema lives in:** `scripts/session_bootstrap.py`, `scripts/completion_gate.py`,
   `scripts/hooks/pre-commit`, generated per-IDE adapters under `<root>/.cursor`,
   `.claude`, `.codex`, etc. (from `scripts/install_ide_hooks.py`).

@@ -7,7 +7,7 @@
 > **prose** (relies on the agent reading and honoring it — the model-dependent
 > surface ADR 033 exists to shrink).
 
-**Summary:** 38 rules — 11 enforced · 0 tested · 27 prose.
+**Summary:** 38 rules — 12 enforced · 0 tested · 26 prose.
 
 ## Tenets
 | id | rule | severity | enforcement | mechanism |
@@ -55,6 +55,6 @@
 | `dod-07` | A new phase, `src/` module, or capability | high | **prose** | convention: design doc before code, then TDD; partial test coverage |
 | `dod-08` | Anything cost-relevant (plan, provider, bucket) | normal | **prose** | convention: architecture cost table + interview_packet |
 | `dod-09` | Security / guardrail behaviour | high | **prose** | partial: security tests exist; guardrail set is partly aspirational |
-| `dod-10` | Create / obtain / rotate any account, API token, key, or secret | critical | **prose** | gitleaks blocks committing secret values (detect); catalog+Bitwarden rule is prose |
+| `dod-10` | Create / obtain / rotate any account, API token, key, or secret | critical | **enforced** | gitleaks blocks committing secret values; scripts/check_secrets_catalog.py (pre-commit gate 6) blocks declared secrets lacking a private catalog row; the Bitwarden-vault half stays operator-verified (external store) |
 | `dod-11` | End of any working session | critical | **enforced** | scripts/check_status_snapshot.py (shape) + completion_gate.py (commit/push) |
 | `dod-12` | Every logical step + every response (tenet 16) | high | **enforced** | scripts/completion_gate.py (turn-end commit/push) + scripts/handoff_verify.py (agent-run final check incl. behind + STATUS freshness) |
