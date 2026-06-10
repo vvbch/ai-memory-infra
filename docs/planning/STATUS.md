@@ -50,7 +50,8 @@ switch hardening) remains done. Infra phases 0–4 live; phases 5–8 stubs.
 - **`.cursor/mcp.json`** — `AI_MEMORY_USER_ID` aligned to `chandrav`.
 - **`docs/architecture.md`** — iOS Claude row updated to ADR 034 / deploy pending.
 - **`scripts/ssh_unlock.py` + `operator-credential-handoff` skill** — clipboard → agent
-  SSH unlock; AGENTS.md + interfaces §12 updated.
+  SSH unlock; AGENTS.md + interfaces §12 updated. (ADR 034 + skill artifacts from the
+  previous session were found uncommitted and are now committed + pushed.)
 
 ## Last decisions
 
