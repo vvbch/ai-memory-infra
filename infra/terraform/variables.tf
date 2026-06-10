@@ -43,9 +43,9 @@ variable "domain_name" {
 }
 
 variable "subdomains" {
-  description = "Subdomains to create A records for, each pointing at the droplet. `dash` is included because the OSS Mem0 server compose ships a mem0-dashboard container (verified against mem0ai/mem0 server/docker-compose.yaml)."
+  description = "Subdomains to create A records for, each pointing at the droplet. `dash` is included because the OSS Mem0 server compose ships a mem0-dashboard container (verified against mem0ai/mem0 server/docker-compose.yaml). `mcp` is the remote Streamable HTTP MCP endpoint for Claude connector clients (ADR 034)."
   type        = list(string)
-  default     = ["memory", "dash", "graph", "monitor"]
+  default     = ["memory", "dash", "graph", "monitor", "mcp"]
 }
 
 variable "create_apex_record" {

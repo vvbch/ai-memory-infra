@@ -32,6 +32,17 @@ services:
         max-size: "10m"
         max-file: "5"
 
+  mcp-proxy:
+    deploy:
+      resources:
+        limits:
+          memory: 192M
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "5"
+
   postgres:
     deploy:
       resources:

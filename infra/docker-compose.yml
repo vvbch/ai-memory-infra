@@ -83,6 +83,30 @@ services:
     networks:
       - mem0_network
 
+  mcp-proxy:
+    # Remote Streamable HTTP MCP for Claude's connector clients, incl. iPhone
+    # (ADR 034). Same tool code as the local stdio proxy; bearer-token gated.
+    # Internal-only — Caddy terminates TLS at mcp.{$DOMAIN}.
+    build:
+      context: ..
+      dockerfile: infra/mcp-proxy.Dockerfile
+    image: ai-memory-mcp-proxy:local
+    restart: unless-stopped
+    environment:
+      # Talks to Mem0 over the internal network (no hairpin through Caddy);
+      # the admin key stays server-side, never in the Claude connector.
+      - AI_MEMORY_BASE_URL=http://mem0:8000
+      - AI_MEMORY_API_KEY=${ADMIN_API_KEY}
+      - MCP_CONNECTOR_BEARER_TOKEN=${MCP_CONNECTOR_BEARER_TOKEN}
+      - MCP_ALLOWED_HOSTS=mcp.${DOMAIN}
+    depends_on:
+      mem0:
+        condition: service_started
+    expose:
+      - "8765"
+    networks:
+      - mem0_network
+
   postgres:
     image: ankane/pgvector:v0.5.1 # matches upstream mem0 server; pgvector preinstalled
     restart: unless-stopped
