@@ -207,6 +207,58 @@ def test_consent_page_renders_form(client: TestClient) -> None:
     assert "form" in response.text
 
 
+def test_consent_page_names_requesting_client(client: TestClient) -> None:
+    # ADR 036: the page must identify the actual requesting client, not assume Claude.
+    response = client.post(
+        "/register",
+        json={
+            "redirect_uris": ["https://www.perplexity.ai/rest/connections/oauth_callback"],
+            "grant_types": ["authorization_code", "refresh_token"],
+            "response_types": ["code"],
+            "token_endpoint_auth_method": "none",
+            "client_name": "Perplexity",
+        },
+    )
+    assert response.status_code == 201
+    _, challenge = pkce_pair()
+    location = client.get(
+        "/authorize",
+        params={
+            "client_id": response.json()["client_id"],
+            "redirect_uri": "https://www.perplexity.ai/rest/connections/oauth_callback",
+            "response_type": "code",
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+            "state": "opaque-state",
+        },
+        follow_redirects=False,
+    ).headers["location"]
+    page = client.get(f"/consent?txn={txn_from(location)}")
+    assert page.status_code == 200
+    assert "Perplexity" in page.text
+
+
+def test_consent_page_escapes_hostile_client_name(client: TestClient) -> None:
+    # DCR is open (RFC 7591); client_name is untrusted input on an operator-facing page.
+    response = client.post(
+        "/register",
+        json={
+            "redirect_uris": [CALLBACK],
+            "grant_types": ["authorization_code", "refresh_token"],
+            "response_types": ["code"],
+            "token_endpoint_auth_method": "none",
+            "client_name": "<script>alert(1)</script>",
+        },
+    )
+    assert response.status_code == 201
+    _, challenge = pkce_pair()
+    location = start_authorize(client, response.json()["client_id"], challenge)
+    page = client.get(f"/consent?txn={txn_from(location)}")
+    assert page.status_code == 200
+    assert "<script>" not in page.text
+    assert "&lt;script&gt;" in page.text
+
+
 def test_consent_unknown_txn_rejected(client: TestClient) -> None:
     assert client.get("/consent?txn=nonexistent").status_code == 400
     response = client.post(

@@ -166,15 +166,26 @@ class SingleUserOAuthProvider(
         self._prune_pending()
         return txn in self._pending
 
+    def _client_display_name(self, txn: str) -> str:
+        pending = self._pending.get(txn)
+        if pending is None:
+            return "A connector client"
+        client = self._store.get("clients", pending.client_id)
+        name = (client or {}).get("client_name")
+        return str(name) if name else pending.client_id
+
     def consent_page(self, txn: str) -> str:
         """HTML consent form. `txn` must already be validated by the caller."""
+        # client_name comes from open DCR (untrusted) — escaped before rendering.
+        client_name = escape(self._client_display_name(txn))
         return f"""<!doctype html>
 <html lang="en">
 <head><meta charset="utf-8"><title>ai-memory — approve connector</title></head>
 <body style="font-family: system-ui, sans-serif; max-width: 26rem; margin: 4rem auto;">
-  <h1 style="font-size: 1.2rem;">Approve Claude connector access</h1>
-  <p>A client is requesting access to your memory bank. Paste the connector
-  secret (Bitwarden: <code>MCP_CONNECTOR_BEARER_TOKEN</code>) to approve.</p>
+  <h1 style="font-size: 1.2rem;">Approve connector access</h1>
+  <p><strong>{client_name}</strong> is requesting access to your memory bank.
+  Paste the connector secret (Bitwarden: <code>MCP_CONNECTOR_BEARER_TOKEN</code>)
+  to approve.</p>
   <form method="post" action="/consent">
     <input type="hidden" name="txn" value="{escape(txn)}">
     <input type="password" name="secret" autofocus required
