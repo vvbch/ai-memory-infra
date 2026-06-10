@@ -195,6 +195,31 @@ class SingleUserOAuthProvider(
 </body>
 </html>"""
 
+    def consent_success_page(self, redirect_url: str) -> str:
+        """HTML page that returns the browser to the connector OAuth callback.
+
+        A bare 302 after POST is enough for most clients, but ChatGPT's OAuth
+        popup sometimes stalls on an empty redirect — so we also render an
+        auto-redirect plus a manual fallback link (same redirect URL).
+        """
+        safe_href = escape(redirect_url, quote=True)
+        safe_js = json.dumps(redirect_url)
+        return f"""<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ai-memory — approved</title>
+  <meta http-equiv="refresh" content="0;url={safe_href}">
+</head>
+<body style="font-family: system-ui, sans-serif; max-width: 28rem; margin: 4rem auto;">
+  <h1 style="font-size: 1.2rem;">Approved</h1>
+  <p>Returning you to the connector to finish sign-in…</p>
+  <p><a id="oauth-redirect" href="{safe_href}">Continue to connector</a>
+  if you are not redirected automatically.</p>
+  <script>window.location.replace({safe_js});</script>
+</body>
+</html>"""
+
     def complete_consent(self, txn: str, secret: str) -> str:
         """Verify the consent secret and mint an authorization code.
 

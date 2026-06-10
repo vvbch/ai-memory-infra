@@ -20,7 +20,7 @@ from mcp.server.transport_security import TransportSecuritySettings
 from pydantic import AnyHttpUrl
 from starlette.applications import Starlette
 from starlette.requests import Request
-from starlette.responses import HTMLResponse, JSONResponse, RedirectResponse, Response
+from starlette.responses import HTMLResponse, JSONResponse, Response
 
 from mcp_proxy import server
 from mcp_proxy.oauth import (
@@ -112,7 +112,8 @@ def build_app(
                 "from Bitwarden (MCP_CONNECTOR_BEARER_TOKEN).",
                 status_code=401,
             )
-        return RedirectResponse(redirect_url, status_code=302)
+        # HTML auto-redirect: ChatGPT's OAuth popup can stall on a bare 302.
+        return HTMLResponse(provider.consent_success_page(redirect_url))
 
     return mcp.streamable_http_app()
 

@@ -423,6 +423,12 @@ inherits — verify before relying on it).
    **Approve**.
 4. In a chat, open the **+** (tools) menu → **Developer mode** → toggle the
    app on, and prompt it to use the `ai-memory` tools explicitly.
+5. Verify with a forced tool call (enable the app **per chat** first — Settings
+   "Connected" is not enough): "Using only the ai-memory developer app (not Google
+   Drive), call `search_memories` with query `drill canary`." Server-side proof:
+   `CallToolRequest` in mcp-proxy logs. ChatGPT may show abbreviated tool
+   snippets in-thread, not full JSON — that is normal; do not treat vague
+   "search my memories" answers (or Google namespace errors) as connector proof.
 
 ## IDE startup/handoff hooks (session bootstrap + completion gate)
 

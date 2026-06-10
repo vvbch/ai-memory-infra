@@ -359,9 +359,12 @@ COE 2026-06-10-delayed-memory-buildout):
   retention policy), secrets, destructive operations, or an explicit operator pause.
   The instruction to read `AGENTS.md`/`STATUS.md` and continue the next action is the
   standing operator authorization for this workspace's reversible completion commit+push;
-  do not require a second "please commit" prompt. If a higher-level tool policy or a
-  real blocker prevents commit/push, say that before the final answer and leave the
-  repo in a clearly documented handoff state.
+  do not require a second "please commit" prompt — and **never ask** "want me to
+  commit?" / "say if you want that committed" at session end when this applies
+  (COE 2026-06-10-session-end-commit-permission-ask). Generic agent habits that
+  conflict with this workspace rule lose; name a blocker or commit+push. If a
+  higher-level tool policy or a real blocker prevents commit/push, say that before
+  the final answer and leave the repo in a clearly documented handoff state.
 - **Final response gate:** before any final answer, explicitly verify and satisfy all
   handoff requirements: (1) every touched git repo is committed and pushed, or the blocker
   is named plainly; (2) `STATUS.md` and required logs have been updated to a logical

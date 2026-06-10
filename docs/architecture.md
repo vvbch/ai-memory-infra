@@ -132,8 +132,8 @@ Docker internal network (ADR 009).
 | Android | Edge Canary / Quetta + extension | Best-effort (ADR 004) |
 | iOS — Claude | Remote MCP connector (`mcp.{domain}`, Streamable HTTP, self-hosted OAuth 2.1) | **Live** — connector registered + OAuth-approved on claude.ai 2026-06-10 (ADR 034/035); iPhone inherits from web |
 | Perplexity (web) | Custom remote connector to the same MCP endpoint (OAuth 2.0/DCR, ADR 036) | **Live** — registered + OAuth-approved 2026-06-10; live-verified with a real `search_memories` round-trip in a thread. Mobile/desktop apps reported to inherit — not yet verified |
-| ChatGPT (web) | Developer-mode custom app to the same MCP endpoint (OAuth/DCR, ADR 036) | Designed (ADR 036), registration pending |
-| iOS — ChatGPT/Gemini/DeepSeek | none (ChatGPT: pending ADR 036 connector + mobile-inherit verification) | Known gap |
+| ChatGPT (web) | Developer-mode custom app to the same MCP endpoint (OAuth/DCR, ADR 036) | **Live** — registered + OAuth-approved 2026-06-10; live-verified `search_memories` round-trip (`CallToolRequest` + Mem0 `/search` 200 in proxy logs). ChatGPT may show abbreviated tool snippets in-thread, not full JSON |
+| iOS — ChatGPT/Gemini/DeepSeek | ChatGPT: mobile inherit from web connector unverified; Gemini/DeepSeek none | Partial gap |
 | Claude Code / Cursor / VS Code | Local stdio MCP proxy to live REST API | Full |
 | Any future tool | REST API | Full |
 

@@ -1301,3 +1301,22 @@ connector in the Claude account settings.
 **Next**
 - Operator registers the connector (web first; mobile inherits it), confirms an iPhone
   round-trip — then the day's third goal: a memory-bank snapshot + an honest graph report.
+
+## 2026-06-10 — ChatGPT joins the same remote MCP server (ADR 036)
+
+**Focus:** close the last ADR 036 web surface — ChatGPT developer-mode custom app on the
+existing `mcp.chandrav.dev` OAuth endpoint (same server as Claude and Perplexity).
+
+**Milestones**
+- **OAuth connected** after a consent-page fix: ChatGPT's popup stalled on a bare HTTP
+  302; an HTML auto-redirect + manual fallback link unblocked the callback.
+- **Live-verified read path:** proxy logs show `CallToolRequest` → Mem0 `/search` 200
+  when the operator enabled ai-memory per-chat and forced `search_memories` (ChatGPT's
+  UI shows abbreviated snippets, not full JSON — logs are the honest proof).
+- **Coverage matrix + setup** updated with ChatGPT operator lessons (per-chat toggle,
+  explicit tool prompts, don't trust vague "search my memories" or Google namespaces).
+- **COE** for session-end "want me to commit?" — standing authorization means commit+push
+  is routine, not a second ask.
+
+**Next**
+- Mobile inherit spot-checks (Perplexity + ChatGPT apps); then BACKLOG (Goal 3 or hardening).

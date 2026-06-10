@@ -12,7 +12,9 @@ from __future__ import annotations
 
 import base64
 import hashlib
+import html
 import json
+import re
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -119,24 +121,39 @@ def approve_consent(client: TestClient, location: str, secret: str = SECRET) -> 
     )
 
 
+def redirect_url_from_consent_response(response: Any) -> str:
+    if response.status_code in REDIRECT_CODES:
+        return response.headers["location"]
+    assert response.status_code == 200
+    match = re.search(r'id="oauth-redirect" href="([^"]+)"', response.text)
+    assert match is not None, "consent success page missing oauth-redirect link"
+    return html.unescape(match.group(1))
+
+
 def obtain_code(client: TestClient, client_id: str, challenge: str) -> str:
     location = start_authorize(client, client_id, challenge)
     response = approve_consent(client, location)
-    assert response.status_code in REDIRECT_CODES
-    redirect = response.headers["location"]
+    redirect = redirect_url_from_consent_response(response)
     assert redirect.startswith(CALLBACK)
     query = parse_qs(urlparse(redirect).query)
     assert query["state"] == ["opaque-state"]
     return query["code"][0]
 
 
-def exchange_code(client: TestClient, client_id: str, code: str, verifier: str) -> Any:
+def exchange_code(
+    client: TestClient,
+    client_id: str,
+    code: str,
+    verifier: str,
+    *,
+    redirect_uri: str = CALLBACK,
+) -> Any:
     return client.post(
         "/token",
         data={
             "grant_type": "authorization_code",
             "code": code,
-            "redirect_uri": CALLBACK,
+            "redirect_uri": redirect_uri,
             "client_id": client_id,
             "code_verifier": verifier,
         },
@@ -274,6 +291,60 @@ def test_consent_wrong_secret_rejected(client: TestClient) -> None:
     response = approve_consent(client, location, secret="wrong-secret")
     assert response.status_code == 401
     assert "location" not in response.headers
+
+
+def test_consent_success_page_redirects_to_callback(client: TestClient) -> None:
+    info = register_client(client)
+    _, challenge = pkce_pair()
+    location = start_authorize(client, info["client_id"], challenge, state="oauth_s_test")
+    response = approve_consent(client, location)
+    redirect = redirect_url_from_consent_response(response)
+    assert redirect.startswith(CALLBACK)
+    assert "code=" in redirect
+    assert parse_qs(urlparse(redirect).query)["state"] == ["oauth_s_test"]
+    assert response.status_code == 200
+    assert "window.location.replace" in response.text
+
+
+def test_chatgpt_flow_with_resource_indicator(client: TestClient) -> None:
+    # ChatGPT sends RFC 8707 `resource` on /authorize; callback path is per-app.
+    callback = "https://chatgpt.com/connector/oauth/LxVoJmCzIUXl"
+    registered = client.post(
+        "/register",
+        json={
+            "redirect_uris": [callback],
+            "grant_types": ["authorization_code", "refresh_token"],
+            "response_types": ["code"],
+            "token_endpoint_auth_method": "none",
+            "client_name": "ai-memory",
+        },
+    )
+    assert registered.status_code == 201
+    client_id = registered.json()["client_id"]
+    verifier, challenge = pkce_pair()
+    consent_location = client.get(
+        "/authorize",
+        params={
+            "client_id": client_id,
+            "redirect_uri": callback,
+            "response_type": "code",
+            "code_challenge": challenge,
+            "code_challenge_method": "S256",
+            "resource": f"{ISSUER}/",
+            "state": "oauth_s_chatgpt",
+        },
+        follow_redirects=False,
+    ).headers["location"]
+    code = obtain_code_from_consent(client, consent_location)
+    token_response = exchange_code(client, client_id, code, verifier, redirect_uri=callback)
+    assert token_response.status_code == 200
+    assert mcp_initialize(client, token_response.json()["access_token"]).status_code == 200
+
+
+def obtain_code_from_consent(client: TestClient, consent_location: str) -> str:
+    response = approve_consent(client, consent_location)
+    redirect = redirect_url_from_consent_response(response)
+    return parse_qs(urlparse(redirect).query)["code"][0]
 
 
 # --- token issuance -----------------------------------------------------------
