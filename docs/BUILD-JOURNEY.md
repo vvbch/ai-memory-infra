@@ -1099,3 +1099,36 @@ The fix direction: structured, enforced inputs instead of freeform text.
 **Next**
 - Implement the structured operating contract, or run the product premise test — both
   are queued; the order is the operator's call.
+
+---
+
+## 2026-06-10 — Rotated the admin password the clean way, and made the secret index trustworthy
+
+**Focus:** close the last control-plane hygiene item — neutralise a partially-exposed
+admin password by rotating it — and make the index of secrets accurate.
+
+**Milestones**
+- **The leaked-prefix risk is gone.** The admin-UI password (a fragment of which had once
+  slipped into a private file's history) was rotated to a fresh, stronger hash, the new
+  value stored in the password manager, the proxy reloaded, and the new login verified live
+  (correct password accepted; no/old password rejected). The old fragment is now a dead
+  credential — fixed by rotation, with no history rewrite needed.
+- **The secret index now names names.** Prompted by a sharp operator question, every entry
+  in the secrets catalog was mapped to the exact password-manager item that holds its value
+  (several were unnamed or ambiguous, and the admin password had no dedicated item at all).
+  A latent mix-up between two storage keys — a least-privilege backup-only key and the
+  broader infrastructure key — was corrected at the same time.
+- **Plaintext swept off the box.** A convenience block that had kept the admin password in
+  plaintext inside the server's environment file (deliberately retained through the live
+  burn-in week) was deleted now that the value is safely in the vault — with the live
+  configuration confirmed intact and the on-disk backups removed.
+- **A documentation claim, confirmed against the live system.** The graph database was
+  queried directly and holds zero nodes — matching the earlier source-based finding that the
+  deployed memory service writes nothing to it yet.
+- **Routine maintenance, made deliberate.** Security patches were waiting on a reboot; the
+  box was rebooted (the stack self-recovers) and a standing monthly patch-and-reboot practice
+  was written down so this stops drifting.
+
+**Next**
+- Implement the structured operating contract (the model-agnostic upgrade), then run the
+  product premise test.
