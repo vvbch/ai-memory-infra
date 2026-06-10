@@ -175,6 +175,24 @@
 - **Enforcement:** installer-generated (re-run after re-clone); skill bodies are
   pointers, so drift surface is minimal.
 
+### 13. Remote MCP HTTP surface (`mcp.` subdomain) — TESTED / live
+
+- **What:** Streamable HTTP MCP at `https://mcp.chandrav.dev/` for Claude's
+  remote-connector clients (incl. iPhone). Same three tools as §3 (shared
+  `src/mcp_proxy/server.py` tool code, `metadata.source=mcp` on writes, default
+  `user_id=chandrav`). Every request must carry
+  `Authorization: Bearer <MCP_CONNECTOR_BEARER_TOKEN>` (dedicated token, **not**
+  `ADMIN_API_KEY`); missing/wrong token ⇒ `401` + `WWW-Authenticate: Bearer`.
+  `/health` is the only open route. Transport keeps DNS-rebinding protection
+  scoped to the subdomain; runs stateless (no session affinity behind Caddy).
+- **Schema lives in:** `src/mcp_proxy/http_server.py` (bearer gate + app),
+  `infra/mcp-proxy.Dockerfile`, `infra/docker-compose.yml` (`mcp-proxy` service),
+  `infra/Caddyfile` (`mcp.{$DOMAIN}`), Terraform `subdomains`.
+- **ADR:** 034 (remote MCP HTTP endpoint; bearer auth v1, OAuth as v2 path).
+- **Enforcement:** `tests/test_mcp_proxy/test_http_server.py` (401/health/
+  initialize-through-gate); live-verified 2026-06-10 (search round-trip over
+  HTTPS). Caddy rate limiting for this route stays in BACKLOG.
+
 ## Coverage at a glance
 
 | Contract | Enforcement | Cross-repo? |
@@ -191,6 +209,7 @@
 | 10. Pointer-file purity | ENFORCED | no |
 | 11. Final handoff | TESTED | yes (all repos) |
 | 12. Agent skills | installer-generated | no |
+| 13. Remote MCP HTTP | TESTED / live | no |
 
 > The gap this registry makes visible: contracts 1, 2, 8, 9, and 10 are
 > deterministically enforced; 5 (auth/guardrails) is the weakest and is tracked

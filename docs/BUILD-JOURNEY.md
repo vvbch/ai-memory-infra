@@ -1190,3 +1190,34 @@ skill system, and the "is this handoff actually clean?" check was still partly m
   checkpoint-freshness on top.
 - This closes the promoted P1 governance backlog item that three separate handoff
   post-mortems had been pointing at.
+
+## 2026-06-10 - The fourth surface: a remote MCP endpoint goes live
+
+**Focus:** the one memory surface that couldn't work yet was Claude on iPhone — a phone
+app can't launch a local helper process, it needs a public HTTPS endpoint speaking the
+MCP protocol. The design (a dedicated subdomain, a dedicated bearer token rather than
+reusing the admin key, OAuth deferred as the multi-user path) was decided in an ADR the
+session before; this session built and shipped it.
+
+**Milestones**
+- **Same tools, new transport.** The remote endpoint reuses the exact tool code the local
+  editor proxy already runs — search, add, list — so there is one implementation and one
+  write contract, not a fork. The new code is a thin HTTP shell: an auth gate plus the
+  protocol library's built-in HTTP transport, test-driven (six tests, written first).
+- **Defense kept proportionate.** Requests without the dedicated token get a 401; the
+  transport's DNS-rebinding protection stays on, scoped to the subdomain; the container
+  talks to the memory API over the internal Docker network so the admin key never leaves
+  the server. Token rotation is a two-minute operation by design.
+- **Shipped end-to-end in one session:** DNS record via Terraform (the plan showed
+  exactly one resource to add), a small container behind the existing reverse proxy, and
+  a live verification from the public internet — unauthorized requests rejected,
+  an authorized MCP search returning real memories.
+- **Cost: zero new spend** — the container rides the existing box.
+
+**Effort:** ~45 minutes, almost entirely agent-side. The only human steps left are
+account-bound by nature: saving the token in the password vault and registering the
+connector in the Claude account settings.
+
+**Next**
+- Operator registers the connector (web first; mobile inherits it), confirms an iPhone
+  round-trip — then the day's third goal: a memory-bank snapshot + an honest graph report.

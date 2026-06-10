@@ -311,7 +311,7 @@ Set these on the machine that starts the MCP client:
 
 ```powershell
 $env:AI_MEMORY_BASE_URL = "https://memory.chandrav.dev"
-$env:AI_MEMORY_USER_ID = "chrome-extension-user"
+$env:AI_MEMORY_USER_ID = "chandrav"
 $env:AI_MEMORY_API_KEY = "<from Bitwarden: ai-memory-infra ADMIN_API_KEY>"
 ```
 
@@ -330,7 +330,7 @@ Use a stdio server that runs the installed entrypoint:
       "command": "ai-memory-mcp",
       "env": {
         "AI_MEMORY_BASE_URL": "https://memory.chandrav.dev",
-        "AI_MEMORY_USER_ID": "chrome-extension-user",
+        "AI_MEMORY_USER_ID": "chandrav",
         "AI_MEMORY_API_KEY": "${env:AI_MEMORY_API_KEY}"
       }
     }
@@ -355,8 +355,28 @@ claude mcp add ai-memory -- ai-memory-mcp
 
 At least one MCP client lists `search_memories`, `add_memory`, and `list_memories`,
 then successfully searches for a known live memory without pasting the API key in
-chat. Claude mobile/iOS remains a later step because it needs a remote HTTP MCP
-endpoint, not a local stdio process.
+chat. Claude mobile/iOS uses the remote HTTP endpoint below instead of a local
+stdio process.
+
+### Remote MCP connector for Claude (incl. iPhone) — ADR 034
+
+The droplet serves the same three tools over Streamable HTTP at
+`https://mcp.chandrav.dev/` (Caddy → `mcp-proxy` container), gated by a dedicated
+bearer token (`MCP_CONNECTOR_BEARER_TOKEN` in the droplet `infra/.env`; master
+copy in Bitwarden — not the admin API key).
+
+Register it once on the web (mobile inherits connectors from web/desktop):
+
+1. Open `claude.ai` → **Settings** → **Connectors** → **Add custom connector**.
+2. Name: `ai-memory`. URL: `https://mcp.chandrav.dev/`.
+3. In the advanced/auth field, paste the bearer token from Bitwarden
+   (`MCP_CONNECTOR_BEARER_TOKEN`).
+4. Save, then enable the connector in a chat (search-and-tools menu). On the
+   iPhone Claude app it appears after the web registration syncs.
+
+Verify: ask Claude to search memories for a known live fact; writes land with
+`metadata.source=mcp`. Token rotation = regenerate, update droplet `.env`,
+`docker compose up -d mcp-proxy`, re-paste in the connector settings.
 
 ## IDE startup/handoff hooks (session bootstrap + completion gate)
 
