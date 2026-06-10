@@ -9,6 +9,50 @@
 
 ---
 
+## 2026-06-10 — Remote MCP, take two: self-hosted OAuth because the client demands it
+
+**Focus:** the remote memory endpoint for Claude on iPhone was deployed and
+verified earlier today behind a static bearer token — and then the registration
+screen revealed that claude.ai custom connectors accept **only OAuth** (or no
+auth at all). No field to paste a token into. This session turned that
+dead-end into a working OAuth 2.1 authorization server without adding a single
+new dependency or vendor.
+
+**Milestones**
+- **A blameless post-mortem first.** The miss was documented as a correction-of-
+  errors record: the design had been verified against the API-path connector
+  docs, not the consumer UI's own auth page. The systemic fix — when a design's
+  viability depends on a third-party surface the agent can't exercise itself,
+  that surface's own documentation gets verified at design time — is now part
+  of the decision record (ADR 035, superseding the auth section of ADR 034).
+- **Own the policy, not the protocol.** The MCP SDK already pinned in the
+  project ships the entire OAuth protocol surface: discovery metadata, dynamic
+  client registration, PKCE S256 verification, the token endpoint. The new code
+  is one module of single-user policy: a consent page where the operator pastes
+  the existing connector secret to approve a client, opaque rotated tokens
+  (access 1 h / refresh 60 d) stored SHA-256-hashed in a small state file on a
+  Docker volume — so connector sessions survive redeploys and the file never
+  contains a usable secret. The old static token still works for curl-style
+  verification, so nothing about the operational runbook breaks.
+- **Tested like it matters.** Twenty-five new tests drive the exact flow Claude
+  performs — registration → authorize → consent → PKCE token exchange →
+  authorized tool call — plus the abuse paths: wrong consent password, tampered
+  PKCE verifier, replayed authorization codes, expired and garbage tokens.
+  Suite: 103 passed, 94% coverage, strict typing clean.
+- **Rehearsed live before involving a human.** After deploy, the agent ran the
+  full OAuth dance end-to-end against the public endpoint itself — discovery,
+  registration, consent approval, token exchange, and a memory search with the
+  issued token returning real memories. The only steps left for the operator
+  are the two that genuinely require human hands: saving the secret to the
+  password vault and clicking through claude.ai's connect flow.
+
+**Next**
+- Operator registration on claude.ai (an OAuth connect + one consent-page
+  approval), confirmation on the iPhone app, then the day's third goal: a
+  memory-bank snapshot and an honest knowledge-graph status report.
+
+---
+
 ## 2026-06-10 — Memory Daily Driver v0, Phase 2: talking to your memory bank
 
 **Focus:** wire the Phase 1 verbs into normal conversation, so "plan my day" or
