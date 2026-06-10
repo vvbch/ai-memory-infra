@@ -130,7 +130,7 @@ Docker internal network (ADR 009).
 |---|---|---|
 | Desktop / ChromeOS | OpenMemory Chrome extension | Full |
 | Android | Edge Canary / Quetta + extension | Best-effort (ADR 004) |
-| iOS — Claude | Remote MCP connector | Future HTTP MCP endpoint needed |
+| iOS — Claude | Remote MCP connector (`mcp.{domain}`, Streamable HTTP) | ADR 034 accepted; deploy pending |
 | iOS — ChatGPT/Gemini/DeepSeek | none | Known gap |
 | Claude Code / Cursor / VS Code | Local stdio MCP proxy to live REST API | Full |
 | Any future tool | REST API | Full |

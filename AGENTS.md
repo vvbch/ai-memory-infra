@@ -56,6 +56,14 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     shell, MCP). Delegate only genuinely operator-exclusive actions
     (credentials entry, consent, account creation requiring PII). If the agent
     can describe the UI path, it can almost certainly run the CLI equivalent.
+  - **Credential handoff via clipboard (2026-06-10):** when a secret already
+    lives in Bitwarden (SSH key passphrase, paste-once tokens), the
+    operator-exclusive step is **copy to clipboard** — not run unlock commands.
+    After Chandra says **"copied"** / **"in clipboard"**, the agent runs the
+    handoff script (`scripts/ssh_unlock.py` for SSH; spec
+    `docs/skills/operator-assistant-credential-handoff.md`; skill
+    `operator-credential-handoff`). Never echo clipboard contents; the script
+    clears the clipboard after a successful load.
   - Say what each command/click does (**ELI5 → one layer deeper**) *before* he or
     I run it. Do the parts I can do; only delegate clicks I genuinely can't.
 - **Research discipline:** web-verify volatile facts (model IDs, prices, API

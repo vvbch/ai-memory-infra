@@ -161,7 +161,8 @@
 ### 12. Agent skills (discoverable trigger pointers) — ENFORCED (by installer)
 
 - **What:** the persona skills (`memory-daily-driver`, `session-checkpoint`,
-  `operator-action`) are versioned in `ai-memory-infra/skills/*/SKILL.md` as thin
+  `operator-action`, `operator-credential-handoff`) are versioned in
+  `ai-memory-infra/skills/*/SKILL.md` as thin
   trigger pointers to the canonical specs (`docs/skills/*`) + scripts; the
   installer copies them to the unversioned workspace root (`.cursor/skills/`,
   `.claude/skills/`) where Cursor/Claude Code auto-discover them (verified

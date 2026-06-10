@@ -13,7 +13,9 @@ Before delegating anything to Chandra:
 
 1. **Pre-delegation gate:** verify the action cannot be done via CLI/API/MCP
    (`gh`, `curl`, shell). Delegate only genuinely operator-exclusive steps
-   (credentials entry, consent, account creation requiring PII).
+   (credentials entry, consent, account creation requiring PII). **Exception:**
+   SSH passphrase / paste-once secrets → `operator-credential-handoff` skill
+   (copy to clipboard only; agent runs `scripts/ssh_unlock.py`).
 2. **Web-verify volatile UI steps** (console layouts drift) before giving
    click-by-click instructions.
 3. Validate + render the action block from the `ai-memory-infra` repo root:

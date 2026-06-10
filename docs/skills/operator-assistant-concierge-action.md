@@ -69,5 +69,13 @@ python scripts/operator_action.py \
 python scripts/operator_action.py --json --purpose ... --action ... --success ...
 ```
 
+## When to use vs credential handoff
+
+| Situation | Use |
+|---|---|
+| Operator must click/consent in a web UI | `operator_action.py` |
+| Operator copies a secret to clipboard; agent runs the consumer | `operator-credential-handoff` / `scripts/ssh_unlock.py` |
+| No secret; agent can run everything | Neither — just run it |
+
 Cross-platform (tenet 3): pure Python stdlib, UTF-8 forced. Editor-agnostic
 (tenet 2): any harness or a human can run it.

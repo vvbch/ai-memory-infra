@@ -168,6 +168,11 @@ later become skills under the Build Agent.
    canonical practice text in `AGENTS.md`.
 5. **Memory Steward: memory hygiene checks.** Flag secrets, oversized memories,
    missing owner metadata, and stale facts. (Deferred behind real utility.)
+6. ✅ **DONE (2026-06-10) — Operator Assistant: credential handoff (clipboard →
+   agent).** SSH unlock and future paste-once secrets: operator copies; agent runs
+   `scripts/ssh_unlock.py`. Spec:
+   `docs/skills/operator-assistant-credential-handoff.md`; skill
+   `operator-credential-handoff`.
 
 This order directly follows the COEs: first fix handoff and operator-action
 mechanics, then expand capability.
