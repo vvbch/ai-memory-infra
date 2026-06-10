@@ -40,8 +40,13 @@
 
 ## P1 — discovered drift / verification
 
-- **`[docs-drift]` Architecture docs claim a "Mem0 auto-managed graph" in Neo4j —
-  source says the deployed stack has none (found 2026-06-10, tenet 8/10).**
+- ◑ **`[docs-drift]` Architecture docs claimed a "Mem0 auto-managed graph" in Neo4j —
+  source says the deployed stack has none (found 2026-06-10, tenet 8/10). DOC FIX
+  DONE 2026-06-10 (ADR 032):** corrected `architecture.md`, `AGENTS.md`, `README.md`,
+  `scaffold.py`, compose + Dockerfile comments, ADR 005 note, setup-prompt banner.
+  **Remaining:** (1) live droplet confirm `MATCH (n) RETURN count(n)` is empty
+  (next operator SSH session); (2) the graph-source one-way-door decision
+  (LifeGraph-only vs graph-capable Mem0) before Phase 6 — see ADR 032 §4.
   Verified from upstream source at our pinned ref (`MEM0_REF=3669459…`) and the
   mem0ai 2.0.4 PyPI wheel: the `server/` REST app never reads `NEO4J_*` and never
   configures a `graph_store`, and the 2.0.4 library ships **zero** graph-memory
@@ -56,6 +61,24 @@
   (current plan) or a Mem0 version/extra that actually ships it. Until then,
   decision-supersession history lives in the Mem0 SQLite history table + the
   Daily Driver supersession convention, not in Neo4j.
+
+## P1 — model-agnostic operating contract (ADR 033, Workstream C)
+
+> Direction decided 2026-06-10 (Option B); design in ADR 033; **implementation is a
+> tracked next-session task** (tenet 16). Purpose: stop the contract from being
+> ~900 lines of model-dependent prose — make it structured + enforced so adherence
+> doesn't vary when switching models (Opus 4.8 ↔ Composer 2.5).
+
+- **`[contract]` Build the structured single-source.** Lift tenets + DoD table +
+  practices into `contract/*.yaml` (verbatim) with `enforcement.status` per rule;
+  `scripts/render_contract.py` (TDD) generates fenced AGENTS.md/tenets.md sections +
+  `docs/reports/contract-coverage.md`; wire `--check` into pre-commit + CI. ADR 033 §Migration.
+- **`[contract]` Enforcement backlog (convert top prose-only rules to gates), in priority:**
+  (1) **final-response/handoff validator** — already PROMOTED to P1 governance below;
+  (2) **operator-action format gate** — wire `scripts/operator_action.py` so operator-facing
+  prompts route through it (today opt-in); (3) **pointer-file purity gate** — fail if
+  `.cursor/rules/*`/`CLAUDE.md` carry rule content (ADR 018; closes COE 2026-06-07-cursor-rule-drift);
+  (4) **DoD trigger-table conformance** — check the changed area's target docs were touched.
 
 ## P1 — do at the start of Phase-1 CI work
 

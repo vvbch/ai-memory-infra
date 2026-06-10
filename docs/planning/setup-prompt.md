@@ -1,5 +1,12 @@
 # Personal AI Memory Infrastructure — Complete Setup Prompt
 
+> **⚠️ HISTORICAL SNAPSHOT (the original Day-0 bootstrap prompt) — NOT current
+> truth.** Several decisions below were superseded by later ADRs and should not be
+> treated as the live design: extraction is OpenAI `gpt-5-mini`, not DeepSeek
+> (ADR 013); Neo4j is reserved for LifeGraph and is **not** a live Mem0
+> "dual namespace" (ADR 032). For current state read `docs/architecture.md`,
+> `AGENTS.md`, and `docs/planning/STATUS.md`. Kept as-is for provenance.
+>
 > **How to use**: Paste everything below the line into a new Claude Code session.
 > Self-contained. The new session needs nothing else. No pre-requisites — everything including VPS provisioning, DNS, API keys, and GitHub repo is part of the execution plan.
 

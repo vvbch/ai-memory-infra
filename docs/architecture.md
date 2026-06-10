@@ -22,7 +22,7 @@ flowchart TB
         subgraph Compose["Docker Compose"]
             API["mem0-api<br/>FastAPI REST"]
             PG[("PostgreSQL 16<br/>+ pgvector")]
-            NEO[("Neo4j<br/>dual namespace:<br/>Mem0 graph + LifeGraph")]
+            NEO[("Neo4j<br/>reserved for LifeGraph (Phase 6)<br/>running + backed up; not written today")]
             DASH["mem0-dash"]
             PROM["prometheus"]
             GRAF["grafana"]
@@ -41,7 +41,7 @@ flowchart TB
     D3 -.future remote MCP.-> CADDY
     CADDY --> API
     API --> PG
-    API --> NEO
+    API -.future LifeGraph, Phase 6.-> NEO
     API --> DASH
     API -.extraction.-> LLM
     API -.embeddings.-> EMB
@@ -61,6 +61,17 @@ flowchart TB
 > categorization), not cost. DeepSeek/Qwen and `gpt-4.1-nano` stay documented,
 > swappable alternatives; steady state moves both stages to local Ollama on the
 > Alienware. See ADR 011 (embeddings) and ADR 013 (single-provider, supersedes ADR 002).
+
+> **Neo4j status (ADR 032) — provisioned, not yet in use.** Neo4j is deployed,
+> healthy, and backed up, but **nothing writes to it today.** The deployed Mem0
+> server never reads `NEO4J_*` and configures no graph store, and mem0ai 2.0.4
+> ships no graph-memory code (so the `mem0ai[graph]` extra and the compose
+> `NEO4J_*` env vars are currently inert). Neo4j is **reserved for LifeGraph**
+> (people / ventures / skills / decisions / milestones), which is **Phase 6 and
+> not yet built**. Earlier docs called this a "dual namespace (Mem0 auto-managed
+> graph + LifeGraph)"; that overstated reality and was corrected 2026-06-10. Until
+> Phase 6, decision-supersession history lives in Mem0's SQLite history table + the
+> Daily Driver supersession convention, not in Neo4j.
 
 ## Components & cost
 

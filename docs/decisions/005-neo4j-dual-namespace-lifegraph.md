@@ -1,6 +1,11 @@
 # ADR 005: Neo4j dual namespace with LifeGraph
 
-**Status:** Accepted
+**Status:** Accepted — **partially corrected by ADR 032 (2026-06-10).** The
+LifeGraph namespace (decision #2) remains the plan (Phase 6, not yet built). The
+premise behind decision #1 — that the deployed **Mem0 auto-manages a graph** in the
+same Neo4j instance — is **wrong for the current stack**: the deployed Mem0 server
+ships no graph store and never writes Neo4j (ADR 032). So today Neo4j is a single
+(future) namespace, not a live dual namespace.
 **Date:** 2026-06-04
 
 ### Context

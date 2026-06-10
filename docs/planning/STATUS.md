@@ -6,133 +6,144 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-10 (**control-plane hardening session: STATUS-drift COE + shape gate,
-real CI + fix-on-failure agent, weekly scan automation (Sat 09:00 IST), `/resume` command,
-interview packets refreshed + 5 per-track packets**). Repo-health green at session start.
+**Last updated:** 2026-06-10 (**control-plane hardening session: secrets catalog +
+hygiene, HLD-drift fix (Neo4j), LLD design-template + interface registry, maturity
+honesty, and the structured-operating-contract design (ADR 033, model-agnostic)**).
+Repo-health green at session start.
 
 ## Plain English — where we are (resume here)
 
 **The product:** your self-hosted memory server is live (`https://memory.chandrav.dev/docs`),
-backed up nightly with watchdogs, restore-drilled monthly, reachable from Chrome (extension) and
-Cursor/Claude Code (local MCP proxy). The conversational practice is wired: say *"plan my day"*,
-*"log this, remind me Friday"*, *"recruiter X reached out"*, *"we decided X because Y"*, or
-*"done"* — the agent reads/writes your memory bank and always echoes back exactly what it stored.
-**The next product step is the fun one (Phase 3, the premise test):** put your REAL todos and a
-couple of real recruiter reachouts in, use "plan my day" for a few days, and judge whether it's
-genuinely useful.
+backed up nightly + restore-drilled monthly, reachable from Chrome and Cursor/Claude Code
+(local MCP proxy). The conversational practice ("plan my day", "log this", "we decided X")
+is wired.
 
-**What changed this session (2026-06-10):** you spotted that this STATUS file had quietly become a
-second log (it had ~25 layers of old updates). That was a process failure — we wrote it up properly
-(COE), trimmed this file back to a true snapshot (nothing lost — every detail is still in the
-private build log and git history), and added a machine check so it can never silently happen
-again. We also gave the project a **standing maintenance crew**: real CI now runs lint + types +
-tests on every change; if CI fails on main, an agent automatically investigates and opens a fix PR;
-and **every Saturday 09:00 IST** a scan agent reviews the whole repo (redundancies,
-inconsistencies, benchmark vs industry standards) and refreshes your **interview packets** — there
-are now five track-specific ones (PM, Product, AI Engineer, Principal AI Engineer, Sr EM AI) in the
-private repo. Typing **`/resume`** in a new chat now does what pasting the resume line used to.
+**Why this session existed:** you noticed that when you switch models (Opus 4.8 high vs
+Composer 2.5), adherence to tenets/guidelines/operating-style varies a lot — because the
+contract is ~900 lines of *prose* the model must read and choose to follow. You asked to
+(1) make the buildout model/reasoning-agnostic, (2) check we manage scope/architecture/
+HLD/LLD well, and (3) confirm secrets are catalogued in the private repo (purpose + where
+they live, no values). We did all three as control-plane hardening, **before** going back
+to Phase 3.
 
-**Automation secrets are set and smoke-tested green** (both weekly-scan jobs passed).
-COE written for a pre-delegation failure (agent delegated a `gh workflow run` to the operator
-instead of running it; tenet 17 violation; new pre-delegation gate added to AGENTS.md concierge
-rules).
+**What changed this session (2026-06-10):**
+- **Secrets are now catalogued.** New `ai-memory-infra-private/docs/security/secrets-catalog.md`
+  lists every secret (no values) — purpose, where it lives (console URL / Bitwarden item),
+  rotation, blast radius. AGENTS.md DoD now requires a catalog row whenever a secret is
+  created/rotated. Two hygiene snags flagged + the working-copy scrubbed.
+- **HLD drift fixed (ADR 032).** The "Neo4j dual namespace / Mem0 auto-graph" claim was
+  wrong (deployed Mem0 ships no graph store, writes nothing to Neo4j). Corrected everywhere;
+  Neo4j is now honestly described as reserved-for-LifeGraph (Phase 6).
+- **LLD/HLD discipline is now systematic.** Added a design-doc template
+  (`docs/design/TEMPLATE.md`) + a DoD rule (design doc before code), and an interface/
+  contract registry (`docs/interfaces.md`) with enforcement status per contract.
+- **Maturity honesty.** Reworded AGENTS.md engineering practices to `[in place]` vs
+  `[target]`, annotated build-phase reality, deleted 4 red stub workflows, fixed the
+  extension's stale README default + rewrote its privacy policy for the self-hosted reality.
+- **Model-agnostic direction decided (Option B), designed, handed off.** ADR 033 specs a
+  *structured single-source contract* (`contract/*.yaml` -> renders AGENTS.md + an
+  enforcement-coverage report; gates read the same ids). Implementation is the next
+  session's one task.
 
-**What you pay:** ~₹2,600/mo for the cloud box; full stack ≈ ₹3,800/mo landed; pause anytime with
+**What you pay:** ~₹2,600/mo cloud box; full stack ≈ ₹3,800/mo landed; pause anytime with
 `scripts/teardown.py`.
 
 ## Current phase
 
-**Memory Daily Driver v0 — Phases 0-2 done; Phase 3 (premise test) is next.** Infra phases 1-4
-(IaC, backup/restore + drills, Chrome extension, MCP) are all complete and live-proven. Control
-plane this session gained: deterministic STATUS shape gate, real CI (`.github/workflows/ci.yml`),
-fix-on-failure agent (`ci-autofix.yml`), weekly scan + interview-refresh automation
-(`weekly-scan.yml`, prompts versioned in `docs/automation/`), and the `/resume` slash command
-(installed per-IDE by `scripts/install_ide_hooks.py`).
+**Control plane hardened (this session). Two candidate next tracks, operator picks order:**
+(A) implement ADR 033 structured contract (per the approved plan, next session's single
+task); (B) Phase 3 premise test (your originally-stated "then go back to phase 3", and what
+COE 2026-06-10-delayed-memory-buildout urges first). Infra phases 0-4 are done/live; phases
+5-8 are stubs (see AGENTS.md build-phase status).
 
 ## Done this session (2026-06-10)
 
-- **COE + fix: STATUS.md log drift** — `docs/coe/2026-06-10-status-snapshot-log-drift.md`;
-  trimmed this file 1,343 → ~140 lines; `scripts/check_status_snapshot.py` (TDD, 9 tests) wired
-  as pre-commit gate 3 + CI step; AGENTS.md DoD row now says "overwrite means replace".
-- **Real CI** on every push/PR: ruff + mypy + pytest (80% gate) + memory-contract gate + STATUS
-  gate. Fixed the one pre-existing ruff failure (`check_memory_contract.py` E501).
-- **`ci-autofix.yml`**: CI failure on main → agent reproduces, fixes (two-way doors only, never
-  weakens a gate), opens a PR.
-- **`weekly-scan.yml`** (Sat 09:00 IST = cron `30 3 * * 6`): job 1 scans the repo (redundancy,
-  inconsistency, tests, architecture benchmark) → report in `docs/reports/weekly-scan/` + fixes
-  PR; job 2 regenerates the interview packets in the private repo. Orchestration is GitHub
-  Actions, prompts are versioned markdown, agent CLI is a swappable two-line detail (tenet 2).
-- **Baseline scan report** (manual first pass): `docs/reports/weekly-scan/2026-06-10-baseline.md`
-  — benchmark scorecard + a table of one-way-door findings awaiting operator decisions.
-- **`/resume` command**: the canonical resume prompt as a one-word slash command
-  (`.cursor/commands/resume.md` + `.claude/commands/resume.md`, generated by the hook installer).
-- **Interview packets**: master packet decision log + new "Agents, skills & mechanisms" showcase
-  inventory + 2 new STAR stories; five per-track packets created in
-  `ai-memory-infra-private/docs/interviews/`.
-- **Automation secrets set + smoke-tested green:** `CURSOR_API_KEY` + `PRIVATE_REPO_PAT` (GitHub
-  PAT "ai-memory-interview-refresh", Contents + Pull requests: RW on
-  `vvbch/ai-memory-infra-private`) as repo secrets on `vvbch/ai-memory-infra`; enabled Actions
-  PR-creation permission via API; `weekly-scan.yml` manual trigger: both jobs green.
-- **COE: premature delegation to operator** — `docs/coe/2026-06-10-premature-delegation-to-operator.md`;
-  AGENTS.md concierge rules gained a pre-delegation gate: "before delegating, verify the action
-  cannot be performed via CLI/API."
+- **Secrets catalog** — `ai-memory-infra-private/docs/security/secrets-catalog.md` (no
+  values): full inventory with purpose/location/rotation/blast-radius; AGENTS.md custody +
+  DoD rows now require a catalog row on every secret create/rotate.
+- **Secret hygiene** — redacted the partial basic-auth password prefix from the private
+  `BUILD-LOG.md` working copy; documented the exposure + the `.env` plaintext block as open
+  hygiene items in the catalog. **Operator action still needed** (see blockers): rotate the
+  Caddy basic-auth password + delete the `.env` block (closes P1 burn-in).
+- **HLD drift (ADR 032)** — corrected the Neo4j/Mem0-graph overclaim in `architecture.md`,
+  `AGENTS.md`, `README.md`, `scaffold.py`, compose + Dockerfile comments, ADR 005 note,
+  setup-prompt banner. Live `MATCH (n) count` confirm deferred to next operator SSH session.
+- **LLD mechanism** — `docs/design/TEMPLATE.md` + DoD trigger "design doc before code".
+- **Interface registry** — `docs/interfaces.md` (8 contracts, enforcement status).
+- **Maturity honesty** — practices `[in place]`/`[target]`; build-phase reality; deleted
+  `cd.yml`/`eval-suite.yml`/`backup-verify.yml`/`docker-build.yml` stubs; extension
+  README/privacy fixed.
+- **ADR 033** — structured operating contract design + enforcement backlog; Option B chosen,
+  implementation handed to next session.
 
 ## Last decisions
 
-- **Doc contracts are code** — deterministic shape validators for documents, same as lint for
-  code (COE 2026-06-10).
-- **Automation orchestration belongs to the repo, not the IDE** — GitHub Actions + versioned
-  prompts; agent vendor is a swappable detail; agent jobs run with zero live credentials,
-  PR-only, two-way doors only (operator confirmed "not tied to Cursor" 2026-06-10).
-- **Weekly cadence:** Saturday 09:00 IST, output = PR + report (operator choice 2026-06-10).
+- **Operating contract becomes structured single-source (ADR 033, Option B).** Prose is
+  generated from `contract/*.yaml`; gates read the same ids; coverage report makes the
+  model-dependent surface visible and shrinkable. Build deferred to next session (tenet 16).
+- **Neo4j is reserved for LifeGraph, not a live Mem0 graph (ADR 032).** Corrects ADR 005
+  premise #1. Graph-source decision (LifeGraph-only vs graph-capable Mem0) is a pre-Phase-6
+  one-way door.
+- **Secrets get a private catalog (index), Bitwarden stays the value store.** Creating/
+  rotating a secret is not done until it's in both.
+- **Design doc before code** for any new phase/module/capability (HLD+LLD template).
 
 ## Backlog (parked work)
 
-Prioritized backlog lives in **`docs/planning/BACKLOG.md`** (P1/P2/P3). Top items: P1
-`[docs-drift]` Mem0-graph claim fix (architecture docs overstate Neo4j's current role — verify
-droplet Neo4j empty, fix docs + ADR); P1 `.env` plaintext-note strip (burn-in trigger ~2026-06-15,
-tenet 18). New candidates from the baseline scan report (operator to rank): AGENTS.md security
-claims vs implementation reword, delete stub workflows, dependency lockfile + pinning.
+Prioritized backlog in **`docs/planning/BACKLOG.md`**. Updated this session: the
+`[docs-drift]` Neo4j P1 doc-fix is done (ADR 032) — remaining is the live count confirm +
+the graph-source one-way-door decision. New: **Workstream C enforcement backlog** (ADR 033)
+— final-response/handoff validator (promoted P1 governance), operator-action gate wiring,
+pointer-purity gate, DoD-trigger conformance. Still open: `.env` plaintext strip (now
+unblocked by the rotation action), supply-chain pinning/lockfile, `MEM0_DEFAULT_LLM_MODEL`
+boot-assert.
 
 ## Open blockers / risks
 
-- ~~Operator setup for automation secrets~~ **Done 2026-06-10:** `CURSOR_API_KEY` and
-  `PRIVATE_REPO_PAT` set as repo secrets; Actions PR-creation permission enabled;
-  smoke-test green (both jobs).
-- **OpenClaw adapter gate (ADR 028):** before enabling OpenClaw writes, verify the adapter passes
-  `source`/`agent_id` through to Mem0 + Neo4j metadata; patch the adapter, never fork `user_id`.
-- **`gpt-4.1-nano` silent fallback** if `MEM0_DEFAULT_LLM_MODEL` ever unset on the droplet —
-  `.env.example` pins it; keep it set.
-- **Operator income change risk (end-June 2026):** recurring spend must stay pause-able —
-  `decommission.md` §2 → `scripts/teardown.py` drops the droplet in one command.
-- **Cosmetic:** Compose `"wdqOTNUqJsh" variable is not set` warning (bcrypt `$` in
-  `BASIC_AUTH_HASH`) — harmless. Apex `chandrav.dev` TLS unverified from Windows (placeholder).
+- **Operator action — basic-auth password rotation (this session's one handoff item):**
+  a partial prefix of the admin-UI/basic-auth password sits in private `BUILD-LOG.md`
+  git history. Recommended fix (reversible; neutralizes the leaked prefix, no history
+  rewrite): rotate it. Needs a live droplet change + Bitwarden write. **One step:** when
+  ready, I'll walk you through `caddy hash-password` → update `infra/.env` on the droplet →
+  reload Caddy → store the new plaintext in Bitwarden → I tick the catalog. The same SSH
+  session can run the Neo4j `MATCH (n) RETURN count(n)` confirm + delete the `.env` block.
+- **OpenClaw adapter gate (ADR 028):** verify `source`/`agent_id` propagation before enabling writes.
+- **`gpt-4.1-nano` silent fallback** if `MEM0_DEFAULT_LLM_MODEL` unset on the droplet — keep it set.
+- **Operator income change risk (end-June 2026):** spend must stay pause-able (`scripts/teardown.py`).
+- **Cosmetic:** bcrypt `$` Compose warning; apex `chandrav.dev` TLS unverified from Windows.
 
 ## Environment notes
 
 - Use `working_directory` param, not raw `cd` (Drive path has spaces/parens). Windows
-  PowerShell 5.1; git push auth cached. Repos: `github.com/vvbch/ai-memory-infra(-private)`.
+  PowerShell 5.1; git push auth cached. Repos: `github.com/vvbch/ai-memory-infra(-private)`,
+  `ai-memory-extension`.
 - **gitleaks PATH:** refresh in the committing shell:
   `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')`.
-- **SSH:** key in `ssh-agent` (passphrase in Bitwarden); droplet `168.144.145.29` (`root@`);
-  stack in `/opt/ai-memory-infra/infra`; mem0 source at `/opt/mem0-src`.
-- **Droplet repo sync:** `git fetch && git diff --stat origin/main` then
-  `git reset --hard origin/main` (remote is truth, tenet 11; `.env` gitignored, untouched).
-- **No-bash-on-Windows:** `bash -n` via `C:\Program Files\Git\bin\bash.exe`.
-- Nightly backup timer (18:30 UTC) + monthly restore drill (1st, 19:30 UTC), both watched by
-  healthchecks.io. Permanent drill canary `user_id=drill-canary` is planted — leave it.
+- **SSH:** key passphrase in Bitwarden; **ssh-agent is not auto-loaded in agent shells** —
+  SSH to the droplet (`root@168.144.145.29`) is operator-gated this way. Stack in
+  `/opt/ai-memory-infra/infra`; mem0 source `/opt/mem0-src`.
+- **Droplet repo sync:** `git fetch && git diff --stat origin/main` then `git reset --hard origin/main`.
+- Nightly backup (18:30 UTC) + monthly restore drill (1st, 19:30 UTC), watched by healthchecks.io.
+  Drill canary `user_id=drill-canary` is planted — leave it.
 
 ## Next action
 
-> **RESUME HERE.** Automation secrets are set and verified green. One item:
+> **RESUME HERE.** Control plane is hardened + committed. Pick the track:
 >
-> 1. **Phase 3 — the premise test (the fun one).** Sit with Chandra and capture his REAL open
->    items + 1-2 real recruiter reachouts (one at a time, conversational practice per AGENTS.md
->    § Memory Daily Driver), run "plan my day" for a few days, judge whether retrieval is
->    genuinely useful, iterate. Operator-facing work — expect conversation, not code.
+> **(A) Implement ADR 033 — structured operating contract (the approved next task).**
+> Lift the 18 tenets + DoD table + practices into `contract/*.yaml` (verbatim) with an
+> `enforcement.status` per rule; write `scripts/render_contract.py` (TDD) to generate the
+> fenced AGENTS.md/tenets.md sections + `docs/reports/contract-coverage.md`; wire `--check`
+> into pre-commit + CI; then pick the top 1-2 enforcement-backlog gates. See ADR 033 §
+> "Migration steps".
 >
-> Background: personas in `docs/agent-personas.md`; reversibility rules tenet 17; commit+push
-> every touched repo before ending (completion gate enforces).
+> **(B) Phase 3 — premise test.** Capture your REAL open items + 1-2 recruiter reachouts
+> (conversational, one at a time per AGENTS.md § Memory Daily Driver), run "plan my day"
+> for a few days, judge genuine utility. Operator-facing; expect conversation, not code.
+>
+> Recommended: (A) is the directed plan and removes the model-drift pain you raised; (B)
+> is what the delayed-buildout COE urges and what you said you'd "go back to". Your call.
+> Also pending: the basic-auth rotation handoff item (Open blockers).
 
 **How to talk to the next agent:** type **`/resume`** in a new chat — or paste:
 

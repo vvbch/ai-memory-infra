@@ -170,7 +170,9 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 ## Architecture (summary)
 
 Caddy (auto-HTTPS) → Mem0 (FastAPI REST) over PostgreSQL/pgvector, plus
-Neo4j (dual namespace: Mem0 auto-managed graph + LifeGraph). A local stdio MCP
+Neo4j (running + backed up but **not yet written**: reserved for LifeGraph,
+Phase 6; the deployed Mem0 ships no graph store, so it writes no graph today —
+ADR 032, corrects the earlier "dual namespace" claim). A local stdio MCP
 proxy (ADR 025) lets Claude Code, Cursor, and VS Code call the live REST API.
 Prometheus + Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
 Claude remote MCP connector still needs a later HTTP endpoint for iOS; Claude Code +
@@ -188,23 +190,51 @@ Full diagram: `docs/architecture.md`.
 `social_media` (YouTube; Vijaya + cousin) · `ria` (future) ·
 `personal` / `career` / `migration` (job search, Germany/Australia, PhD Dec 2026).
 
-## Engineering practices (non-negotiable)
+## Engineering practices (standards — with honest status)
 
-- **IaC**: Terraform for all infra. No manual console clicks.
-- **TDD**: tests before implementation; 80%+ coverage on `src/`.
-- **CI** on every PR: ruff + mypy + pytest against an ephemeral Docker stack.
-- **CD** on push to main: SSH deploy → health check → rollback on failure.
-- **Eval framework**: retrieval (precision@k, MRR), extraction (cross-LLM),
-  categorization, guardrails. Weekly CI run; blocks on regression.
-- **Security**: JWT auth, PII filter (Aadhaar/PAN/keys), HTTPS, CORS allowlist,
-  rate limiting, basic auth on admin UIs. Stack ships with none of this — add it.
-- **ADRs** in `docs/decisions/` for every major choice.
+These are the project's engineering standards. Each is tagged **[in place]** (live
+and enforced today) or **[target — Phase N]** (the standard we hold ourselves to,
+not yet built). Keep these tags honest — a claim outrunning reality is itself drift
+(tenet 10; baseline scan 2026-06-10).
 
-## Build phases
+- **IaC** — **[in place]** Terraform for all cloud infra; no manual console clicks.
+- **TDD** — **[in place]** tests before implementation; 80%+ coverage gate on `src/`
+  (enforced in CI).
+- **CI** — **[in place]** on every push/PR: ruff + mypy + pytest + the contract/
+  STATUS gates (`.github/workflows/ci.yml`). (Tests run against fakes, not yet a
+  full ephemeral Docker stack — **[target]**.)
+- **CD** — **[target — Phase 1/ops]** push-to-main SSH deploy → health check →
+  rollback. **Today deploys are manual SSH** (`make deploy`); no `cd.yml` yet.
+- **Eval framework** — **[target — Phase 7]** retrieval (precision@k, MRR),
+  extraction (cross-LLM), categorization, guardrails, blocking on regression.
+  Designed (ADR 007/014); `src/eval/` is still a stub.
+- **Security** — **partly [in place], partly [target — Phase 9/security]**. In
+  place: HTTPS (Caddy), an admin `X-API-Key` + JWT support on the API, basic auth on
+  admin UIs, least-privilege backup key, gitleaks. Target (not yet built): PII filter
+  (Aadhaar/PAN/keys), CORS allowlist, rate limiting. The OSS stack ships none of the
+  target items — they are explicitly TODO, not done. See `docs/interfaces.md` §5.
+- **ADRs** — **[in place]** in `docs/decisions/` for every major choice.
+- **Supply chain** — **[target]** lockfile + dependency pinning + action SHA-pinning
+  + Dependabot are not yet in place (BACKLOG; baseline scan gap).
 
-0 scaffold + accounts · 1 IaC (Terraform/Compose/Caddy) · 2 backup/restore ·
-3 Chrome extension fork · 4 Claude + Cursor/VS Code MCP · 5 migration (TDD) ·
-6 LifeGraph (TDD) · 7 eval framework (TDD) · 8 observability · 9 docs/polish.
+## Build phases (with reality status)
+
+Status as of 2026-06-10 — keep honest (a stub-only phase must not read as progress;
+COE 2026-06-10-delayed-memory-buildout):
+
+- **0 scaffold + accounts** — ✅ done
+- **1 IaC (Terraform/Compose/Caddy)** — ✅ done (deploy is manual SSH; no CD yet)
+- **2 backup/restore + drills** — ✅ done (nightly timer, dead-man's-switch, monthly drill)
+- **3 Chrome extension fork** — ✅ live (some polish parked, BACKLOG)
+- **4 Claude + Cursor/VS Code MCP** — ✅ done (local stdio proxy)
+- **3-premise** *(product premise test — the current STATUS Next action)* — ⬜ not started
+- **5 migration (TDD)** — ⬜ stub (`src/migration/` placeholder)
+- **6 LifeGraph (TDD)** — ⬜ stub (`src/life_graph/` placeholder; Neo4j reserved, ADR 032)
+- **7 eval framework (TDD)** — ⬜ stub (`src/eval/` placeholder; designed in ADR 007/014)
+- **8 observability** — ⬜ stub (`src/observability/`, `src/health/` placeholders; `monitor.` reserved)
+- **9 docs/polish** — ⬜ ongoing
+
+`⬜ stub` means the `src/` module is a placeholder file, not an implementation.
 
 ## Conventions
 
@@ -213,10 +243,13 @@ Full diagram: `docs/architecture.md`.
 - Secrets only via `.env` (gitignored) and CI secrets. Never in code/commits/logs.
 - **Credential custody:** every account login, API token, and key for the project
   is stored in the **Bitwarden `ai-memory-infra` individual-vault folder** the moment
-  it's created (ADR 017). The vault is the single home for secrets, mirroring how git
-  (tenet 1) is the single home for everything non-secret — nothing important lives
-  only in a chat window. For SSO logins, store a note (e.g. "DigitalOcean = Google
-  SSO, <email>") so the nominee can still get in.
+  it's created (ADR 017) **and** indexed (no value) in the private
+  `docs/security/secrets-catalog.md` — purpose, where it lives, rotation, blast
+  radius. The vault is the single home for secret *values*; the catalog is the single
+  index of *what exists and where to find/rotate it*, mirroring how git (tenet 1) is
+  the single home for everything non-secret — nothing important lives only in a chat
+  window. For SSO logins, store a note (e.g. "DigitalOcean = Google SSO, <email>") so
+  the nominee can still get in.
 - When a fact about an external product/API could be stale, verify before coding.
 
 ## Working model (sessions, tooling, governance)
@@ -334,14 +367,14 @@ docs to update:
 |---|---|
 | Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, `docs/interview_packet.md` (arch-at-a-glance + decision log) |
 | A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), `interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |
-| A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport) | The decision is **a contract, not a document** (ADR 031): verify — and patch where needed — in **every** consumer repo (`ai-memory-extension`, MCP proxy `src/mcp_proxy/client.py`, the OpenClaw adapter, the future todo app) before it is done; add a "Propagation / conformance" section to the ADR; `scripts/check_memory_contract.py` must pass. A clean control-plane repo with a violating consumer is **not** done |
+| A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport) | The decision is **a contract, not a document** (ADR 031): verify — and patch where needed — in **every** consumer repo (`ai-memory-extension`, MCP proxy `src/mcp_proxy/client.py`, the OpenClaw adapter, the future todo app) before it is done; register it in `docs/interfaces.md` (with enforcement status); add a "Propagation / conformance" section to the ADR; `scripts/check_memory_contract.py` must pass. A clean control-plane repo with a violating consumer is **not** done |
 | A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md` — **never** restate it in the editor pointer files (they stay pure pointers; see next row + ADR 018) |
 | An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`) | Keep it a **pure pointer** — frontmatter + "read `AGENTS.md`"; it carries **zero** tenets/rules/decisions (tenet 2, ADR 018). If you're adding substance here, it belongs in `AGENTS.md` instead |
 | Infra/IaC (terraform, compose, Caddy, `.env`) | `docs/runbook.md` / `docs/setup.md` if ops or commands change, `README.md` quick-start if commands change, `STATUS.md` |
-| A `src/` module or capability | tests first (TDD), `README.md`/`architecture.md` if user-facing, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |
+| A new phase, `src/` module, or capability | **a design doc first** (`docs/design/<name>.md` from `docs/design/TEMPLATE.md` — HLD + LLD: components, interfaces, data contracts, failure modes, test plan) **before code**, proportional to stakes (tenet 8); then tests first (TDD), `README.md`/`architecture.md` if user-facing, `docs/interfaces.md` if it adds/changes a contract, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |
 | Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |
 | Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
-| Create / obtain any account, API token, key, or secret | Store it **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault |
+| Create / obtain / rotate any account, API token, key, or secret | Store the value **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017) **and** add/update a row (no value) in the private `docs/security/secrets-catalog.md` (purpose · where it lives · rotation · blast radius); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault **and** the catalog |
 | End of any working session | (1) `docs/planning/STATUS.md` — **overwrite means replace**: current phase, the *current* session's decisions, open blockers, next action. **Never keep "Prior update" blocks or older dated sections** — superseded narrative moves to BUILD-LOG *in the same step* (it's already there if the DoD was followed). Shape is machine-enforced by `scripts/check_status_snapshot.py` (pre-commit gate 3 + CI; COE 2026-06-10-status-snapshot-log-drift). (2) **Append** a session entry to the private `docs/planning/BUILD-LOG.md` (steps · gotchas/micro-lessons · time: wall-clock + rough human/agent split) and a curated, no-personal-detail summary to public `docs/BUILD-JOURNEY.md` (keep them in agreement, tenet 10) |
 | Every logical step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each logical step boundary — not just at session end — so the file is resume-ready at real handoff points. End a response with a copy-paste **Resume prompt** only when that checkpoint exists; otherwise say the work is mid-step and keep going in the current chat |
 

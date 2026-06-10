@@ -1060,3 +1060,42 @@ and pushed.
 **Next**
 - One-time setup of the two automation secrets, then back to the product: the Memory Daily Driver
   premise test.
+
+---
+
+## 2026-06-10 — Making the build model-agnostic: structure over prose
+
+**Focus:** a deliberate control-plane hardening pass before resuming product work,
+prompted by a real observation — switching the underlying model (a strong
+high-reasoning model vs. a faster, cheaper one) changed how faithfully the agent
+followed the project's tenets, guidelines, and operating style. The root cause: the
+operating contract was ~900 lines of prose the model had to read and choose to honor.
+The fix direction: structured, enforced inputs instead of freeform text.
+
+**Milestones**
+- **Secrets are now catalogued, not just stored.** A private secrets catalog lists
+  every credential the system uses — its purpose, where the real value lives (the
+  console to rotate it / the password-manager item), how to rotate it, and the blast
+  radius if it leaked — all without ever recording a value. The password manager stays
+  the single home for values; the catalog is the single index. Creating or rotating a
+  secret is now "not done" until it is in both.
+- **The architecture docs were made honest.** A source review found the docs claimed a
+  live knowledge graph that the deployed memory service does not actually populate. The
+  graph database is running and backed up, but reserved for a later phase, not written
+  today. Every place that overstated this was corrected and the decision recorded, with
+  the engineering practices relabeled to separate what is live from what is still a
+  target — and four empty, failing placeholder CI workflows were removed.
+- **Design discipline became a mechanism.** New work now starts with a short design doc
+  (high- and low-level design: components, interfaces, data contracts, failure modes,
+  test plan) before code, and the system's cross-component contracts are catalogued in
+  one registry that marks how strongly each is enforced.
+- **A model-agnostic contract, designed.** The chosen direction: turn the operating
+  contract into a structured single source that both renders the human-readable docs
+  and drives the automated gates, plus a coverage report that makes visible which rules
+  are deterministically enforced versus prose-only — so the model-dependent surface can
+  be measured and shrunk over time. The build itself is scoped as the next focused
+  session.
+
+**Next**
+- Implement the structured operating contract, or run the product premise test — both
+  are queued; the order is the operator's call.

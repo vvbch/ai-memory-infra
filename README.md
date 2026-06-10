@@ -8,8 +8,10 @@ context across every LLM, on any device.
 
 - **Memory layer**: Mem0 REST API over PostgreSQL/pgvector, with a local MCP
   proxy for Claude Code, Cursor, and VS Code (ADR 025).
-- **Knowledge graph**: Neo4j, dual namespace - Mem0's auto-managed semantic
-  graph + LifeGraph (people, ventures, skills, decisions, milestones).
+- **Knowledge graph**: Neo4j, provisioned and backed up but **not yet in use** -
+  reserved for LifeGraph (people, ventures, skills, decisions, milestones; Phase 6,
+  not yet built). The deployed Mem0 ships no graph store, so it does not write a
+  graph today (ADR 032).
 - **Reach**: Chrome extension (desktop / ChromeOS) + local MCP proxy for
   Claude Code, Cursor, and VS Code. Claude mobile needs a later remote HTTP MCP
   endpoint. Android extension coverage is best-effort only (see ADR 004). Native
