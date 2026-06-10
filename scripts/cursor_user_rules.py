@@ -1,16 +1,11 @@
 #!/usr/bin/env python3
-"""Workspace substitute for Cursor's cursor_dialog MCP (user rules).
+"""Print canonical Cursor global user-rule replacement text (control plane).
 
-Cursor's built-in cursor_dialog tool is gated behind the cursor_skill_enabled
-feature flag and is not listed in cursor-app-control MCP offerings — agents
-cannot call it from this harness. User rules also live in Cursor's cloud
-KnowledgeBase API, not in a local git-tracked file.
+Cursor user rules are cloud-synced (KnowledgeBase API), not local files.
+`cursor_dialog` MCP is not exposed in this harness. Default: **print in chat**
+so the operator can copy; optional `copy` subcommand if explicitly requested.
 
-This script is the control-plane workaround: copy canonical replacement text to
-the clipboard and print a one-step operator action so Chandra can paste into
-Cursor Settings → Rules.
-
-Spec: docs/coe/2026-06-10-global-workspace-rule-conflict.md § Global rule replacement
+Spec: docs/coe/2026-06-10-global-workspace-rule-conflict.md
 """
 
 from __future__ import annotations
@@ -25,41 +20,40 @@ _REPO_ROOT = Path(__file__).resolve().parents[1]
 _COE = _REPO_ROOT / "docs/coe/2026-06-10-global-workspace-rule-conflict.md"
 
 
-def _extract_block(coe_text: str, start_heading: str, end_heading: str | None) -> str:
-    heading_match = re.search(re.escape(start_heading), coe_text)
-    if not heading_match:
-        raise SystemExit(f"Could not find heading {start_heading!r} in {_COE}")
-    fence = re.search(r"\n---\s*\n", coe_text[heading_match.end() :])
-    if not fence:
-        raise SystemExit(f"Could not find --- fence after {start_heading!r} in {_COE}")
-    start = heading_match.end() + fence.end()
-    if end_heading:
-        end_match = re.search(re.escape(end_heading), coe_text[start:])
-        if not end_match:
-            raise SystemExit(f"Could not find end heading {end_heading!r} in {_COE}")
-        return coe_text[start : start + end_match.start()].strip()
-    return coe_text[start:].strip()
+def _between_fences(coe_text: str, after: str, before: str | None = None) -> str:
+    start_idx = coe_text.find(after)
+    if start_idx == -1:
+        raise SystemExit(f"Marker not found in {_COE}: {after!r}")
+    rest = coe_text[start_idx + len(after) :]
+    fences = list(re.finditer(r"\n---\s*\n", rest))
+    if not fences:
+        raise SystemExit(f"No --- fence after {after!r} in {_COE}")
+    body_start = fences[0].end()
+    body_end = fences[1].start() if len(fences) > 1 else len(rest)
+    if before:
+        before_idx = rest.find(before, body_start)
+        if before_idx == -1:
+            raise SystemExit(f"End marker not found: {before!r}")
+        body_end = before_idx
+    return rest[body_start:body_end].strip()
 
 
 def commit_rule_text() -> str:
-    coe = _COE.read_text(encoding="utf-8")
-    return _extract_block(
-        coe,
-        "## Global rule replacement",
-        "In **`creating-pull-requests`**",
+    return _between_fences(
+        _COE.read_text(encoding="utf-8"),
+        "Replace that rule's full body with:",
+        "If you have a separate user rule about **pull requests**",
     )
 
 
 def pr_rule_exception_text() -> str:
     coe = _COE.read_text(encoding="utf-8")
-    marker = "In **`creating-pull-requests`**"
+    marker = "the commit rule above already covers push for ai-memory):"
     idx = coe.find(marker)
     if idx == -1:
-        raise SystemExit(f"Could not find {marker!r} in {_COE}")
-    block = coe[idx + len(marker) :].strip()
-    # Take only the blockquote paragraph (skip the intro line above it).
+        raise SystemExit(f"PR exception marker not found in {_COE}")
     lines: list[str] = []
-    for line in block.splitlines():
+    for line in coe[idx + len(marker) :].splitlines():
         if line.startswith("> "):
             lines.append(line[2:])
         elif line.startswith(">"):
@@ -85,72 +79,77 @@ def copy_to_clipboard(text: str) -> None:
     if sys.platform == "win32":
         subprocess.run(["clip"], input=text, text=True, check=True, shell=True)
         return
-    for cmd in (
-        ["pbcopy"],
-        ["xclip", "-selection", "clipboard"],
-        ["wl-copy"],
-    ):
+    for cmd in (["pbcopy"], ["xclip", "-selection", "clipboard"], ["wl-copy"]):
         try:
             subprocess.run(cmd, input=text, text=True, check=True)
             return
         except FileNotFoundError:
             continue
-    raise SystemExit("No clipboard command found (clip/pbcopy/xclip/wl-copy).")
+    raise SystemExit("Clipboard unavailable — use printed text from `show` instead.")
+
+
+def _ensure_utf8_stdout() -> None:
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 
 def main() -> int:
+    _ensure_utf8_stdout()
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
 
-    show = sub.add_parser("show", help="Print replacement texts")
+    show = sub.add_parser("show", help="Print replacement text (default handoff)")
     show.add_argument(
         "which",
         choices=("commit", "pr-exception", "all"),
         nargs="?",
-        default="all",
+        default="commit",
     )
 
-    copy = sub.add_parser("copy", help="Copy replacement text to clipboard")
-    copy.add_argument(
-        "which",
-        choices=("commit", "pr-exception"),
+    copy = sub.add_parser(
+        "copy",
+        help="Try clipboard (unreliable from agent shell — prefer show)",
     )
+    copy.add_argument("which", choices=("commit", "pr-exception"))
 
-    sub.add_parser(
-        "why-unavailable",
-        help="Explain why cursor_dialog MCP is not exposed here",
-    )
+    sub.add_parser("why-unavailable", help="Why cursor_dialog / disk edit fails")
 
     args = parser.parse_args()
 
     if args.command == "why-unavailable":
         print(
-            "cursor_dialog is implemented in Cursor's built-in cursor-app-control MCP "
-            "but is NOT listed in listOfferings() — only move_agent_to_root, "
-            "create_project, rename_chat, etc. are advertised to agents.\n"
-            "The handler exists behind feature gate cursor_skill_enabled; this harness "
-            "does not expose it as a callable tool.\n"
-            "Global user rules are stored in Cursor's cloud KnowledgeBase API, not in "
-            "this repo. Workaround: python scripts/cursor_user_rules.py copy commit "
-            "then paste into Cursor Settings → Rules."
+            "Layers:\n"
+            "  1. Workspace rules: AGENTS.md + .cursor/rules (git) — agents CAN fix.\n"
+            "  2. Cursor User rules: cloud KnowledgeBase — NOT in local files here;\n"
+            "     cursor_dialog MCP not exposed to this harness.\n"
+            "  3. Prompt tags like committing-changes-with-git: internal XML names,\n"
+            "     NOT Settings UI labels.\n"
+            "\n"
+            "Filesystem probe (2026-06-10): no 'only create commits' under\n"
+            "%AppData%/Cursor or state.vscdb applicationUser blob.\n"
+            "\n"
+            "Handoff: python scripts/cursor_user_rules.py show commit\n"
+            "Then: Settings > Rules > User rules > Add rule (if empty) or edit match."
         )
         return 0
 
     if args.command == "show":
         if args.which in ("commit", "all"):
-            print("=== committing-changes-with-git replacement ===\n")
+            print("=== Suggested Cursor User rule (copy from chat) ===\n")
             print(commit_rule_text())
         if args.which in ("pr-exception", "all"):
-            if args.which == "all":
-                print("\n=== creating-pull-requests exception line ===\n")
+            print("\n=== Optional PR-rule exception line ===\n")
             print(pr_rule_exception_text())
         return 0
 
     text = commit_rule_text() if args.which == "commit" else pr_rule_exception_text()
-    copy_to_clipboard(text)
-    label = "commit rule" if args.which == "commit" else "PR-rule exception"
-    print(f"Copied {label} replacement to clipboard ({len(text)} chars).")
-    print("Paste into Cursor Settings > Rules, then save.")
+    try:
+        copy_to_clipboard(text)
+    except (SystemExit, subprocess.CalledProcessError, OSError) as exc:
+        print(f"Clipboard failed ({exc}). Printed text instead:\n")
+        print(text)
+        return 1
+    print(f"Copied to clipboard ({len(text)} chars). Verify with Ctrl+V before relying on it.")
     return 0
 
 

@@ -98,8 +98,16 @@ below to the clipboard for paste into **Cursor Settings → Rules**.
 
 ## Global rule replacement
 
-Replace the full text of **`committing-changes-with-git`** in **Cursor Settings →
-Rules** with:
+**UI note (2026-06-10 correction):** `committing-changes-with-git` is an *internal*
+agent-prompt tag — **not** a label in Cursor Settings. In the UI, open **Cursor
+Settings → Rules**, scroll to **User rules**, and either:
+
+- edit the existing user rule whose body mentions **only commit when explicitly
+  asked** / git safety, **or**
+- click **Add rule** if no such rule exists (paste the block below as a new user
+  rule titled e.g. `Commits — default vs ai-memory`).
+
+Replace that rule's full body with:
 
 ---
 
@@ -132,8 +140,9 @@ Git Safety Protocol (all projects):
 
 ---
 
-In **`creating-pull-requests`**, add this line after "DO NOT push to the remote
-repository unless the user explicitly asks":
+If you have a separate user rule about **pull requests** / `gh pr create`, add this
+line after its "do not push unless explicitly asked" sentence (otherwise skip —
+the commit rule above already covers push for ai-memory):
 
 > **Exception — ai-memory workspace:** push is part of routine handoff when
 > committing reversible work per `ai-memory-infra/AGENTS.md`; still do not push
