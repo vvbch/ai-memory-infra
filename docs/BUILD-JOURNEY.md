@@ -9,6 +9,42 @@
 
 ---
 
+## 2026-06-10 — Standards pay rent: ChatGPT and Perplexity get designed in for near-zero new code
+
+**Focus:** with Claude's remote connector live, the operator pointed at the next
+two platforms — ChatGPT and Perplexity. The morning's post-mortem lesson applied
+directly: before designing anything, verify what each platform's **own** docs say
+about user-added remote MCP connectors. This session was research + the decision
+record; registration comes next.
+
+**Milestones**
+- **First-party verification, both platforms.** OpenAI's developer docs: custom
+  remote MCP servers are supported as apps, and "developer mode" (Plus plan and
+  above, web registration) gives a full read/write MCP client over OAuth — with
+  dynamic client registration supported and static tokens explicitly not.
+  Perplexity's help center and changelog: custom remote connectors shipped
+  March 2026 (Pro plan and above), OAuth 2.0 with dynamic client registration,
+  Streamable HTTP transport. Third-party setup guides were read but deliberately
+  marked non-load-bearing.
+- **The OAuth bet pays off.** Both platforms speak exactly the protocol surface
+  already deployed for Claude: OAuth 2.1 + dynamic client registration + PKCE
+  over Streamable HTTP. The new ADR's expected server change is one cosmetic
+  edit — the consent page stops saying "Claude" and names whichever client is
+  asking. One server, one secret class, three platforms.
+- **Honesty gates kept.** The architecture coverage table only changes after a
+  live memory round-trip on each platform; mobile availability is treated as
+  unverified until seen working; and the plan-tier requirements (paid tiers on
+  both platforms) are surfaced as an explicit operator spend decision, not
+  assumed.
+
+**Effort:** ~40 minutes, agent-side research and documentation.
+
+**Next**
+- Confirm the operator's plan tiers, generalize the consent-page copy, then
+  concierge the two registrations with live verification — Perplexity first.
+
+---
+
 ## 2026-06-10 — Remote MCP, take two: self-hosted OAuth because the client demands it
 
 **Focus:** the remote memory endpoint for Claude on iPhone was deployed and
