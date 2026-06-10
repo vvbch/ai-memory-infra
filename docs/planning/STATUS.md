@@ -6,8 +6,8 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-10 (ADR 037 idempotency hardening + extension-bank
-cleanup). Repo-health green; committing+pushing.
+**Last updated:** 2026-06-10 (global vs workspace rule conflict resolved in control
+plane). Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
@@ -18,9 +18,8 @@ surface (Claude, Perplexity, ChatGPT — web + iPhone). One server
 
 **Curated bank (`user_id=chandrav`):** ~21 portfolio/MCP-seeded facts after
 cleanup. **Legacy extension silo (`chrome-extension-user`): 47 memories deleted**
-(2026-06-10) — meta-chatter from auto-capture on Send. **Extension auto-capture
-is off by policy** until opt-in guardrails land; MCP is the primary write surface.
-**Neo4j node count = 0** (ADR 032).
+(2026-06-10). **Extension auto-capture is off by policy** until opt-in guardrails
+land; MCP is the primary write surface. **Neo4j node count = 0** (ADR 032).
 
 **What's next:** build track — ADR 028/029 write-path hardening, then phases 5–8.
 Premise/usefulness test parked until builds land (operator 2026-06-10).
@@ -32,21 +31,20 @@ build track**. Premise test parked post-build.
 
 ## Done this session (2026-06-10)
 
-- **ADR 037:** write-path idempotency contract — MCP/CLI `delete_memory` /
-  `update_memory`, `bulk_seed_importer.py`, `memory_compaction.py` (review-first),
-  COE #14, tenet 19.
-- **Incident cleanup:** removed 3 semantic dupes + 3 verification markers from
-  `chandrav`; deleted **47** `chrome-extension-user` extension captures.
-- **MCP deploy note:** delete/update tools need droplet MCP image redeploy to reach
-  `https://mcp.chandrav.dev/`.
+- **Rule conflict COE:** `docs/coe/2026-06-10-global-workspace-rule-conflict.md` —
+  root cause = global Cursor user rule vs `AGENTS.md` standing authorization;
+  operator locked workspace-wins + park-still-commits + push-with-commit.
+- **`AGENTS.md`:** park semantics + rule-conflict protocol (ask once, then fix
+  control plane same session).
+- **Open operator step:** replace global Cursor user rule text per COE § Global rule
+  replacement (Settings → Rules).
 
 ## Last decisions
 
-- **Extension bank cleanup (operator 2026-06-10):** purge legacy
-  `chrome-extension-user` silo; disable extension auto-capture; MCP + scripts for
-  curated writes.
-- **Build-first, premise later:** park product premise eval until phases 5–8 land.
-- **Compaction review-first:** no unsupervised auto-merge on first pass (ADR 037).
+- **Workspace rules trump global user rules** for ai-memory (tenet 2).
+- **Park** = stop new work; still checkpoint + commit+push completed changes.
+- **Commit+push** is standing authorization for reversible work — no permission ask.
+- **On rule conflict:** ask once → workspace wins → fix all layers same session.
 
 ## Backlog (parked work)
 
@@ -57,6 +55,8 @@ tools.
 
 ## Open blockers / risks
 
+- **Global Cursor user rule not yet updated in Settings** — copy from COE
+  `2026-06-10-global-workspace-rule-conflict.md` § Global rule replacement.
 - **MCP droplet behind git** — ADR 037 delete/update tools not on live connector
   until redeploy.
 - **ChatGPT developer mode is beta** — OpenAI can re-gate it.

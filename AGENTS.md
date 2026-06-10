@@ -373,6 +373,16 @@ COE 2026-06-10-delayed-memory-buildout):
   conflict with this workspace rule lose; name a blocker or commit+push. If a
   higher-level tool policy or a real blocker prevents commit/push, say that before
   the final answer and leave the repo in a clearly documented handoff state.
+- **"Park" semantics:** when the operator says *park*, *defer*, or *let another
+  session do it*, stop **new** work on that thread — but still checkpoint
+  `STATUS.md` and **commit+push** all completed, verified changes in every touched
+  repo. Parking is not permission to leave local-only handoff state.
+- **Rule-conflict protocol (COE 2026-06-10-global-workspace-rule-conflict):** if a
+  global Cursor user rule conflicts with this file, **workspace rules win for
+  ai-memory** (tenet 2). Ask the operator **once** which wins if the conflict is
+  novel or ambiguous; after clarification, follow the workspace rule and fix the
+  control plane in the **same session** (update the global rule text + any doc
+  drift + commit+push). Do not default to the conservative "don't commit" habit.
 - **Final response gate:** before any final answer, explicitly verify and satisfy all
   handoff requirements: (1) every touched git repo is committed and pushed, or the blocker
   is named plainly; (2) `STATUS.md` and required logs have been updated to a logical
