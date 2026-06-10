@@ -64,6 +64,8 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 
 ## Tenets (non-negotiable — see docs/tenets.md)
 
+<!-- Generated from contract/tenets.yaml by scripts/render_contract.py (ADR 033) — edit the YAML, not the text between the fences. -->
+<!-- generated:agents-tenets start -->
 1. **Everything versioned.** Every artifact — code, configs, scaffolding
    scripts, decisions, the planning doc, these instructions — lives in source
    control. We learn over time from history. Nothing important exists only in
@@ -166,6 +168,7 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     history, data loss, public exposure) — those are fixed *now*; burn-in covers only
     reversible convenience/cosmetic debt. Same reversibility test as tenet 17, applied to
     cleanup *timing*.
+<!-- generated:agents-tenets end -->
 
 ## Architecture (summary)
 
@@ -192,6 +195,8 @@ Full diagram: `docs/architecture.md`.
 
 ## Engineering practices (standards — with honest status)
 
+<!-- Generated from contract/practices.yaml by scripts/render_contract.py (ADR 033) — edit the YAML, not the text between the fences. -->
+<!-- generated:agents-practices start -->
 These are the project's engineering standards. Each is tagged **[in place]** (live
 and enforced today) or **[target — Phase N]** (the standard we hold ourselves to,
 not yet built). Keep these tags honest — a claim outrunning reality is itself drift
@@ -216,6 +221,7 @@ not yet built). Keep these tags honest — a claim outrunning reality is itself 
 - **ADRs** — **[in place]** in `docs/decisions/` for every major choice.
 - **Supply chain** — **[target]** lockfile + dependency pinning + action SHA-pinning
   + Dependabot are not yet in place (BACKLOG; baseline scan gap).
+<!-- generated:agents-practices end -->
 
 ## Build phases (with reality status)
 
@@ -359,6 +365,8 @@ The live memory bank is part of every conversation, via `scripts/memory.py`
 
 ## Documentation discipline / Definition of Done
 
+<!-- Generated from contract/dod.yaml by scripts/render_contract.py (ADR 033) — edit the YAML, not the text between the fences. -->
+<!-- generated:agents-dod start -->
 Tenet 10: restated facts must not drift. A change is **not done** until the docs
 it touches are updated *in the same PR*. Use this trigger table — change-type →
 docs to update:
@@ -381,3 +389,4 @@ docs to update:
 **Done means:** code tests green (if code) · the trigger row's docs updated · an
 ADR exists for any major choice · `STATUS.md` refreshed · PR checklist ticked ·
 no drift between any two places that state the same fact.
+<!-- generated:agents-dod end -->

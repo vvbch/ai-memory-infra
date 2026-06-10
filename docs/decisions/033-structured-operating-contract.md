@@ -1,8 +1,8 @@
 # ADR 033: Operating contract as a structured single-source (model-agnostic)
 
-**Status:** Accepted (direction) — **implementation deferred to the next session**
-(one task per session, tenet 16). This ADR is the design + handoff; the build is the
-next session's single goal.
+**Status:** Implemented (2026-06-10) — migration steps 1–4 done; the structured
+single-source + renderer + gates are live. Step 5 (this status update) complete.
+Direction was Accepted (Option B) the prior session.
 **Date:** 2026-06-10
 **Deciders:** Chandra (chose Option B), agent (design)
 **Ties:** tenet 2 (editor/model-agnostic), tenet 10 (no drift), tenet 14 (errors are
@@ -140,7 +140,34 @@ source+renderer land:
 - **Reversibility:** two-way door — it generates the same docs we already keep; if it
   proves heavy, delete the generator and keep the YAML as a checklist.
 
+### Propagation / conformance (implementation, 2026-06-10)
+
+- **Structured source:** `contract/tenets.yaml` (18), `contract/practices.yaml` (8),
+  `contract/dod.yaml` (12 trigger rows) — each rule carries the prose **verbatim**
+  plus `enforcement.status` + `mechanism` + `gate_id`.
+- **Renderer:** `scripts/render_contract.py` regenerates the fenced sections of
+  `AGENTS.md` (`agents-tenets` / `agents-practices` / `agents-dod`) and
+  `docs/tenets.md` (`tenets-full`), and writes `docs/reports/contract-coverage.md`.
+  `--check` is the gate. TDD: `tests/test_scripts/test_render_contract.py`.
+- **Faithful lift proven:** the rendered fenced regions are **byte-equal** to the
+  prior hand-authored prose — the only diff to `AGENTS.md`/`tenets.md` was the
+  inserted `<!-- generated:* -->` fence comments (no prose changed); the in-sync
+  integration test pins this going forward.
+- **Wired:** `render_contract.py --check` in `scripts/hooks/pre-commit` (gate 4) +
+  `.github/workflows/ci.yml`. PyYAML added to `pyproject.toml` deps.
+- **Registry:** `docs/interfaces.md` §9 (operating contract) + §10 (pointer purity).
+- **First enforcement-backlog gate landed:** #3 pointer-file purity
+  (`scripts/check_pointer_purity.py`, ADR 018; pre-commit gate 5 + CI) — promotes
+  DoD row `dod-05` from prose → **enforced** in the coverage report. Coverage now:
+  38 rules, 11 enforced / 0 tested / 27 prose (the model-dependent surface is now
+  *measured* and shrinking, exactly the ADR's intent). Remaining backlog gates
+  (#1 final-response/handoff validator, #2 operator-action routing, #4 DoD
+  trigger-table conformance) stay parked in `BACKLOG.md`.
+
 ### Out of scope (explicitly)
 
 Rewriting teaching/concierge *narrative* into rigid templates; per-rule gates beyond
-the backlog list; any change that weakens an existing gate.
+the backlog list; any change that weakens an existing gate. The narrowly
+**glob-scoped** Cursor helper rules (`10-python-tdd.mdc`, `20-docs-dod.mdc`) are not
+touched by the pointer-purity gate (scoped to `alwaysApply` rules + `CLAUDE.md`);
+whether those may carry conventions at all is a separate parked decision.

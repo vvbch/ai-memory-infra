@@ -4,6 +4,8 @@ Durable principles for this project. Versioned on purpose: when a decision
 later looks wrong, we trace it back here and learn. Changes to tenets go
 through a PR with rationale.
 
+<!-- Generated from contract/tenets.yaml by scripts/render_contract.py (ADR 033) — edit the YAML, not the text between the fences. -->
+<!-- generated:tenets-full start -->
 ## 1. Everything is versioned
 Every artifact lives in source control — application code, infra (Terraform,
 Compose, Caddy), CI/CD, scaffolding scripts and the exact setup commands, ADRs,
@@ -383,3 +385,4 @@ drift), tenet 14 (the backlog item is the Detect/Mitigate record), and tenet 7
 (don't pay maintenance/attention cost before the value is real). The line it draws —
 *reversible convenience may wait for burn-in; active risk and one-way doors may not* —
 is the same reversibility test as tenet 17, applied to **cleanup timing**.
+<!-- generated:tenets-full end -->

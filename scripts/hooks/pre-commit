@@ -1,8 +1,10 @@
 #!/bin/sh
-# pre-commit guard — THREE gates, all BLOCK the commit on failure:
+# pre-commit guard — FIVE gates, all BLOCK the commit on failure:
 #   1. Tenet 11 / ADR 015 — repo-integrity (FAST subset, Drive-sync corruption).
 #   2. Tenet 14 (Detect) / AGENTS.md secrets rule — secret-scan (gitleaks).
 #   3. Tenet 16 / COE 2026-06-10 — STATUS.md must stay a snapshot, not a log.
+#   4. Tenet 10 / ADR 033 — operating-contract prose must match contract/*.yaml.
+#   5. Tenet 2 / ADR 018 — editor pointer files carry zero canonical content.
 #
 # Git runs hooks through its bundled POSIX sh (even on Windows), so this shim is
 # portable. Installed by scripts/install-hooks.ps1 as a COPY, not a symlink
@@ -92,6 +94,44 @@ if [ -f "$status_gate" ] && [ -f "$status_file" ]; then
     echo "Overwrite STATUS.md; append history to the private BUILD-LOG.md instead." >&2
     echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
     exit $ssstatus
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Gate 4 — operating-contract render freshness (Tenet 10 / ADR 033).
+# The tenets / practices / DoD sections of AGENTS.md + docs/tenets.md are
+# GENERATED from contract/*.yaml (single structured source). Block the commit
+# when the prose has drifted from the YAML — drift becomes impossible by
+# construction. Skips cleanly if PyYAML or the script is absent.
+# ---------------------------------------------------------------------------
+render_gate="$repo/scripts/render_contract.py"
+if [ -f "$render_gate" ]; then
+  python "$render_gate" --check
+  rcstatus=$?
+  if [ "$rcstatus" -ne 0 ]; then
+    echo "" >&2
+    echo "pre-commit BLOCKED: operating-contract docs are stale vs contract/*.yaml (ADR 033)." >&2
+    echo "Run:  python scripts/render_contract.py   then stage the regenerated files." >&2
+    echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+    exit $rcstatus
+  fi
+fi
+
+# ---------------------------------------------------------------------------
+# Gate 5 — editor pointer-file purity (Tenet 2 / ADR 018).
+# alwaysApply Cursor rules + CLAUDE.md must stay thin pointers ("read AGENTS.md"),
+# never a copy of the tenets/DoD (closes COE 2026-06-07-cursor-rule-drift).
+# ---------------------------------------------------------------------------
+pointer_gate="$repo/scripts/check_pointer_purity.py"
+if [ -f "$pointer_gate" ]; then
+  python "$pointer_gate"
+  pgstatus=$?
+  if [ "$pgstatus" -ne 0 ]; then
+    echo "" >&2
+    echo "pre-commit BLOCKED: an editor pointer file is drifting into content (ADR 018)." >&2
+    echo "Strip it back to frontmatter + 'read AGENTS.md'; content lives only in AGENTS.md." >&2
+    echo "(To bypass in a known-safe case: git commit --no-verify)" >&2
+    exit $pgstatus
   fi
 fi
 

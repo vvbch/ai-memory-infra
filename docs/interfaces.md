@@ -116,6 +116,32 @@
   **This is the layer Workstream C (structured operating contract, ADR 033) extends
   to cover more of the operating contract.**
 
+### 9. Operating contract (structured single-source) — ENFORCED
+
+- **What:** the tenets / engineering-practices / DoD-trigger sections of `AGENTS.md`
+  and the full `docs/tenets.md` are **generated** from `contract/*.yaml` (one record
+  per rule: verbatim prose + `enforcement.status` + `mechanism` + `gate_id`). Prose
+  is a *view*; the YAML is the source. A coverage report makes the model-dependent
+  (prose-only) surface visible and shrinkable.
+- **Schema lives in:** `contract/tenets.yaml`, `contract/practices.yaml`,
+  `contract/dod.yaml`; renderer `scripts/render_contract.py`; report
+  `docs/reports/contract-coverage.md`; fenced regions marked `<!-- generated:* -->`.
+- **ADR:** 033 (supersedes hand-authored canonical prose for these sections);
+  ties tenet 10 (no drift), ADR 018.
+- **Enforcement:** `scripts/render_contract.py --check` (pre-commit gate 4 + CI) —
+  fails if the prose drifts from the YAML; drift is impossible by construction.
+
+### 10. Editor pointer-file purity — ENFORCED
+
+- **What:** `alwaysApply` Cursor rules + `CLAUDE.md` must stay thin pointers
+  ("read `AGENTS.md`") and carry zero canonical content (no tenets/rules/DoD table).
+- **Schema lives in:** `scripts/check_pointer_purity.py`; the pointers themselves
+  (`.cursor/rules/00-project.mdc`, `CLAUDE.md`).
+- **ADRs:** 018 (boundary + deferred guard, now built); ties COE
+  2026-06-07-cursor-rule-drift, tenet 2/10, ADR 033 §4 (#3).
+- **Enforcement:** `scripts/check_pointer_purity.py` (pre-commit gate 5 + CI).
+  Scoped to contractually-pure pointers; glob-scoped helper rules are out of scope.
+
 ## Coverage at a glance
 
 | Contract | Enforcement | Cross-repo? |
@@ -128,8 +154,10 @@
 | 6. Backup artifact | TESTED / drilled | no |
 | 7. Caddy routes | live | no |
 | 8. Harness hooks/gates | ENFORCED | yes (all repos) |
+| 9. Operating contract (structured) | ENFORCED | no |
+| 10. Pointer-file purity | ENFORCED | no |
 
-> The gap this registry makes visible: contracts 1, 2, and 8 are deterministically
-> enforced; 5 (auth/guardrails) is the weakest and is tracked against the
-> security-maturity reword + BACKLOG. New contracts should aim for ENFORCED or at
-> least TESTED, not PROSE.
+> The gap this registry makes visible: contracts 1, 2, 8, 9, and 10 are
+> deterministically enforced; 5 (auth/guardrails) is the weakest and is tracked
+> against the security-maturity reword + BACKLOG. New contracts should aim for
+> ENFORCED or at least TESTED, not PROSE.

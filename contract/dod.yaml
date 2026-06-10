@@ -1,0 +1,108 @@
+preamble: |-
+  Tenet 10: restated facts must not drift. A change is **not done** until the docs
+  it touches are updated *in the same PR*. Use this trigger table — change-type →
+  docs to update:
+
+  | When you change… | Update these |
+  |---|---|
+postamble: |-
+  **Done means:** code tests green (if code) · the trigger row's docs updated · an
+  ADR exists for any major choice · `STATUS.md` refreshed · PR checklist ticked ·
+  no drift between any two places that state the same fact.
+rules:
+- id: dod-01
+  title: Architecture / a component / a provider
+  severity: high
+  enforcement:
+    status: prose
+    mechanism: DoD trigger-table conformance is in the ADR 033 enforcement backlog
+    gate_id: null
+  agents_md: '| Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, `docs/interview_packet.md` (arch-at-a-glance + decision log) |'
+- id: dod-02
+  title: A major decision, or reverse one
+  severity: high
+  enforcement:
+    status: prose
+    mechanism: 'convention: new/superseded ADR + interview_packet + STATUS'
+    gate_id: null
+  agents_md: '| A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), `interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |'
+- id: dod-03
+  title: A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport)
+  severity: critical
+  enforcement:
+    status: enforced
+    mechanism: scripts/check_memory_contract.py (ADR 028/031, cross-repo)
+    gate_id: memory-contract
+  agents_md: '| A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport) | The decision is **a contract, not a document** (ADR 031): verify — and patch where needed — in **every** consumer repo (`ai-memory-extension`, MCP proxy `src/mcp_proxy/client.py`, the OpenClaw adapter, the future todo app) before it is done; register it in `docs/interfaces.md` (with enforcement status); add a "Propagation / conformance" section to the ADR; `scripts/check_memory_contract.py` must pass. A clean control-plane repo with a violating consumer is **not** done |'
+- id: dod-04
+  title: A tenet
+  severity: high
+  enforcement:
+    status: enforced
+    mechanism: scripts/render_contract.py --check (tenets.md + AGENTS.md summary stay in sync)
+    gate_id: contract-render
+  agents_md: '| A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md` — **never** restate it in the editor pointer files (they stay pure pointers; see next row + ADR 018) |'
+- id: dod-05
+  title: An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`)
+  severity: high
+  enforcement:
+    status: enforced
+    mechanism: scripts/check_pointer_purity.py (ADR 018; alwaysApply rules + CLAUDE.md)
+    gate_id: pointer-purity
+  agents_md: '| An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`) | Keep it a **pure pointer** — frontmatter + "read `AGENTS.md`"; it carries **zero** tenets/rules/decisions (tenet 2, ADR 018). If you''re adding substance here, it belongs in `AGENTS.md` instead |'
+- id: dod-06
+  title: Infra/IaC (terraform, compose, Caddy, `.env`)
+  severity: normal
+  enforcement:
+    status: prose
+    mechanism: 'convention: runbook/setup/README/STATUS on infra change'
+    gate_id: null
+  agents_md: '| Infra/IaC (terraform, compose, Caddy, `.env`) | `docs/runbook.md` / `docs/setup.md` if ops or commands change, `README.md` quick-start if commands change, `STATUS.md` |'
+- id: dod-07
+  title: A new phase, `src/` module, or capability
+  severity: high
+  enforcement:
+    status: prose
+    mechanism: 'convention: design doc before code, then TDD; partial test coverage'
+    gate_id: null
+  agents_md: '| A new phase, `src/` module, or capability | **a design doc first** (`docs/design/<name>.md` from `docs/design/TEMPLATE.md` — HLD + LLD: components, interfaces, data contracts, failure modes, test plan) **before code**, proportional to stakes (tenet 8); then tests first (TDD), `README.md`/`architecture.md` if user-facing, `docs/interfaces.md` if it adds/changes a contract, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |'
+- id: dod-08
+  title: Anything cost-relevant (plan, provider, bucket)
+  severity: normal
+  enforcement:
+    status: prose
+    mechanism: 'convention: architecture cost table + interview_packet'
+    gate_id: null
+  agents_md: '| Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |'
+- id: dod-09
+  title: Security / guardrail behaviour
+  severity: high
+  enforcement:
+    status: prose
+    mechanism: 'partial: security tests exist; guardrail set is partly aspirational'
+    gate_id: null
+  agents_md: '| Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |'
+- id: dod-10
+  title: Create / obtain / rotate any account, API token, key, or secret
+  severity: critical
+  enforcement:
+    status: prose
+    mechanism: gitleaks blocks committing secret values (detect); catalog+Bitwarden rule is prose
+    gate_id: null
+  agents_md: '| Create / obtain / rotate any account, API token, key, or secret | Store the value **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017) **and** add/update a row (no value) in the private `docs/security/secrets-catalog.md` (purpose · where it lives · rotation · blast radius); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it''s in the vault **and** the catalog |'
+- id: dod-11
+  title: End of any working session
+  severity: critical
+  enforcement:
+    status: enforced
+    mechanism: scripts/check_status_snapshot.py (shape) + completion_gate.py (commit/push)
+    gate_id: status-shape
+  agents_md: '| End of any working session | (1) `docs/planning/STATUS.md` — **overwrite means replace**: current phase, the *current* session''s decisions, open blockers, next action. **Never keep "Prior update" blocks or older dated sections** — superseded narrative moves to BUILD-LOG *in the same step* (it''s already there if the DoD was followed). Shape is machine-enforced by `scripts/check_status_snapshot.py` (pre-commit gate 3 + CI; COE 2026-06-10-status-snapshot-log-drift). (2) **Append** a session entry to the private `docs/planning/BUILD-LOG.md` (steps · gotchas/micro-lessons · time: wall-clock + rough human/agent split) and a curated, no-personal-detail summary to public `docs/BUILD-JOURNEY.md` (keep them in agreement, tenet 10) |'
+- id: dod-12
+  title: Every logical step + every response (tenet 16)
+  severity: high
+  enforcement:
+    status: enforced
+    mechanism: scripts/completion_gate.py (turn-end commit/push); STATUS checkpoint partly prose
+    gate_id: completion-gate
+  agents_md: '| Every logical step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each logical step boundary — not just at session end — so the file is resume-ready at real handoff points. End a response with a copy-paste **Resume prompt** only when that checkpoint exists; otherwise say the work is mid-step and keep going in the current chat |'

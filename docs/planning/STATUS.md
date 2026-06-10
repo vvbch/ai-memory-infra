@@ -6,10 +6,10 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-10 (**control-plane hardening session: secrets catalog +
-hygiene, HLD-drift fix (Neo4j), LLD design-template + interface registry, maturity
-honesty, and the structured-operating-contract design (ADR 033, model-agnostic)**).
-Repo-health green at session start.
+**Last updated:** 2026-06-10 (**ADR 033 implemented: the operating contract is now a
+structured single-source — `contract/*.yaml` renders the AGENTS.md/tenets.md prose +
+a coverage report; `--check` gates pre-commit + CI; first enforcement-backlog gate
+(pointer-file purity) landed**). Repo-health green at session start.
 
 ## Plain English — where we are (resume here)
 
@@ -18,89 +18,75 @@ backed up nightly + restore-drilled monthly, reachable from Chrome and Cursor/Cl
 (local MCP proxy). The conversational practice ("plan my day", "log this", "we decided X")
 is wired.
 
-**Why this session existed:** you noticed that when you switch models (Opus 4.8 high vs
-Composer 2.5), adherence to tenets/guidelines/operating-style varies a lot — because the
-contract is ~900 lines of *prose* the model must read and choose to follow. You asked to
-(1) make the buildout model/reasoning-agnostic, (2) check we manage scope/architecture/
-HLD/LLD well, and (3) confirm secrets are catalogued in the private repo (purpose + where
-they live, no values). We did all three as control-plane hardening, **before** going back
-to Phase 3.
+**Why this session existed:** the operator chose order **(A) then (B)**. This session did
+**(A): implement ADR 033** — make the operating contract model-agnostic. Until now the
+contract was ~900 lines of *prose* a model had to read and choose to follow, so adherence
+varied by model (Opus 4.8 vs Composer 2.5). Now the high-value rules are **structured data
++ mechanisms**, and the prose is *generated from* that data.
 
 **What changed this session (2026-06-10):**
-- **Secrets are now catalogued.** New `ai-memory-infra-private/docs/security/secrets-catalog.md`
-  lists every secret (no values) — purpose, where it lives (console URL / Bitwarden item),
-  rotation, blast radius. AGENTS.md DoD now requires a catalog row whenever a secret is
-  created/rotated. Two hygiene snags flagged + the working-copy scrubbed.
-- **HLD drift fixed (ADR 032).** The "Neo4j dual namespace / Mem0 auto-graph" claim was
-  wrong (deployed Mem0 ships no graph store, writes nothing to Neo4j). Corrected everywhere;
-  Neo4j is now honestly described as reserved-for-LifeGraph (Phase 6).
-- **LLD/HLD discipline is now systematic.** Added a design-doc template
-  (`docs/design/TEMPLATE.md`) + a DoD rule (design doc before code), and an interface/
-  contract registry (`docs/interfaces.md`) with enforcement status per contract.
-- **Maturity honesty.** Reworded AGENTS.md engineering practices to `[in place]` vs
-  `[target]`, annotated build-phase reality, deleted 4 red stub workflows, fixed the
-  extension's stale README default + rewrote its privacy policy for the self-hosted reality.
-- **Model-agnostic direction decided (Option B), designed, handed off.** ADR 033 specs a
-  *structured single-source contract* (`contract/*.yaml` -> renders AGENTS.md + an
-  enforcement-coverage report; gates read the same ids). Implementation is the next
-  session's one task.
+- **The contract is now a structured single-source.** `contract/tenets.yaml` (18),
+  `contract/practices.yaml` (8), `contract/dod.yaml` (12 DoD rows) hold each rule
+  **verbatim** plus an honest `enforcement.status` (enforced / tested / prose) + mechanism
+  + gate_id. `scripts/render_contract.py` (TDD) **generates** the fenced sections of
+  `AGENTS.md` + `docs/tenets.md` and writes `docs/reports/contract-coverage.md`.
+- **The lift was proven faithful.** Rendered output is **byte-equal** to the old
+  hand-authored prose — the only diff to AGENTS.md/tenets.md was the inserted
+  `<!-- generated:* -->` fence comments. An in-sync test pins it forever.
+- **Drift is now impossible by construction.** `render_contract.py --check` is wired into
+  pre-commit (gate 4) + CI: if anyone edits the prose without editing the YAML, the commit
+  fails.
+- **First enforcement-backlog gate landed (ADR 033 §4 #3): pointer-file purity.**
+  `scripts/check_pointer_purity.py` (pre-commit gate 5 + CI) fails if an `alwaysApply`
+  Cursor rule / `CLAUDE.md` drifts into carrying tenets/rules (closes COE
+  2026-06-07-cursor-rule-drift). The coverage report now reads **38 rules — 11 enforced,
+  0 tested, 27 prose**: the model-dependent surface is finally *measured* and shrinking.
 
 **What you pay:** ~₹2,600/mo cloud box; full stack ≈ ₹3,800/mo landed; pause anytime with
 `scripts/teardown.py`.
 
 ## Current phase
 
-**Control plane hardened (this session). Two candidate next tracks, operator picks order:**
-(A) implement ADR 033 structured contract (per the approved plan, next session's single
-task); (B) Phase 3 premise test (your originally-stated "then go back to phase 3", and what
-COE 2026-06-10-delayed-memory-buildout urges first). Infra phases 0-4 are done/live; phases
-5-8 are stubs (see AGENTS.md build-phase status).
+**Control plane further hardened (ADR 033 done). (A) is substantially complete** — the
+structured contract + renderer + two gates (render-freshness, pointer-purity) are live; the
+remaining enforcement-backlog gates are parked in `BACKLOG.md`. **Next track is (B) Phase 3
+premise test** (the operator's "then go back to phase 3"). Infra phases 0–4 are done/live;
+phases 5–8 are stubs (see AGENTS.md build-phase status).
 
 ## Done this session (2026-06-10)
 
-- **Secrets catalog** — `ai-memory-infra-private/docs/security/secrets-catalog.md` (no
-  values): full inventory with purpose/location/rotation/blast-radius; AGENTS.md custody +
-  DoD rows now require a catalog row on every secret create/rotate.
-- **Secret hygiene — basic-auth rotation DONE (2026-06-10).** Rotated the Caddy
-  basic-auth password to a fresh cost-14 `$2a$14$` hash (live + login-verified:
-  `graph.`=200 with new pw, 401 without), stored the new plaintext in Bitwarden item
-  `BASIC_AUTH (admin UI — dash./graph.)`, and **deleted the `.env` plaintext block**
-  on the droplet (P1 burn-in closed). Also pinned every secret → exact Bitwarden item
-  in the private catalog and fixed a Spaces backup-vs-Terraform key drift.
-- **HLD drift (ADR 032)** — corrected the Neo4j/Mem0-graph overclaim in `architecture.md`,
-  `AGENTS.md`, `README.md`, `scaffold.py`, compose + Dockerfile comments, ADR 005 note,
-  setup-prompt banner. **Live `MATCH (n) count` confirmed = 0 (2026-06-10)** — no
-  Mem0-written nodes, exactly as predicted; only the graph-source one-way-door
-  decision remains (ADR 032 §4).
-- **LLD mechanism** — `docs/design/TEMPLATE.md` + DoD trigger "design doc before code".
-- **Interface registry** — `docs/interfaces.md` (8 contracts, enforcement status).
-- **Maturity honesty** — practices `[in place]`/`[target]`; build-phase reality; deleted
-  `cd.yml`/`eval-suite.yml`/`backup-verify.yml`/`docker-build.yml` stubs; extension
-  README/privacy fixed.
-- **ADR 033** — structured operating contract design + enforcement backlog; Option B chosen,
-  implementation handed to next session.
+- **ADR 033 implemented** (migration steps 1–5): `contract/*.yaml` (verbatim lift,
+  enforcement.status per rule) + `scripts/render_contract.py` (+ tests) generating the
+  fenced AGENTS.md/tenets.md sections + `docs/reports/contract-coverage.md`; byte-equal
+  no-op diff proved the lift faithful; `--check` wired into pre-commit + CI; PyYAML added
+  to deps; ADR 033 → Implemented with a Propagation note.
+- **Pointer-file purity gate** (`scripts/check_pointer_purity.py`, + tests) — ADR 033 §4
+  enforcement-backlog item #3 / ADR 018's deferred guard; pre-commit gate 5 + CI; promotes
+  DoD row `dod-05` prose → enforced.
+- **Registry + backlog updated** — `docs/interfaces.md` §9 (operating contract) + §10
+  (pointer purity); `BACKLOG.md` Workstream C marked done where landed; new parked item:
+  decide the fate of glob-scoped helper rules `10`/`20`.
+- **Repo green:** ruff + mypy + 56 tests (90% cov) + all five pre-commit gates pass.
 
 ## Last decisions
 
-- **Operating contract becomes structured single-source (ADR 033, Option B).** Prose is
-  generated from `contract/*.yaml`; gates read the same ids; coverage report makes the
-  model-dependent surface visible and shrinkable. Build deferred to next session (tenet 16).
-- **Neo4j is reserved for LifeGraph, not a live Mem0 graph (ADR 032).** Corrects ADR 005
-  premise #1. Graph-source decision (LifeGraph-only vs graph-capable Mem0) is a pre-Phase-6
-  one-way door.
-- **Secrets get a private catalog (index), Bitwarden stays the value store.** Creating/
-  rotating a secret is not done until it's in both.
-- **Design doc before code** for any new phase/module/capability (HLD+LLD template).
+- **Operating contract is a generated view of `contract/*.yaml` (ADR 033 — Implemented).**
+  Prose can no longer drift from the structured source; the prose-only (model-dependent)
+  surface is measured by `contract-coverage.md` and shrinks deliberately via the
+  enforcement backlog.
+- **Pointer-purity gate is scoped to contractually-pure pointers** (`alwaysApply` rules +
+  `CLAUDE.md`), not the glob-scoped helper rules — whose fate is a separate parked decision
+  (avoids unilaterally deleting curated content, tenet 17).
 
 ## Backlog (parked work)
 
-Prioritized backlog in **`docs/planning/BACKLOG.md`**. Updated this session: the
-`[docs-drift]` Neo4j P1 doc-fix is done (ADR 032) — remaining is the live count confirm +
-the graph-source one-way-door decision. New: **Workstream C enforcement backlog** (ADR 033)
-— final-response/handoff validator (promoted P1 governance), operator-action gate wiring,
-pointer-purity gate, DoD-trigger conformance. Still open: `.env` plaintext strip (now
-unblocked by the rotation action), supply-chain pinning/lockfile, `MEM0_DEFAULT_LLM_MODEL`
-boot-assert.
+Prioritized backlog in **`docs/planning/BACKLOG.md`**. Updated this session: Workstream C
+structured single-source = DONE; enforcement-backlog gate #3 (pointer purity) = DONE;
+**remaining ADR 033 gates** still open — #1 final-response/handoff validator (already a
+promoted P1 governance item), #2 operator-action format routing, #4 DoD trigger-table
+conformance. New parked item: decide the fate of glob-scoped helper rules `10`/`20`. Other
+open items unchanged: graph-source one-way-door decision (ADR 032 §4), supply-chain
+pinning/lockfile, `MEM0_DEFAULT_LLM_MODEL` boot-assert, droplet OS patch/reboot cadence.
 
 ## Open blockers / risks
 
@@ -116,6 +102,9 @@ boot-assert.
   `ai-memory-extension`.
 - **gitleaks PATH:** refresh in the committing shell:
   `$env:Path = [Environment]::GetEnvironmentVariable('Path','Machine') + ';' + [Environment]::GetEnvironmentVariable('Path','User')`.
+- **Contract is generated:** edit `contract/*.yaml`, then run `python scripts/render_contract.py`
+  and commit — never hand-edit the text between `<!-- generated:* -->` fences in
+  `AGENTS.md`/`docs/tenets.md` (the `--check` gate will block it).
 - **SSH:** key passphrase in Bitwarden; **ssh-agent is not auto-loaded in agent shells** —
   SSH to the droplet (`root@168.144.145.29`) is operator-gated this way. Stack in
   `/opt/ai-memory-infra/infra`; mem0 source `/opt/mem0-src`.
@@ -125,21 +114,17 @@ boot-assert.
 
 ## Next action
 
-> **RESUME HERE.** Operator-gated rotation closeout is DONE (basic-auth rotated +
-> login-verified, Neo4j count=0 confirmed, `.env` plaintext block deleted, catalog
-> pinned). Operator chose the order: **(A) then (B).**
+> **RESUME HERE.** (A) ADR 033 is implemented and committed; its remaining enforcement-backlog
+> gates are parked in `BACKLOG.md` (do them later, one per session). Per the operator's chosen
+> order **(A) then (B)**, the next track is:
 >
-> **(A) Implement ADR 033 — structured operating contract (ACTIVE next task).**
-> Lift the 18 tenets + DoD table + practices into `contract/*.yaml` (verbatim) with an
-> `enforcement.status` per rule; write `scripts/render_contract.py` (TDD) to generate the
-> fenced AGENTS.md/tenets.md sections + `docs/reports/contract-coverage.md`; wire `--check`
-> into pre-commit + CI; then pick the top 1-2 enforcement-backlog gates. See ADR 033 §
-> "Migration steps".
+> **(B) Phase 3 — premise test.** Capture your REAL open items + 1–2 recruiter reachouts
+> (conversational, one at a time per AGENTS.md § Memory Daily Driver), run "plan my day" for
+> a few days, judge genuine utility. Operator-facing; expect conversation, not code. This is
+> what COE 2026-06-10-delayed-memory-buildout urges before more buildout.
 >
-> **(B) Phase 3 — premise test (after A).** Capture your REAL open items + 1-2 recruiter
-> reachouts (conversational, one at a time per AGENTS.md § Memory Daily Driver), run
-> "plan my day" for a few days, judge genuine utility. Operator-facing; expect
-> conversation, not code.
+> *(Or, if you'd rather keep hardening the control plane first, pick the next ADR 033
+> enforcement-backlog gate — #1 final-response/handoff validator is the highest-value.)*
 
 **How to talk to the next agent:** type **`/resume`** in a new chat — or paste:
 

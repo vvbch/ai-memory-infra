@@ -70,16 +70,26 @@
 > ~900 lines of model-dependent prose — make it structured + enforced so adherence
 > doesn't vary when switching models (Opus 4.8 ↔ Composer 2.5).
 
-- **`[contract]` Build the structured single-source.** Lift tenets + DoD table +
-  practices into `contract/*.yaml` (verbatim) with `enforcement.status` per rule;
-  `scripts/render_contract.py` (TDD) generates fenced AGENTS.md/tenets.md sections +
-  `docs/reports/contract-coverage.md`; wire `--check` into pre-commit + CI. ADR 033 §Migration.
+- ✅ **`[contract]` Build the structured single-source — DONE (2026-06-10).** 18 tenets +
+  8 practices + 12 DoD rows lifted into `contract/*.yaml` (verbatim, `enforcement.status`
+  per rule); `scripts/render_contract.py` (TDD) generates the fenced AGENTS.md/tenets.md
+  sections + `docs/reports/contract-coverage.md`; byte-equal no-op diff proved the lift
+  faithful; `--check` wired into pre-commit (gate 4) + CI. See ADR 033 §Propagation.
 - **`[contract]` Enforcement backlog (convert top prose-only rules to gates), in priority:**
   (1) **final-response/handoff validator** — already PROMOTED to P1 governance below;
   (2) **operator-action format gate** — wire `scripts/operator_action.py` so operator-facing
-  prompts route through it (today opt-in); (3) **pointer-file purity gate** — fail if
-  `.cursor/rules/*`/`CLAUDE.md` carry rule content (ADR 018; closes COE 2026-06-07-cursor-rule-drift);
+  prompts route through it (today opt-in);
+  ✅ (3) **pointer-file purity gate — DONE (2026-06-10):** `scripts/check_pointer_purity.py`
+  (pre-commit gate 5 + CI) fails if an `alwaysApply` Cursor rule / `CLAUDE.md` carries
+  canonical content (ADR 018; closes COE 2026-06-07-cursor-rule-drift) — promotes DoD row
+  `dod-05` prose→enforced in the coverage report;
   (4) **DoD trigger-table conformance** — check the changed area's target docs were touched.
+- **`[contract]` Decide the fate of the glob-scoped Cursor helper rules.**
+  `10-python-tdd.mdc` / `20-docs-dod.mdc` carry conventions that partly duplicate
+  AGENTS.md (a tenet-2/10 drift surface). They are deliberately **out of scope** of the
+  pointer-purity gate (which checks `alwaysApply` pointers + `CLAUDE.md`). Decide: slim them
+  to pure pointers, generate them from AGENTS.md, or accept scoped helpers as a sanctioned
+  exception — then either widen the gate or document the carve-out. Tie: ADR 018, ADR 033 §4.
 
 ## P1 — do at the start of Phase-1 CI work
 
@@ -201,11 +211,12 @@
   admin) on the operator's Windows box — re-`ssh-add` after a PC reboot, or set the
   service Automatic from an elevated shell. Tie: tenets 14, 18.
 
-- **Policy-as-code for pointer files (ADR 018 enforcement).** Either *generate*
-  `.cursor/rules/*` + `CLAUDE.md` from `AGENTS.md` (propagation by definition →
-  drift impossible by construction), and/or a **pointer-lint** that fails if a
-  pointer file carries tenet/rule content. Closes the COE detection gap
-  (`docs/coe/2026-06-07-cursor-rule-drift.md`).
+- ◑ **Policy-as-code for pointer files (ADR 018 enforcement).** ✅ The **pointer-lint**
+  half is DONE (2026-06-10): `scripts/check_pointer_purity.py` fails if an `alwaysApply`
+  pointer / `CLAUDE.md` carries tenet/rule content (pre-commit + CI) — closes the COE
+  detection gap (`docs/coe/2026-06-07-cursor-rule-drift.md`). **Remaining (optional):**
+  *generating* `.cursor/rules/*` + `CLAUDE.md` from `AGENTS.md` (drift impossible by
+  construction) and the scoped-helper-rule decision (see Workstream C above).
 - **Behavioural tenets as eval/CI checks** where feasible — codify rules that have
   teeth as tests that block on regression (tenet 14).
 - **`[finops]` Context-budget / session-cost signal (tenet 16 Detect layer).** Detection

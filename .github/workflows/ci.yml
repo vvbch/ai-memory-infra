@@ -39,3 +39,9 @@ jobs:
 
       - name: STATUS.md snapshot shape (COE 2026-06-10)
         run: python scripts/check_status_snapshot.py
+
+      - name: Operating-contract render freshness (ADR 033)
+        run: python scripts/render_contract.py --check
+
+      - name: Editor pointer-file purity (ADR 018)
+        run: python scripts/check_pointer_purity.py

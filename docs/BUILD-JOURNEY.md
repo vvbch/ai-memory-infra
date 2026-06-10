@@ -1132,3 +1132,37 @@ admin password by rotating it — and make the index of secrets accurate.
 **Next**
 - Implement the structured operating contract (the model-agnostic upgrade), then run the
   product premise test.
+
+---
+
+## 2026-06-10 — The operating contract becomes structured (model-agnostic)
+
+**Focus:** stop the project's operating contract from being ~900 lines of prose that a
+model has to *read and choose* to follow — because adherence visibly varied when switching
+between a strong model and a cheaper/faster one. Make the high-value rules structured data
+backed by mechanisms, and let the human-readable prose be *generated* from that source.
+
+**Milestones**
+- **One structured source of truth for the contract.** The 18 tenets, the engineering
+  practices, and the Definition-of-Done trigger table now live as machine-readable records,
+  each carrying the rule verbatim plus an honest enforcement status — *enforced* (a gate
+  fails on violation), *tested*, or *prose* (relies on the agent honoring it).
+- **The prose is now generated, and can't drift.** A renderer regenerates the relevant
+  sections of the canonical instructions and the tenets document from that source, and
+  writes a coverage report. A check runs in pre-commit and CI: edit the prose without
+  editing the source and the commit fails. The migration was proven faithful by showing the
+  regenerated text is byte-for-byte identical to the previous hand-written prose — the only
+  change was inserting the generation markers.
+- **The model-dependent surface is now measured.** The coverage report tallies 38 rules:
+  11 are enforced by deterministic gates, the other 27 are still prose. That number is the
+  thing to shrink over time, deliberately, instead of hoping.
+- **First rule promoted from prose to enforced.** A new check makes the editor "pointer"
+  files (which should only say "read the canonical instructions") fail the build if they
+  ever start copying real rules into themselves — closing a previously hand-caught drift.
+
+**Effort:** about half a session, almost entirely agent-side (design, code, tests, docs),
+with no console or operator steps required.
+
+**Next**
+- Run the product premise test (live, conversational), or keep hardening by converting the
+  next highest-value prose rule into a gate.

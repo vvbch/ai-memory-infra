@@ -1,0 +1,87 @@
+preamble: |-
+  These are the project's engineering standards. Each is tagged **[in place]** (live
+  and enforced today) or **[target — Phase N]** (the standard we hold ourselves to,
+  not yet built). Keep these tags honest — a claim outrunning reality is itself drift
+  (tenet 10; baseline scan 2026-06-10).
+rules:
+- id: practice-iac
+  title: IaC
+  severity: high
+  enforcement:
+    status: prose
+    mechanism: Terraform in repo; no CI gate verifying drift
+    gate_id: null
+  agents_md: '- **IaC** — **[in place]** Terraform for all cloud infra; no manual console clicks.'
+- id: practice-tdd
+  title: TDD
+  severity: critical
+  enforcement:
+    status: enforced
+    mechanism: pytest --cov-fail-under=80 on src/ (CI)
+    gate_id: ci-tests
+  agents_md: |-
+    - **TDD** — **[in place]** tests before implementation; 80%+ coverage gate on `src/`
+      (enforced in CI).
+- id: practice-ci
+  title: CI
+  severity: critical
+  enforcement:
+    status: enforced
+    mechanism: .github/workflows/ci.yml (ruff + mypy + pytest + contract/STATUS gates)
+    gate_id: ci
+  agents_md: |-
+    - **CI** — **[in place]** on every push/PR: ruff + mypy + pytest + the contract/
+      STATUS gates (`.github/workflows/ci.yml`). (Tests run against fakes, not yet a
+      full ephemeral Docker stack — **[target]**.)
+- id: practice-cd
+  title: CD
+  severity: normal
+  enforcement:
+    status: prose
+    mechanism: target (Phase 1/ops); deploys are manual SSH today
+    gate_id: null
+  agents_md: |-
+    - **CD** — **[target — Phase 1/ops]** push-to-main SSH deploy → health check →
+      rollback. **Today deploys are manual SSH** (`make deploy`); no `cd.yml` yet.
+- id: practice-eval-framework
+  title: Eval framework
+  severity: normal
+  enforcement:
+    status: prose
+    mechanism: target (Phase 7); src/eval/ is a stub
+    gate_id: null
+  agents_md: |-
+    - **Eval framework** — **[target — Phase 7]** retrieval (precision@k, MRR),
+      extraction (cross-LLM), categorization, guardrails, blocking on regression.
+      Designed (ADR 007/014); `src/eval/` is still a stub.
+- id: practice-security
+  title: Security
+  severity: high
+  enforcement:
+    status: prose
+    mechanism: 'partial: HTTPS + gitleaks in place; PII filter / CORS / rate-limit are target'
+    gate_id: null
+  agents_md: |-
+    - **Security** — **partly [in place], partly [target — Phase 9/security]**. In
+      place: HTTPS (Caddy), an admin `X-API-Key` + JWT support on the API, basic auth on
+      admin UIs, least-privilege backup key, gitleaks. Target (not yet built): PII filter
+      (Aadhaar/PAN/keys), CORS allowlist, rate limiting. The OSS stack ships none of the
+      target items — they are explicitly TODO, not done. See `docs/interfaces.md` §5.
+- id: practice-adrs
+  title: ADRs
+  severity: normal
+  enforcement:
+    status: prose
+    mechanism: 'convention: docs/decisions/ per major choice'
+    gate_id: null
+  agents_md: '- **ADRs** — **[in place]** in `docs/decisions/` for every major choice.'
+- id: practice-supply-chain
+  title: Supply chain
+  severity: normal
+  enforcement:
+    status: prose
+    mechanism: 'target: lockfile / pinning / Dependabot not yet in place'
+    gate_id: null
+  agents_md: |-
+    - **Supply chain** — **[target]** lockfile + dependency pinning + action SHA-pinning
+      + Dependabot are not yet in place (BACKLOG; baseline scan gap).
