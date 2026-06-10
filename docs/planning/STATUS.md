@@ -61,13 +61,17 @@ COE 2026-06-10-delayed-memory-buildout urges first). Infra phases 0-4 are done/l
 - **Secrets catalog** — `ai-memory-infra-private/docs/security/secrets-catalog.md` (no
   values): full inventory with purpose/location/rotation/blast-radius; AGENTS.md custody +
   DoD rows now require a catalog row on every secret create/rotate.
-- **Secret hygiene** — redacted the partial basic-auth password prefix from the private
-  `BUILD-LOG.md` working copy; documented the exposure + the `.env` plaintext block as open
-  hygiene items in the catalog. **Operator action still needed** (see blockers): rotate the
-  Caddy basic-auth password + delete the `.env` block (closes P1 burn-in).
+- **Secret hygiene — basic-auth rotation DONE (2026-06-10).** Rotated the Caddy
+  basic-auth password to a fresh cost-14 `$2a$14$` hash (live + login-verified:
+  `graph.`=200 with new pw, 401 without), stored the new plaintext in Bitwarden item
+  `BASIC_AUTH (admin UI — dash./graph.)`, and **deleted the `.env` plaintext block**
+  on the droplet (P1 burn-in closed). Also pinned every secret → exact Bitwarden item
+  in the private catalog and fixed a Spaces backup-vs-Terraform key drift.
 - **HLD drift (ADR 032)** — corrected the Neo4j/Mem0-graph overclaim in `architecture.md`,
   `AGENTS.md`, `README.md`, `scaffold.py`, compose + Dockerfile comments, ADR 005 note,
-  setup-prompt banner. Live `MATCH (n) count` confirm deferred to next operator SSH session.
+  setup-prompt banner. **Live `MATCH (n) count` confirmed = 0 (2026-06-10)** — no
+  Mem0-written nodes, exactly as predicted; only the graph-source one-way-door
+  decision remains (ADR 032 §4).
 - **LLD mechanism** — `docs/design/TEMPLATE.md` + DoD trigger "design doc before code".
 - **Interface registry** — `docs/interfaces.md` (8 contracts, enforcement status).
 - **Maturity honesty** — practices `[in place]`/`[target]`; build-phase reality; deleted
@@ -100,13 +104,6 @@ boot-assert.
 
 ## Open blockers / risks
 
-- **Operator action — basic-auth password rotation (this session's one handoff item):**
-  a partial prefix of the admin-UI/basic-auth password sits in private `BUILD-LOG.md`
-  git history. Recommended fix (reversible; neutralizes the leaked prefix, no history
-  rewrite): rotate it. Needs a live droplet change + Bitwarden write. **One step:** when
-  ready, I'll walk you through `caddy hash-password` → update `infra/.env` on the droplet →
-  reload Caddy → store the new plaintext in Bitwarden → I tick the catalog. The same SSH
-  session can run the Neo4j `MATCH (n) RETURN count(n)` confirm + delete the `.env` block.
 - **OpenClaw adapter gate (ADR 028):** verify `source`/`agent_id` propagation before enabling writes.
 - **`gpt-4.1-nano` silent fallback** if `MEM0_DEFAULT_LLM_MODEL` unset on the droplet — keep it set.
 - **Operator income change risk (end-June 2026):** spend must stay pause-able (`scripts/teardown.py`).
@@ -128,22 +125,21 @@ boot-assert.
 
 ## Next action
 
-> **RESUME HERE.** Control plane is hardened + committed. Pick the track:
+> **RESUME HERE.** Operator-gated rotation closeout is DONE (basic-auth rotated +
+> login-verified, Neo4j count=0 confirmed, `.env` plaintext block deleted, catalog
+> pinned). Operator chose the order: **(A) then (B).**
 >
-> **(A) Implement ADR 033 — structured operating contract (the approved next task).**
+> **(A) Implement ADR 033 — structured operating contract (ACTIVE next task).**
 > Lift the 18 tenets + DoD table + practices into `contract/*.yaml` (verbatim) with an
 > `enforcement.status` per rule; write `scripts/render_contract.py` (TDD) to generate the
 > fenced AGENTS.md/tenets.md sections + `docs/reports/contract-coverage.md`; wire `--check`
 > into pre-commit + CI; then pick the top 1-2 enforcement-backlog gates. See ADR 033 §
 > "Migration steps".
 >
-> **(B) Phase 3 — premise test.** Capture your REAL open items + 1-2 recruiter reachouts
-> (conversational, one at a time per AGENTS.md § Memory Daily Driver), run "plan my day"
-> for a few days, judge genuine utility. Operator-facing; expect conversation, not code.
->
-> Recommended: (A) is the directed plan and removes the model-drift pain you raised; (B)
-> is what the delayed-buildout COE urges and what you said you'd "go back to". Your call.
-> Also pending: the basic-auth rotation handoff item (Open blockers).
+> **(B) Phase 3 — premise test (after A).** Capture your REAL open items + 1-2 recruiter
+> reachouts (conversational, one at a time per AGENTS.md § Memory Daily Driver), run
+> "plan my day" for a few days, judge genuine utility. Operator-facing; expect
+> conversation, not code.
 
 **How to talk to the next agent:** type **`/resume`** in a new chat — or paste:
 

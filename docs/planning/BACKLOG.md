@@ -44,9 +44,10 @@
   source says the deployed stack has none (found 2026-06-10, tenet 8/10). DOC FIX
   DONE 2026-06-10 (ADR 032):** corrected `architecture.md`, `AGENTS.md`, `README.md`,
   `scaffold.py`, compose + Dockerfile comments, ADR 005 note, setup-prompt banner.
-  **Remaining:** (1) live droplet confirm `MATCH (n) RETURN count(n)` is empty
-  (next operator SSH session); (2) the graph-source one-way-door decision
-  (LifeGraph-only vs graph-capable Mem0) before Phase 6 — see ADR 032 §4.
+  **Remaining:** (1) ✅ live droplet confirm DONE 2026-06-10 — `MATCH (n) RETURN
+  count(n)` = **0** (no Mem0-written nodes, as ADR 032 predicted); (2) the
+  graph-source one-way-door decision (LifeGraph-only vs graph-capable Mem0) before
+  Phase 6 — see ADR 032 §4 (the only open part of this item now).
   Verified from upstream source at our pinned ref (`MEM0_REF=3669459…`) and the
   mem0ai 2.0.4 PyPI wheel: the `server/` REST app never reads `NEO4J_*` and never
   configures a `graph_store`, and the 2.0.4 library ships **zero** graph-memory
@@ -93,18 +94,14 @@
   Ties: `docs/coe/2026-06-08-atomic-handoff-failure.md`,
   `docs/coe/2026-06-09-session-handoff-omission.md`,
   `docs/coe/2026-06-09-concierge-handoff-regression.md`.
-- **`[security]` Strip the plaintext secrets block from `infra/.env` (post-burn-in
-  cleanup).** The generated dash/graph admin password (and copy-to-Bitwarden reminder)
-  live as a comment block at the top of `infra/.env` — both locally and, after deploy, on
-  the droplet (`/opt/ai-memory-infra/infra/.env`). The values are already safe in
-  Bitwarden, so delete the block from both copies; nothing plaintext should sit at rest.
-  **Deferred to the post-burn-in cleanup pass (tenet 18):** the operator is keeping the
-  admin-UI login note handy through ~1 week of full real-world usage, then this gets swept.
-  Trigger: **after ~1 week of full usage (~2026-06-15)**. Safe to hold because `.env` is
-  gitignored *and* the new gitleaks pre-commit gate stops it ever reaching git (the active
-  risk — secrets in history — is already closed). Consciously deferred 2026-06-07,
-  re-deferred with a trigger 2026-06-08. Ties: AGENTS.md secrets rule, ADR 017, tenets
-  14 & 18.
+- ✅ **`[security]` Strip the plaintext secrets block from `infra/.env` — DONE
+  (2026-06-10).** Pulled forward from the ~2026-06-15 burn-in trigger because it was
+  swept in the same SSH session as the basic-auth rotation. The droplet
+  `/opt/ai-memory-infra/infra/.env` comment block (now-rotated admin password +
+  copy-to-Bitwarden reminder) was deleted; the live `KEY=VALUE` secrets and the
+  `ai-memory .env (prod)` Bitwarden note were confirmed intact; on-disk backups were
+  removed. Ties: AGENTS.md secrets rule, ADR 017, tenets 14 & 18; private
+  secrets-catalog hygiene items.
 - ✅ **`[security]` Secret-scan pre-commit (gitleaks) — DONE (2026-06-08).** "No secrets
   in git" is now a *deterministic gate*. Added **gitleaks v8.30.1** as a second pre-commit
   gate in `scripts/hooks/pre-commit` (after the Tenet-11 repo-health gate): it runs
@@ -191,6 +188,18 @@
   `$`) makes Compose log `"…" variable is not set`. Harmless (Caddy gets the right hash via
   `env_file`); escape `$`→`$$` in `infra/.env` to quiet it. Also: apex `chandrav.dev` TLS
   didn't verify from a Windows client — confirm Caddy issued the apex cert.
+- **`[ops]` Define an OS patch + reboot cadence for the droplet (flagged 2026-06-10).**
+  The box runs `unattended-upgrades` (security auto-patch) but has **no defined
+  reboot/patch window**, so kernel/lib updates leave `/var/run/reboot-required`
+  flags and an apt backlog accumulating (51 pending updates + a pending reboot seen
+  2026-06-10). Industry norm for a single box: keep `unattended-upgrades` for
+  security, add `needrestart` to catch services needing restart, and schedule a
+  **monthly `apt upgrade` + reboot in a low-traffic window** (the stack is
+  `restart: unless-stopped`, so it self-recovers in ~1–2 min). Decide whether to
+  automate (timer) or keep operator-driven; document in `docs/runbook.md`. Note: the
+  ssh-agent service was set to **Manual** start (couldn't set Automatic without
+  admin) on the operator's Windows box — re-`ssh-add` after a PC reboot, or set the
+  service Automatic from an elevated shell. Tie: tenets 14, 18.
 
 - **Policy-as-code for pointer files (ADR 018 enforcement).** Either *generate*
   `.cursor/rules/*` + `CLAUDE.md` from `AGENTS.md` (propagation by definition →
