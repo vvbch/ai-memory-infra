@@ -8,8 +8,9 @@ context across every LLM, on any device.
 
 - **Memory layer**: Mem0 REST API over PostgreSQL/pgvector, with a local MCP
   proxy for Claude Code, Cursor, and VS Code (ADR 025).
-- **Knowledge graph**: Neo4j, dual namespace - Mem0's auto-managed semantic
-  graph + LifeGraph (people, ventures, skills, decisions, milestones).
+- **Knowledge graph**: Neo4j reserved for LifeGraph (Phase 6); Mem0's built-in
+  graph path is not wired in the pinned mem0ai 2.0.4 build — see BACKLOG P1
+  `[docs-drift]`.
 - **Reach**: Chrome extension (desktop / ChromeOS) + local MCP proxy for
   Claude Code, Cursor, and VS Code. Claude mobile needs a later remote HTTP MCP
   endpoint. Android extension coverage is best-effort only (see ADR 004). Native
@@ -30,8 +31,9 @@ cp infra/.env.example infra/.env   # fill in secrets
 
 ## Engineering
 
-Terraform IaC, GitHub Actions CI/CD, TDD (80%+ coverage), eval suite with
-guardrail tests, Prometheus + Grafana, ADRs in `docs/decisions/`. Tenets in
+Terraform IaC, GitHub Actions CI on every PR (CD planned), TDD (80%+ coverage),
+eval framework + observability planned (Phases 7–8), ADRs in `docs/decisions/`.
+Tenets in
 `docs/tenets.md`. Canonical agent context in `AGENTS.md`.
 
 ## License

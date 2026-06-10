@@ -165,7 +165,8 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 ## Architecture (summary)
 
 Caddy (auto-HTTPS) → Mem0 (FastAPI REST) over PostgreSQL/pgvector, plus
-Neo4j (dual namespace: Mem0 auto-managed graph + LifeGraph). A local stdio MCP
+Neo4j (LifeGraph target; Mem0 graph not wired in mem0ai 2.0.4 — BACKLOG P1). A
+local stdio MCP
 proxy (ADR 025) lets Claude Code, Cursor, and VS Code call the live REST API.
 Prometheus + Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
 Claude remote MCP connector still needs a later HTTP endpoint for iOS; Claude Code +
@@ -187,7 +188,8 @@ Full diagram: `docs/architecture.md`.
 
 - **IaC**: Terraform for all infra. No manual console clicks.
 - **TDD**: tests before implementation; 80%+ coverage on `src/`.
-- **CI** on every PR: ruff + mypy + pytest against an ephemeral Docker stack.
+- **CI** on every PR: ruff + mypy + pytest + contract gates (today: no ephemeral
+  Docker stack in CI yet — target per ADR 007).
 - **CD** on push to main: SSH deploy → health check → rollback on failure.
 - **Eval framework**: retrieval (precision@k, MRR), extraction (cross-LLM),
   categorization, guardrails. Weekly CI run; blocks on regression.
