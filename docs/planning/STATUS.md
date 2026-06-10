@@ -32,7 +32,10 @@ inconsistencies, benchmark vs industry standards) and refreshes your **interview
 are now five track-specific ones (PM, Product, AI Engineer, Principal AI Engineer, Sr EM AI) in the
 private repo. Typing **`/resume`** in a new chat now does what pasting the resume line used to.
 
-**One operator setup step pending:** the two automation secrets (see Next action).
+**Automation secrets are set and smoke-tested green** (both weekly-scan jobs passed).
+COE written for a pre-delegation failure (agent delegated a `gh workflow run` to the operator
+instead of running it; tenet 17 violation; new pre-delegation gate added to AGENTS.md concierge
+rules).
 
 **What you pay:** ~₹2,600/mo for the cloud box; full stack ≈ ₹3,800/mo landed; pause anytime with
 `scripts/teardown.py`.
@@ -66,6 +69,13 @@ fix-on-failure agent (`ci-autofix.yml`), weekly scan + interview-refresh automat
 - **Interview packets**: master packet decision log + new "Agents, skills & mechanisms" showcase
   inventory + 2 new STAR stories; five per-track packets created in
   `ai-memory-infra-private/docs/interviews/`.
+- **Automation secrets set + smoke-tested green:** `CURSOR_API_KEY` + `PRIVATE_REPO_PAT` (GitHub
+  PAT "ai-memory-interview-refresh", Contents + Pull requests: RW on
+  `vvbch/ai-memory-infra-private`) as repo secrets on `vvbch/ai-memory-infra`; enabled Actions
+  PR-creation permission via API; `weekly-scan.yml` manual trigger: both jobs green.
+- **COE: premature delegation to operator** — `docs/coe/2026-06-10-premature-delegation-to-operator.md`;
+  AGENTS.md concierge rules gained a pre-delegation gate: "before delegating, verify the action
+  cannot be performed via CLI/API."
 
 ## Last decisions
 
@@ -87,9 +97,8 @@ claims vs implementation reword, delete stub workflows, dependency lockfile + pi
 ## Open blockers / risks
 
 - ~~Operator setup for automation secrets~~ **Done 2026-06-10:** `CURSOR_API_KEY` and
-  `PRIVATE_REPO_PAT` (GitHub PAT "ai-memory-interview-refresh", Contents + Pull requests: RW
-  on `vvbch/ai-memory-infra-private`) set as repo secrets; Actions PR-creation permission
-  enabled. Awaiting smoke-test re-run of `weekly-scan.yml` to confirm green.
+  `PRIVATE_REPO_PAT` set as repo secrets; Actions PR-creation permission enabled;
+  smoke-test green (both jobs).
 - **OpenClaw adapter gate (ADR 028):** before enabling OpenClaw writes, verify the adapter passes
   `source`/`agent_id` through to Mem0 + Neo4j metadata; patch the adapter, never fork `user_id`.
 - **`gpt-4.1-nano` silent fallback** if `MEM0_DEFAULT_LLM_MODEL` ever unset on the droplet —
@@ -115,15 +124,9 @@ claims vs implementation reword, delete stub workflows, dependency lockfile + pi
 
 ## Next action
 
-> **RESUME HERE.** Two queued items, in order:
+> **RESUME HERE.** Automation secrets are set and verified green. One item:
 >
-> 1. **Operator one-time setup (concierge, one step at a time): the two automation secrets.**
->    (a) `CURSOR_API_KEY` — cursor.com → Dashboard → API keys → create → add as a repo secret on
->    `vvbch/ai-memory-infra` (Settings → Secrets and variables → Actions). (b) `PRIVATE_REPO_PAT`
->    — GitHub fine-grained PAT scoped to `vvbch/ai-memory-infra-private`, Contents: Read and
->    write, added as a second repo secret. Then trigger `weekly-scan` once via Actions →
->    "Run workflow" and confirm both jobs go green. Details: `docs/automation/README.md`.
-> 2. **Phase 3 — the premise test (the fun one).** Sit with Chandra and capture his REAL open
+> 1. **Phase 3 — the premise test (the fun one).** Sit with Chandra and capture his REAL open
 >    items + 1-2 real recruiter reachouts (one at a time, conversational practice per AGENTS.md
 >    § Memory Daily Driver), run "plan my day" for a few days, judge whether retrieval is
 >    genuinely useful, iterate. Operator-facing work — expect conversation, not code.
