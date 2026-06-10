@@ -37,7 +37,8 @@
   003 (soft separation), 031 (contracts).
 - **Enforcement:** `scripts/check_memory_contract.py` (CI + can run pre-commit) —
   checks extension constants, a single normalizing write path, no direct
-  `/memories` bypass, MCP proxy default user id.
+  `/memories` bypass, MCP proxy `DEFAULT_USER_ID`, and MCP `add_memory`
+  `metadata.source="mcp"` tagging.
 
 ### 2. Extension ↔ API identity contract — ENFORCED (cross-repo)
 

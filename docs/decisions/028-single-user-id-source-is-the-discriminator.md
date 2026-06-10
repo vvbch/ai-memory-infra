@@ -70,6 +70,22 @@ a **metadata** concern, not an **identity** concern.
   timestamps, and the open-item lifecycle are *also* metadata on this single
   `user_id`, discriminated the same way.
 
+## Propagation / conformance
+
+Audit 2026-06-11: every in-workspace consumer conforms; OpenClaw remains external.
+
+| Consumer | Contract point | Status |
+|---|---|---|
+| `ai-memory-extension` | `user_id="chandrav"`; `metadata.source="extension"` via `normalizeMemoryWriteBody` + `postMemory` single write path; legacy id/source auto-healed | ✅ enforced (`check_memory_contract.py`) |
+| MCP proxy `client.py` | `DEFAULT_USER_ID="chandrav"` (overridable via `AI_MEMORY_USER_ID`) | ✅ enforced |
+| MCP proxy `server.py` | `add_memory` tags `metadata.source="mcp"` on every write | ✅ enforced + `tests/test_mcp_proxy/test_server.py` |
+| `scripts/memory.py` | agent-surface writes default `metadata.source="cursor"` | ✅ tested (`tests/test_scripts/test_memory.py`) |
+| OpenClaw adapter (`serenichron/openclaw-memory-mem0`) | pass `source`/`agent_id` into Mem0 **and** graph; patch adapter, never fork `user_id` | ⬜ pending — repo not in workspace; BACKLOG P2 |
+| Future todo app | same `user_id` + `source`/`type` contract | ⬜ N/A until built (ADR 029) |
+
+Mechanical gate: `scripts/check_memory_contract.py` (CI). Neo4j graph propagation of
+`metadata.source` is not yet written (LifeGraph Phase 6); pgvector path is live.
+
 ## Notes
 
 - Initial OpenClaw scope is unchanged: email processing from Chandra's desk only;

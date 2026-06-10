@@ -33,9 +33,11 @@ invariants that make the contract impossible to violate at runtime:
        user`` / ``OPENMEMORY_CHROME_EXTENSION`` literals in content scripts are
        fine precisely because they are healed at this chokepoint.)
 
-  MCP proxy (``ai-memory-infra/src/mcp_proxy/client.py``)
-    4. ``DEFAULT_USER_ID = "chandrav"`` and no legacy ``"chrome-extension-user"``
-       default.
+  MCP proxy (``ai-memory-infra/src/mcp_proxy/``)
+    4. ``client.py``: ``DEFAULT_USER_ID = "chandrav"`` and no legacy
+       ``"chrome-extension-user"`` default.
+    5. ``server.py``: ``add_memory`` tags every write ``metadata.source = "mcp"``
+       before delegating to the client (the tool surface is the single write path).
 
 Exit 0 = contract holds in every consumer repo present; exit 1 = a violation
 (printed). Missing a consumer repo is reported, not failed (it may not be
@@ -128,7 +130,7 @@ def check_extension(repo: Path) -> tuple[list[str], list[str]]:
     return violations, notes
 
 
-def check_mcp_proxy(repo: Path) -> tuple[list[str], list[str]]:
+def check_mcp_proxy_client(repo: Path) -> tuple[list[str], list[str]]:
     violations: list[str] = []
     notes: list[str] = []
     client = repo / "src" / "mcp_proxy" / "client.py"
@@ -148,6 +150,42 @@ def check_mcp_proxy(repo: Path) -> tuple[list[str], list[str]]:
             f"missing canonical DEFAULT_USER_ID = '{CANONICAL_USER_ID}' (ADR 028)"
         )
     return violations, notes
+
+
+def check_mcp_proxy_server(repo: Path) -> tuple[list[str], list[str]]:
+    """ADR 028: the MCP tool surface must tag every add with metadata.source=mcp."""
+    violations: list[str] = []
+    notes: list[str] = []
+    server = repo / "src" / "mcp_proxy" / "server.py"
+    text = _read(server)
+    if text is None:
+        notes.append(f"{repo.name}: src/mcp_proxy/server.py not found — skipped")
+        return violations, notes
+
+    if "def add_memory" not in text:
+        violations.append(
+            "ai-memory-infra/src/mcp_proxy/server.py: "
+            "missing add_memory tool (ADR 028 write path)"
+        )
+        return violations, notes
+
+    if not re.search(r'["\']source["\']\s*:\s*["\']mcp["\']', text):
+        violations.append(
+            "ai-memory-infra/src/mcp_proxy/server.py: "
+            'add_memory must set metadata.source = "mcp" (ADR 028)'
+        )
+    if "metadata=metadata" not in text and "metadata={" not in text:
+        violations.append(
+            "ai-memory-infra/src/mcp_proxy/server.py: "
+            "add_memory must pass metadata into client.add_memory (ADR 028)"
+        )
+    return violations, notes
+
+
+def check_mcp_proxy(repo: Path) -> tuple[list[str], list[str]]:
+    client_v, client_n = check_mcp_proxy_client(repo)
+    server_v, server_n = check_mcp_proxy_server(repo)
+    return client_v + server_v, client_n + server_n
 
 
 def main(argv: list[str]) -> int:

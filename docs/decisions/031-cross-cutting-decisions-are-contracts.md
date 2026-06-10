@@ -87,7 +87,7 @@ governs**, enforced by both a soft (process) and a hard (mechanical) control.
 | Consumer repo | Contract point | Status |
 |---|---|---|
 | `ai-memory-extension` | `user_id="chandrav"`, `metadata.source="extension"`, single write path (`postMemory` + background relay `normalizeMemoryWriteBody`), legacy id/source auto-healed | ✅ patched + committed |
-| `ai-memory-infra` MCP proxy (`src/mcp_proxy/client.py`) | `DEFAULT_USER_ID="chandrav"` (overridable via `AI_MEMORY_USER_ID`) | ✅ patched + committed |
+| `ai-memory-infra` MCP proxy (`client.py` + `server.py`) | `DEFAULT_USER_ID="chandrav"`; `add_memory` tags `metadata.source="mcp"` | ✅ patched + gate-enforced |
 | OpenClaw adapter (`serenichron/openclaw-memory-mem0`) | pass `source`/`agent_id` into Mem0 **and** graph; patch adapter, never fork `user_id` (ADR 028 §4) | ⬜ pending — tracked in BACKLOG P2 (memory model) |
 | Future todo app | reads/writes the same `user_id` + `source`/`type` contract | ⬜ N/A until built (ADR 029) |
 
