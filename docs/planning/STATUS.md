@@ -31,6 +31,12 @@ bank snapshot + honest graph report — parked until Goal 2.
   Automatic (admin PowerShell) and the key is loaded; Windows persists agent keys across
   reboots. Verified non-interactive (`BatchMode=yes`) SSH to the droplet. No more
   per-session passphrase handoffs; `ssh_unlock.py` stays as fallback only.
+- **Persistent-credential pattern codified** (AGENTS.md § collab + handoff spec): one-time
+  machine persistence beats recurring handoffs. Full inventory verified — every credential
+  the agent needs is already durable on this Windows box: SSH key (ssh-agent), git push
+  (GCM), `gh` (keyring), `AI_MEMORY_API_KEY` (user env var), Terraform secrets
+  (`terraform.tfvars`), stack `.env`. Only gap: the future `MCP_CONNECTOR_BEARER_TOKEN`
+  (ADR 034) — persist as user env var + Bitwarden when generated in Goal 2.
 
 **What you pay:** ~₹2,600/mo cloud box; full stack ≈ ₹3,800/mo landed; pause anytime with
 `scripts/teardown.py`.

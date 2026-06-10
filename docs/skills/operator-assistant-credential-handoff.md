@@ -49,6 +49,17 @@ The script:
 (or operator confirms droplet command works). `--check` returns ok when clipboard
 is non-empty before unlock.
 
+## Persist, don't repeat (2026-06-10)
+
+A clipboard handoff is a **first-time or recovery** path, never a routine. If the
+same secret would be handed off in a second session, the agent must make it
+durable on the machine in the same session instead (AGENTS.md § persistent agent
+credentials): OS-native store (ssh-agent service on Automatic, GCM, `gh`
+keyring) → Windows user env var → gitignored local file — then verify with a
+non-interactive probe. SSH is the worked example: after the service was set to
+Automatic and the key registered, `ssh -o BatchMode=yes` succeeds with no
+handoff; `ssh_unlock.py` is now fallback-only.
+
 ## When to use vs `operator_action.py`
 
 | Situation | Use |

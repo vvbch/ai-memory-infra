@@ -64,6 +64,22 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     `docs/skills/operator-assistant-credential-handoff.md`; skill
     `operator-credential-handoff`). Never echo clipboard contents; the script
     clears the clipboard after a successful load.
+  - **Persist agent credentials on the machine — handoffs are one-time, not
+    recurring (pattern, 2026-06-10):** if the agent needs the same secret in
+    more than one session, a per-session handoff is a smell. Do the one-time
+    setup that makes it durably available on this machine, in order of
+    preference: (1) OS-native secure stores — Windows `ssh-agent` service set
+    to **Automatic** with the key registered once (keys persist across
+    reboots), Git Credential Manager, `gh` keyring; (2) **Windows *user*
+    environment variables** for API tokens that scripts read via `os.environ`
+    (e.g. `AI_MEMORY_API_KEY`); (3) gitignored local files
+    (`infra/terraform/terraform.tfvars`, `infra/.env`). Bitwarden remains the
+    master copy (ADR 017); the machine store is a working cache. When a new
+    agent-needed secret is created, persist it this way **in the same
+    session** — and verify with a non-interactive probe (e.g.
+    `ssh -o BatchMode=yes`) before declaring it fixed. Origin: the droplet-SSH
+    passphrase was hand-delivered repeatedly until the agent service was made
+    Automatic (2026-06-10); never repeat that loop for any credential.
   - Say what each command/click does (**ELI5 → one layer deeper**) *before* he or
     I run it. Do the parts I can do; only delegate clicks I genuinely can't.
 - **Research discipline:** web-verify volatile facts (model IDs, prices, API
