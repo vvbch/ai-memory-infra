@@ -196,6 +196,32 @@ COMMAND_FILES = (
 )
 
 
+# ---- agent skills -----------------------------------------------------------
+# Canonical skills are versioned in ai-memory-infra/skills/<name>/SKILL.md
+# (thin trigger pointers to docs/skills/* specs + scripts/*). Cursor discovers
+# project skills at <workspace root>/.cursor/skills/<name>/SKILL.md and also
+# reads .claude/skills/ for compatibility (verified cursor.com/docs/skills,
+# 2026-06-10); Claude Code reads .claude/skills/ natively. The workspace root
+# is unversioned, so — same model as the hook adapters — the installer copies
+# the versioned skills there. Root-level (not nested-in-repo) placement is
+# deliberate: nested .cursor/skills/ are auto-scoped to that directory's files,
+# but the Operator Assistant skills must fire on pure conversation.
+
+SKILLS_SRC = INFRA_ROOT / "skills"
+SKILL_TARGET_DIRS = (".cursor/skills", ".claude/skills")
+
+
+def _install_skills() -> None:
+    if not SKILLS_SRC.is_dir():
+        print(f"  (no skills dir at {SKILLS_SRC}; skipping)")
+        return
+    for skill_md in sorted(SKILLS_SRC.glob("*/SKILL.md")):
+        name = skill_md.parent.name
+        content = skill_md.read_text(encoding="utf-8")
+        for target in SKILL_TARGET_DIRS:
+            _write_text(WORKSPACE_ROOT / target / name / "SKILL.md", content)
+
+
 def _write(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
@@ -221,6 +247,9 @@ def main() -> int:
     print("installing slash commands (/resume):")
     for rel in COMMAND_FILES:
         _write_text(WORKSPACE_ROOT / rel, RESUME_COMMAND_MD)
+
+    print("installing agent skills (thin pointers from skills/*/SKILL.md):")
+    _install_skills()
 
     print("")
     print("Done. Verify in each IDE that's installed:")

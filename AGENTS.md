@@ -320,7 +320,10 @@ COE 2026-06-10-delayed-memory-buildout):
   not from `ai-memory-infra/.cursor/`, and the parent workspace is not a git repo —
   so `scripts/install_ide_hooks.py` (versioned) generates the thin per-IDE adapters
   (`<root>/.cursor/hooks.json` for Cursor, `<root>/.claude/settings.json` for
-  Claude Code) from one definition. **Re-run it after any re-clone** (same model as
+  Claude Code) from one definition — and also installs the **agent skills**
+  (versioned `skills/*/SKILL.md` thin trigger pointers → workspace-root
+  `.cursor/skills/` + `.claude/skills/`, where harnesses auto-discover them;
+  `docs/interfaces.md` §12). **Re-run it after any re-clone** (same model as
   the git-hook installer, ADR 015). VS Code has no native session hook — wire the
   bootstrap as a folder-open task (see `docs/setup.md`).
 - **Completion gate:** when a reversible work item is done and verified, commit the

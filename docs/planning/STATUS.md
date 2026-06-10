@@ -6,10 +6,10 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-10 (**ADR 033 implemented: the operating contract is now a
-structured single-source — `contract/*.yaml` renders the AGENTS.md/tenets.md prose +
-a coverage report; `--check` gates pre-commit + CI; first enforcement-backlog gate
-(pointer-file purity) landed**). Repo-health green at session start.
+**Last updated:** 2026-06-10 (**model-switch hardening: agent skills are now
+harness-discoverable + the final all-repo handoff verifier landed** — Goal 1 of the
+operator's 3-goal day; next is Goal 2: remote MCP endpoint for Claude on iPhone).
+Repo-health green at session start.
 
 ## Plain English — where we are (resume here)
 
@@ -18,75 +18,71 @@ backed up nightly + restore-drilled monthly, reachable from Chrome and Cursor/Cl
 (local MCP proxy). The conversational practice ("plan my day", "log this", "we decided X")
 is wired.
 
-**Why this session existed:** the operator chose order **(A) then (B)**. This session did
-**(A): implement ADR 033** — make the operating contract model-agnostic. Until now the
-contract was ~900 lines of *prose* a model had to read and choose to follow, so adherence
-varied by model (Opus 4.8 vs Composer 2.5). Now the high-value rules are **structured data
-+ mechanisms**, and the prose is *generated from* that data.
+**Why this session existed:** the operator's Claude credits exhaust today; the next
+sessions run on **Cursor Composer 2.5**. Day plan (operator-set, 2026-06-10): (1) harden
+interfaces/agents/skills so the model switch is safe; (2) verify all four surfaces
+(Claude iPhone, Claude Chrome, ChatGPT Chrome, Cursor) can read/write mem0 — the iPhone
+one needs a **new remote MCP HTTP endpoint**; (3) report how "the graph" is shaping
+(reality: there is no graph yet — ADR 032; Neo4j is empty by design, reserved for
+LifeGraph Phase 6).
 
-**What changed this session (2026-06-10):**
-- **The contract is now a structured single-source.** `contract/tenets.yaml` (18),
-  `contract/practices.yaml` (8), `contract/dod.yaml` (12 DoD rows) hold each rule
-  **verbatim** plus an honest `enforcement.status` (enforced / tested / prose) + mechanism
-  + gate_id. `scripts/render_contract.py` (TDD) **generates** the fenced sections of
-  `AGENTS.md` + `docs/tenets.md` and writes `docs/reports/contract-coverage.md`.
-- **The lift was proven faithful.** Rendered output is **byte-equal** to the old
-  hand-authored prose — the only diff to AGENTS.md/tenets.md was the inserted
-  `<!-- generated:* -->` fence comments. An in-sync test pins it forever.
-- **Drift is now impossible by construction.** `render_contract.py --check` is wired into
-  pre-commit (gate 4) + CI: if anyone edits the prose without editing the YAML, the commit
-  fails.
-- **First enforcement-backlog gate landed (ADR 033 §4 #3): pointer-file purity.**
-  `scripts/check_pointer_purity.py` (pre-commit gate 5 + CI) fails if an `alwaysApply`
-  Cursor rule / `CLAUDE.md` drifts into carrying tenets/rules (closes COE
-  2026-06-07-cursor-rule-drift). The coverage report now reads **38 rules — 11 enforced,
-  0 tested, 27 prose**: the model-dependent surface is finally *measured* and shrinking.
+**What changed this session (2026-06-10, Goal 1):**
+- **Agent skills are now discoverable by any harness/model.** Canonical thin trigger
+  pointers versioned in `skills/*/SKILL.md` (`memory-daily-driver`,
+  `session-checkpoint`, `operator-action`), installed by
+  `scripts/install_ide_hooks.py` to the workspace-root `.cursor/skills/` +
+  `.claude/skills/` (Cursor skill discovery verified at cursor.com/docs/skills,
+  2026-06-10; root-level placement deliberate — nested skills are dir-scoped, but
+  Operator Assistant skills must fire on pure conversation). Registry §12.
+- **Final all-repo handoff verifier landed (ADR 033 §4 #1; P1 governance item).**
+  `scripts/handoff_verify.py` (+7 tests): every repo clean/pushed/in-sync (incl.
+  **behind** check — stale Drive clone, tenet 11), STATUS.md is the checkpoint of
+  record (no work committed after the last STATUS update), prints the latest pushed
+  commit per repo as push evidence. Registry §11; wired into the `session-checkpoint`
+  skill; `completion_gate.py` stays the deterministic turn-end floor.
 
 **What you pay:** ~₹2,600/mo cloud box; full stack ≈ ₹3,800/mo landed; pause anytime with
 `scripts/teardown.py`.
 
 ## Current phase
 
-**Control plane further hardened (ADR 033 done). (A) is substantially complete** — the
-structured contract + renderer + two gates (render-freshness, pointer-purity) are live; the
-remaining enforcement-backlog gates are parked in `BACKLOG.md`. **Next track is (B) Phase 3
-premise test** (the operator's "then go back to phase 3"). Infra phases 0–4 are done/live;
-phases 5–8 are stubs (see AGENTS.md build-phase status).
+**Control plane hardened for the model switch (Goal 1 of the 2026-06-10 day plan done).**
+Remaining ADR 033 enforcement-backlog gates (#2 operator-action routing, #4 DoD
+trigger-table conformance) stay parked in `BACKLOG.md`. Infra phases 0–4 done/live;
+phases 5–8 stubs; Phase 3-premise test still pending (see AGENTS.md build-phase status).
 
 ## Done this session (2026-06-10)
 
-- **ADR 033 implemented** (migration steps 1–5): `contract/*.yaml` (verbatim lift,
-  enforcement.status per rule) + `scripts/render_contract.py` (+ tests) generating the
-  fenced AGENTS.md/tenets.md sections + `docs/reports/contract-coverage.md`; byte-equal
-  no-op diff proved the lift faithful; `--check` wired into pre-commit + CI; PyYAML added
-  to deps; ADR 033 → Implemented with a Propagation note.
-- **Pointer-file purity gate** (`scripts/check_pointer_purity.py`, + tests) — ADR 033 §4
-  enforcement-backlog item #3 / ADR 018's deferred guard; pre-commit gate 5 + CI; promotes
-  DoD row `dod-05` prose → enforced.
-- **Registry + backlog updated** — `docs/interfaces.md` §9 (operating contract) + §10
-  (pointer purity); `BACKLOG.md` Workstream C marked done where landed; new parked item:
-  decide the fate of glob-scoped helper rules `10`/`20`.
-- **Repo green:** ruff + mypy + 56 tests (90% cov) + all five pre-commit gates pass.
+- **Skills made harness-discoverable** — `skills/*/SKILL.md` (3 thin trigger pointers
+  to the canonical `docs/skills/*` specs + scripts); `install_ide_hooks.py` extended to
+  install them to `<root>/.cursor/skills/` + `<root>/.claude/skills/`; installed + verified.
+- **`scripts/handoff_verify.py`** (+ `tests/test_scripts/test_handoff_verify.py`, 7 tests)
+  — final all-repo handoff verifier; closes the P1 governance backlog item / ADR 033 #1.
+- **Registry + contract + backlog updated** — `docs/interfaces.md` §11 (final handoff)
+  + §12 (agent skills); `contract/dod.yaml` dod-12 mechanism now includes the verifier
+  (re-rendered); BACKLOG P1 governance item marked DONE; AGENTS.md working-model bullet
+  notes the installer also installs skills.
+- **Repo green:** ruff + mypy + 63 tests (90% cov) + pointer-purity + STATUS-shape gates pass.
 
 ## Last decisions
 
-- **Operating contract is a generated view of `contract/*.yaml` (ADR 033 — Implemented).**
-  Prose can no longer drift from the structured source; the prose-only (model-dependent)
-  surface is measured by `contract-coverage.md` and shrinks deliberately via the
-  enforcement backlog.
-- **Pointer-purity gate is scoped to contractually-pure pointers** (`alwaysApply` rules +
-  `CLAUDE.md`), not the glob-scoped helper rules — whose fate is a separate parked decision
-  (avoids unilaterally deleting curated content, tenet 17).
+- **Skills install at the workspace root, not nested in the repo** — nested
+  `.cursor/skills/` are auto-scoped to that directory's files; Operator Assistant
+  skills must trigger on pure conversation. Same versioned-source → generated-adapter
+  model as the hooks (ADR 030).
+- **The handoff verifier is agent-run (TESTED), not a turn-end hook** — fetch/network
+  on every turn would slow all turns; `completion_gate.py` remains the deterministic
+  floor, `handoff_verify.py` adds behind-detection + STATUS-freshness + push evidence
+  before final responses.
 
 ## Backlog (parked work)
 
-Prioritized backlog in **`docs/planning/BACKLOG.md`**. Updated this session: Workstream C
-structured single-source = DONE; enforcement-backlog gate #3 (pointer purity) = DONE;
-**remaining ADR 033 gates** still open — #1 final-response/handoff validator (already a
-promoted P1 governance item), #2 operator-action format routing, #4 DoD trigger-table
-conformance. New parked item: decide the fate of glob-scoped helper rules `10`/`20`. Other
-open items unchanged: graph-source one-way-door decision (ADR 032 §4), supply-chain
-pinning/lockfile, `MEM0_DEFAULT_LLM_MODEL` boot-assert, droplet OS patch/reboot cadence.
+Prioritized backlog in **`docs/planning/BACKLOG.md`**. Updated this session: P1
+governance final-handoff verifier = DONE; skills discoverability = DONE. Remaining
+ADR 033 gates: #2 operator-action format routing, #4 DoD trigger-table conformance.
+Other open items unchanged: glob-scoped helper rules `10`/`20` fate, graph-source
+one-way-door decision (ADR 032 §4), supply-chain pinning/lockfile,
+`MEM0_DEFAULT_LLM_MODEL` boot-assert, droplet OS patch/reboot cadence.
 
 ## Open blockers / risks
 
@@ -114,17 +110,19 @@ pinning/lockfile, `MEM0_DEFAULT_LLM_MODEL` boot-assert, droplet OS patch/reboot 
 
 ## Next action
 
-> **RESUME HERE.** (A) ADR 033 is implemented and committed; its remaining enforcement-backlog
-> gates are parked in `BACKLOG.md` (do them later, one per session). Per the operator's chosen
-> order **(A) then (B)**, the next track is:
+> **RESUME HERE.** Goal 1 of the operator's 2026-06-10 day plan is done. Next is
+> **Goal 2: make all four surfaces read/write mem0.** Three already work (Cursor via
+> local MCP proxy; Claude + ChatGPT on Chrome desktop via the extension) — verify each
+> with a live round-trip. The build item is **Claude on iPhone**: a remote MCP
+> (Streamable HTTP) endpoint on the droplet behind Caddy with auth, registered as a
+> Claude connector (operator confirmed his paid Claude subscription continues — only
+> credits exhaust). Auth design for a public MCP endpoint is **one-way-door class**:
+> web-verify Claude's current remote-connector requirements (tenet 8), write/extend an
+> ADR before exposing anything. Needs operator SSH unlock for droplet work.
 >
-> **(B) Phase 3 — premise test.** Capture your REAL open items + 1–2 recruiter reachouts
-> (conversational, one at a time per AGENTS.md § Memory Daily Driver), run "plan my day" for
-> a few days, judge genuine utility. Operator-facing; expect conversation, not code. This is
-> what COE 2026-06-10-delayed-memory-buildout urges before more buildout.
->
-> *(Or, if you'd rather keep hardening the control plane first, pick the next ADR 033
-> enforcement-backlog gate — #1 final-response/handoff validator is the highest-value.)*
+> After Goal 2 (or ~9pm IST): **Goal 3 (light)** — memory-bank snapshot (counts by
+> type/source) + the honest graph report (empty by design; the unlock is the ADR 032 §4
+> decision).
 
 **How to talk to the next agent:** type **`/resume`** in a new chat — or paste:
 

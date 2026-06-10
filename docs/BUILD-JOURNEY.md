@@ -1166,3 +1166,27 @@ with no console or operator steps required.
 **Next**
 - Run the product premise test (live, conversational), or keep hardening by converting the
   next highest-value prose rule into a gate.
+
+## 2026-06-10 - Hardening for a model switch: discoverable skills + a handoff verifier
+
+**Focus:** the next sessions move to a different coding model, so the operating
+contract must not depend on any one model's diligence. Two gaps closed: the agent
+skills existed as specs + scripts but were not *discoverable* by the editor's
+skill system, and the "is this handoff actually clean?" check was still partly manual.
+
+**Milestones**
+- **Skills are now auto-discovered by the editor.** The three persona skills
+  (memory daily driver, session checkpoint, operator-action formatter) ship as thin
+  versioned trigger files that the existing installer copies to where the editor
+  looks for them - same generated-adapter model as the session hooks. Placement was
+  verified against current editor docs first: nested skill folders are scoped to
+  their directory's files, so conversational skills must install at the workspace
+  root.
+- **A final handoff verifier (test-driven, 7 tests).** One command now answers
+  "is every repo clean, pushed, and in sync - and was the status snapshot the last
+  thing committed?" It also prints the latest pushed commit per repo, so a session's
+  closing claims cite git evidence instead of asserting cleanliness. The turn-end
+  gate remains the deterministic floor; this adds stale-clone detection and
+  checkpoint-freshness on top.
+- This closes the promoted P1 governance backlog item that three separate handoff
+  post-mortems had been pointing at.

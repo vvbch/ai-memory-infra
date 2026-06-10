@@ -37,6 +37,12 @@
     Driver conversational practice (spec
     `docs/skills/operator-assistant-memory-daily-driver.md`); Memory Steward
     hygiene checks remain deferred behind real utility.
+  - ✅ **DONE (2026-06-10): skills are now harness-discoverable.** Canonical
+    thin SKILL.md trigger pointers versioned in `skills/*/SKILL.md`
+    (memory-daily-driver, session-checkpoint, operator-action), installed to the
+    workspace root `.cursor/skills/` + `.claude/skills/` by
+    `scripts/install_ide_hooks.py` (ADR 030 model) so any model — incl. Composer
+    2.5 — auto-discovers them. Registered as `docs/interfaces.md` §12.
 
 ## P1 — discovered drift / verification
 
@@ -93,17 +99,17 @@
 
 ## P1 — do at the start of Phase-1 CI work
 
-- **`[governance]` Final all-repo handoff verifier — PROMOTED from P2 after
-  repeat handoff COEs (2026-06-09).** Before final response, enumerate every
-  touched workspace repo and fail/report if any repo is dirty, ahead, behind, or
-  not pushed to `origin/main`; also check that `STATUS.md`/logs are checkpointed
-  before a resume prompt is emitted. Cheapest version: a documented final
-  checklist in `STATUS.md`; better version: a script that checks
-  `ai-memory-infra`, `ai-memory-infra-private`, `ai-memory-extension`, and any
-  future package repos, then prints the latest pushed commit per touched repo.
+- ✅ **`[governance]` Final all-repo handoff verifier — DONE (2026-06-10).**
+  `scripts/handoff_verify.py` (+ tests): enumerates every workspace repo and
+  fails/reports if any is dirty, ahead, **behind** (stale Drive-synced clone,
+  tenet 11), or has no upstream; checks `STATUS.md` is the checkpoint of record
+  (no work committed after the last STATUS update); prints the latest pushed
+  commit per repo so the final response cites push evidence. Registered as
+  `docs/interfaces.md` §11; invoked via the `session-checkpoint` skill before
+  final responses; turn-end `completion_gate.py` remains the deterministic floor.
   Ties: `docs/coe/2026-06-08-atomic-handoff-failure.md`,
   `docs/coe/2026-06-09-session-handoff-omission.md`,
-  `docs/coe/2026-06-09-concierge-handoff-regression.md`.
+  `docs/coe/2026-06-09-concierge-handoff-regression.md`; ADR 033 §4 (#1).
 - ✅ **`[security]` Strip the plaintext secrets block from `infra/.env` — DONE
   (2026-06-10).** Pulled forward from the ~2026-06-15 burn-in trigger because it was
   swept in the same SSH session as the basic-auth rotation. The droplet

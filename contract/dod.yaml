@@ -103,6 +103,6 @@ rules:
   severity: high
   enforcement:
     status: enforced
-    mechanism: scripts/completion_gate.py (turn-end commit/push); STATUS checkpoint partly prose
+    mechanism: scripts/completion_gate.py (turn-end commit/push) + scripts/handoff_verify.py (agent-run final check incl. behind + STATUS freshness)
     gate_id: completion-gate
   agents_md: '| Every logical step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each logical step boundary — not just at session end — so the file is resume-ready at real handoff points. End a response with a copy-paste **Resume prompt** only when that checkpoint exists; otherwise say the work is mid-step and keep going in the current chat |'

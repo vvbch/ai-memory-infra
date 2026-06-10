@@ -57,4 +57,4 @@
 | `dod-09` | Security / guardrail behaviour | high | **prose** | partial: security tests exist; guardrail set is partly aspirational |
 | `dod-10` | Create / obtain / rotate any account, API token, key, or secret | critical | **prose** | gitleaks blocks committing secret values (detect); catalog+Bitwarden rule is prose |
 | `dod-11` | End of any working session | critical | **enforced** | scripts/check_status_snapshot.py (shape) + completion_gate.py (commit/push) |
-| `dod-12` | Every logical step + every response (tenet 16) | high | **enforced** | scripts/completion_gate.py (turn-end commit/push); STATUS checkpoint partly prose |
+| `dod-12` | Every logical step + every response (tenet 16) | high | **enforced** | scripts/completion_gate.py (turn-end commit/push) + scripts/handoff_verify.py (agent-run final check incl. behind + STATUS freshness) |

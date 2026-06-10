@@ -142,6 +142,38 @@
 - **Enforcement:** `scripts/check_pointer_purity.py` (pre-commit gate 5 + CI).
   Scoped to contractually-pure pointers; glob-scoped helper rules are out of scope.
 
+### 11. Final handoff contract — TESTED
+
+- **What:** before any final response / Resume prompt, every project repo must be
+  clean, pushed, in sync with origin (not behind — Drive-synced clone risk,
+  tenet 11), and `STATUS.md` must be the checkpoint of record (no work committed
+  after the last STATUS update). The verifier prints the latest pushed commit per
+  repo so the final answer cites push evidence instead of asserting it.
+- **Schema lives in:** `scripts/handoff_verify.py` (`--json` for machines);
+  floor enforced turn-end by `scripts/completion_gate.py` (contract 8).
+- **ADRs/ties:** ADR 027/030/033 §4 (#1); COEs 2026-06-08-atomic-handoff-failure,
+  2026-06-09-session-handoff-omission, 2026-06-09-concierge-handoff-regression.
+- **Enforcement:** TESTED (`tests/test_scripts/test_handoff_verify.py`); invoked
+  by the `session-checkpoint` agent skill before final responses. The turn-end
+  completion gate remains the deterministic floor (dirty/unpushed); the
+  behind-check + STATUS-freshness check are agent-run.
+
+### 12. Agent skills (discoverable trigger pointers) — ENFORCED (by installer)
+
+- **What:** the persona skills (`memory-daily-driver`, `session-checkpoint`,
+  `operator-action`) are versioned in `ai-memory-infra/skills/*/SKILL.md` as thin
+  trigger pointers to the canonical specs (`docs/skills/*`) + scripts; the
+  installer copies them to the unversioned workspace root (`.cursor/skills/`,
+  `.claude/skills/`) where Cursor/Claude Code auto-discover them (verified
+  cursor.com/docs/skills, 2026-06-10). Root-level placement is deliberate:
+  nested `.cursor/skills/` are auto-scoped to that directory's files, but the
+  Operator Assistant skills must fire on pure conversation.
+- **Schema lives in:** `skills/*/SKILL.md`; installer `scripts/install_ide_hooks.py`.
+- **ADRs/ties:** ADR 030 (same install model as hooks); `docs/agent-personas.md`
+  (owning personas); tenet 2 (canonical content stays in the repo).
+- **Enforcement:** installer-generated (re-run after re-clone); skill bodies are
+  pointers, so drift surface is minimal.
+
 ## Coverage at a glance
 
 | Contract | Enforcement | Cross-repo? |
@@ -156,6 +188,8 @@
 | 8. Harness hooks/gates | ENFORCED | yes (all repos) |
 | 9. Operating contract (structured) | ENFORCED | no |
 | 10. Pointer-file purity | ENFORCED | no |
+| 11. Final handoff | TESTED | yes (all repos) |
+| 12. Agent skills | installer-generated | no |
 
 > The gap this registry makes visible: contracts 1, 2, 8, 9, and 10 are
 > deterministically enforced; 5 (auth/guardrails) is the weakest and is tracked
