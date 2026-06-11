@@ -6,32 +6,31 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (Phase 5 dry-run ready; env aligned).
+**Last updated:** 2026-06-11 (Phase 5 live load complete; acceptance probe regression).
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.example.com/docs` (operators
 override via env — see private `OPERATOR.md`). Memory write/read contract locked;
-acceptance probe PASS.
+acceptance probe **regressed** after bulk load (1/3 pass — see blockers).
 
 **Build track:** Phases **6–8 core code** landed. **Public/private boundary** scrubbed
-(ADR 038). **Phase 5 bulk load** — ADR export dry-run complete (249 new facts vs 20
-existing bank rows); awaiting operator approval for live write.
+(ADR 038). **Phase 5 bulk load** — **249 ADR facts live** in bank (`chandrav` @
+`memory.chandrav.dev`); all verified by `external_id` search.
 
 ## Current phase
 
-**Phase 5 live data load (operator gate).** Local env now matches private
-`OPERATOR.md` (`AI_MEMORY_USER_ID=chandrav`, `AI_MEMORY_BASE_URL=https://memory.chandrav.dev`).
-Migration CLI exports `data/migration-facts.json`; `bulk_seed_importer.py --dry-run`
-reports **249 would_write**, **0 invalid**.
+**Post–Phase 5 acceptance probe triage.** Live load done; probe must pass at scale
+before calling the memory contract fully green.
 
 ## Done this session (2026-06-11)
 
-- **Env alignment:** persisted `AI_MEMORY_BASE_URL` + `AI_MEMORY_USER_ID` via `setx`
-  (live bank probe: 20 memories under `chandrav`)
-- **Migration CLI:** `--output` writes bulk_seed JSON; design doc updated
-- **ADR 038:** fixed `Jordan` inline-qualifier in decision text (contract gate)
-- **Dry-run:** `docs/decisions/` → 249 facts; bank dedup dropped 0; bulk importer clean
+- **Phase 5 live load:** `bulk_seed_importer` wrote 249 ADR facts to
+  `chandrav@memory.chandrav.dev` (run 1: 193 before server disconnect on cache
+  refresh; run 2: +56 idempotent). All 249 verified via `find_by_external_id`.
+- **Acceptance probe:** `structured_filter` PASS; `backdated_recency` and
+  `entity_collision` FAIL — probe facts drowned by ADR corpus in vector search
+  (`docs/reports/acceptance-probe-2026-06-11.md`).
 
 ## Last decisions
 
@@ -46,21 +45,25 @@ Phase 9 README/eval CI workflow/Grafana deploy.
 
 ## Open blockers / risks
 
-- **Live load approval** — 249 ADR chunks will be written to the live bank (one-way door).
-- **Git history** — personal content remains in old commits; accepted (option 3).
+- **Acceptance probe regression** — 2/3 queries fail after 249-fact load; probe needs
+  isolation from ADR corpus (external_id prefix or dedicated namespace).
+- **Import cache refresh** — full `list_all_memories` after each write overloaded server
+  on run 1; idempotent re-run recovered; consider append-to-cache fix.
 - **Phase 9 polish** — README/eval CI workflow/Grafana deploy remain.
 
 ## Environment notes
 
 - Windows PowerShell 5.1 (no `&&`); use `working_directory` for paths with spaces.
 - Live env: `chandrav` @ `https://memory.chandrav.dev` (setx persisted 2026-06-11).
+- Cursor shells may need env reload:
+  `$env:AI_MEMORY_BASE_URL = [Environment]::GetEnvironmentVariable('AI_MEMORY_BASE_URL','User')`
 
 ## Next action
 
-> **RESUME HERE — operator approves live load:**
-> Run `python scripts/bulk_seed_importer.py data/migration-facts.json` (no `--dry-run`),
-> then `python scripts/acceptance_probe.py`. Re-export first if ADRs changed:
-> `python -m migration import --source docs/decisions --dry-run --use-bank --output data/migration-facts.json`
+> **RESUME HERE — triage acceptance_probe at scale:**
+> Fix probe isolation so `backdated_recency` and `entity_collision` pass with 249 ADR
+> facts loaded (filter by `probe:acceptance:` external_id prefix or dedicated namespace
+> in `search_with_contract` / probe queries). Re-run `python scripts/acceptance_probe.py`.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 
