@@ -2,11 +2,18 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from click.testing import CliRunner
 
-from migration.cli import collect_markdown_files, format_report, main, run_import_pipeline
+from migration.cli import (
+    collect_markdown_files,
+    format_report,
+    main,
+    run_import_pipeline,
+    write_facts_json,
+)
 
 
 def test_collect_markdown_files_finds_nested_md(tmp_path: Path) -> None:
@@ -88,3 +95,37 @@ def test_import_cmd_registered_on_main() -> None:
     command = main.get_command(None, "import")
     assert command is not None
     assert command.name == "import"
+
+
+def test_write_facts_json_matches_bulk_seed_shape(tmp_path: Path) -> None:
+    facts = [
+        {
+            "external_id": "migration:md:sample:hello",
+            "text": "Hello",
+            "metadata": {
+                "type": "fact",
+                "source": "cursor-repo",
+                "event_date": "2026-06-01",
+                "namespace": "public",
+            },
+            "infer": False,
+        }
+    ]
+    out = tmp_path / "facts.json"
+    write_facts_json(out, facts)
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert payload["facts"][0]["external_id"] == "migration:md:sample:hello"
+
+
+def test_import_dry_run_writes_output_json(tmp_path: Path) -> None:
+    (tmp_path / "sample.md").write_text("# Title\n\nBody.\n", encoding="utf-8")
+    out = tmp_path / "out.json"
+    runner = CliRunner()
+    result = runner.invoke(
+        main,
+        ["import", "--source", str(tmp_path), "--dry-run", "--output", str(out)],
+    )
+    assert result.exit_code == 0, result.output
+    payload = json.loads(out.read_text(encoding="utf-8"))
+    assert len(payload["facts"]) == 1
+    assert "Wrote 1 facts" in result.output

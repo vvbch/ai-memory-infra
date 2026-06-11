@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime as _dt
+import json
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ class ImportReport:
     dropped_count: int
     sample_external_ids: tuple[str, ...]
     dropped: tuple[DroppedFact, ...]
+    kept_facts: tuple[dict[str, Any], ...] = ()
 
 
 def collect_markdown_files(source: Path) -> list[Path]:
@@ -79,7 +81,16 @@ def run_import_pipeline(
         dropped_count=len(result.dropped),
         sample_external_ids=sample,
         dropped=tuple(result.dropped),
+        kept_facts=tuple(result.kept),
     )
+
+
+def write_facts_json(path: Path, facts: list[dict[str, Any]] | tuple[dict[str, Any], ...]) -> None:
+    """Write bulk_seed_importer-compatible JSON."""
+    out = path.resolve()
+    out.parent.mkdir(parents=True, exist_ok=True)
+    payload = {"facts": list(facts)}
+    out.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def format_report(report: ImportReport, *, dry_run: bool) -> str:
@@ -135,11 +146,18 @@ def main() -> None:
     is_flag=True,
     help="Dedup against the live memory bank (requires API credentials).",
 )
+@click.option(
+    "--output",
+    "output_path",
+    type=click.Path(dir_okay=False, path_type=Path),
+    help="Write kept facts to JSON for scripts/bulk_seed_importer.py.",
+)
 def import_cmd(
     source: Path,
     dry_run: bool,
     sample: int,
     use_bank: bool,
+    output_path: Path | None,
 ) -> None:
     """Run import_md → categorizer → dedup over a docs directory."""
     if not dry_run:
@@ -151,3 +169,6 @@ def import_cmd(
     bank_records = load_bank_records() if use_bank else []
     report = run_import_pipeline(source, bank_records=bank_records, sample_size=sample)
     click.echo(format_report(report, dry_run=True))
+    if output_path is not None:
+        write_facts_json(output_path, report.kept_facts)
+        click.echo(f"Wrote {len(report.kept_facts)} facts to {output_path.resolve()}")

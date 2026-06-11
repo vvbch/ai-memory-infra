@@ -6,8 +6,7 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (public repo sanitization + Phases 6–8).
-Repo-health pending final verify; committing+pushing both repos.
+**Last updated:** 2026-06-11 (Phase 5 dry-run ready; env aligned).
 
 ## Plain English — where we are (resume here)
 
@@ -16,21 +15,23 @@ override via env — see private `OPERATOR.md`). Memory write/read contract lock
 acceptance probe PASS.
 
 **Build track:** Phases **6–8 core code** landed. **Public/private boundary** scrubbed
-(ADR 038): personal/venture content moved to `ai-memory-infra-private`. **Phase 5 live
-data load** scheduled (operator). Phase 9 polish and production wiring remain.
+(ADR 038). **Phase 5 bulk load** — ADR export dry-run complete (249 new facts vs 20
+existing bank rows); awaiting operator approval for live write.
 
 ## Current phase
 
-**Post-sanitization handoff.** Public repo is stranger-safe at HEAD. Git history still
-contains personal data — **operator chose option 3 (accept history, rely on HEAD).**
-No filter-repo or repo recreate unless that decision is reversed explicitly.
+**Phase 5 live data load (operator gate).** Local env now matches private
+`OPERATOR.md` (`AI_MEMORY_USER_ID=chandrav`, `AI_MEMORY_BASE_URL=https://memory.chandrav.dev`).
+Migration CLI exports `data/migration-facts.json`; `bulk_seed_importer.py --dry-run`
+reports **249 would_write**, **0 invalid**.
 
 ## Done this session (2026-06-11)
 
-- **ADR 038:** public/private content boundary; synthetic LifeGraph/eval fixtures
-- **Private:** `OPERATOR.md`, `ventures.md`, `setup-prompt.md`, interview automation prompt
-- **Public:** `AGENTS.md` rewrite; `primary-user` / `example.com` defaults; docs/skills scrub
-- **Extension:** aligned `DEFAULT_USER_ID` and default server URL with public contract
+- **Env alignment:** persisted `AI_MEMORY_BASE_URL` + `AI_MEMORY_USER_ID` via `setx`
+  (live bank probe: 20 memories under `chandrav`)
+- **Migration CLI:** `--output` writes bulk_seed JSON; design doc updated
+- **ADR 038:** fixed `Jordan` inline-qualifier in decision text (contract gate)
+- **Dry-run:** `docs/decisions/` → 249 facts; bank dedup dropped 0; bulk importer clean
 
 ## Last decisions
 
@@ -45,20 +46,21 @@ Phase 9 README/eval CI workflow/Grafana deploy.
 
 ## Open blockers / risks
 
-- **Git history** — personal content remains in old commits; accepted (option 3). Cloners who dig history may see it.
-- **Live deploy env** — operator must set `AI_MEMORY_USER_ID` / URLs to match existing bank.
-- **Phase 5 data load** — export JSON + `bulk_seed_importer` with approval.
+- **Live load approval** — 249 ADR chunks will be written to the live bank (one-way door).
+- **Git history** — personal content remains in old commits; accepted (option 3).
+- **Phase 9 polish** — README/eval CI workflow/Grafana deploy remain.
 
 ## Environment notes
 
 - Windows PowerShell 5.1 (no `&&`); use `working_directory` for paths with spaces.
+- Live env: `chandrav` @ `https://memory.chandrav.dev` (setx persisted 2026-06-11).
 
 ## Next action
 
-> **RESUME HERE — operator env alignment + Phase 5 load:**
-> Confirm private `OPERATOR.md` env overrides match the live bank (`user_id`, base URL).
-> Then migration CLI `--output facts.json`, dry-run with `--use-bank`, operator approves,
-> `bulk_seed_importer.py` live load.
+> **RESUME HERE — operator approves live load:**
+> Run `python scripts/bulk_seed_importer.py data/migration-facts.json` (no `--dry-run`),
+> then `python scripts/acceptance_probe.py`. Re-export first if ADRs changed:
+> `python -m migration import --source docs/decisions --dry-run --use-bank --output data/migration-facts.json`
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 

@@ -37,7 +37,7 @@ Git history retains prior content until explicitly rewritten (one-way door).
 4. **DoD interview_packet triggers** point at the private repo path; public docs
    never require updating interview materials for engineering-only changes.
 
-5. **Entity-collision examples** use synthetic names (`Jordan`, `project contact`)
+5. **Entity-collision examples** use synthetic names (e.g. `Jordan, project contact`)
    not real family or contacts.
 
 ## Consequences

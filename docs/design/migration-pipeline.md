@@ -45,5 +45,6 @@ migration is for **automated** imports from docs with stable `external_id`s.
 ## Verification
 
 1. Unit: `tests/test_migration/test_import_md.py`
-2. Dry-run: `python -m migration import --source ./docs/decisions/ --dry-run` (CLI later)
+2. Dry-run + export: `python -m migration import --source ./docs/decisions/ --dry-run --use-bank --output data/migration-facts.json`
+3. Load preview: `python scripts/bulk_seed_importer.py data/migration-facts.json --dry-run`
 3. Compare chunk count + sample `external_id`s before any live write
