@@ -6,7 +6,7 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (Phase 5 migration — dedup TDD green).
+**Last updated:** 2026-06-11 (Phase 5 migration — CLI dry-run green).
 Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
@@ -15,25 +15,24 @@ Repo-health green; committing+pushing.
 write/read contract locked; acceptance probe PASS. **Bulk CSV ingest** parked
 until Chandra finishes `data/reconciled-facts.csv` — unrelated to build track.
 
-**Active build track:** **Phase 5 migration pipeline** — parse, classify, and dedup
-done; CLI dry-run next.
+**Active build track:** **Phase 5 migration pipeline** — parse → classify → dedup →
+CLI dry-run complete. No live bank writes until operator approves export + bulk load.
 
 ## Current phase
 
-**Phase 5 migration (TDD).** `dedup.py` filters facts whose `external_id` or
-normalized text already exists in the bank (including within-batch duplicates).
+**Phase 5 migration (TDD).** `python -m migration import --source <dir> --dry-run`
+wires the full pipeline; verified on `docs/decisions/` (37 files → 244 chunks).
 
 ## Done this session (2026-06-11)
 
-- **`src/migration/dedup.py`** + **`tests/test_migration/test_dedup.py`**
-  (8 tests green; 160 total).
+- **`src/migration/cli.py`** + **`src/migration/__main__.py`** +
+  **`tests/test_migration/test_cli.py`** (7 tests; 167 total).
 
 ## Last decisions
 
-- Migration outputs same contract as `bulk_seed_importer` (`infer=false`, `event_date`,
-  `source_doc_id`); does not write live bank until explicit dry-run approval.
-- Dedup is deterministic pre-import filter; write-time `external_id` skip remains
-  in `bulk_seed_importer` (ADR 037).
+- CLI defaults to dry-run only; live import deferred to JSON export +
+  `bulk_seed_importer` (operator gate).
+- `--use-bank` optional for dedup against live Mem0 (needs API credentials).
 
 ## Backlog (parked work)
 
@@ -51,11 +50,10 @@ premise test (after phases 5–8); market world model.
 
 ## Next action
 
-> **RESUME HERE — Phase 5 migration (CLI dry-run):**
-> TDD `src/migration/cli.py` — `python -m migration import --source ./docs/decisions/
-> --dry-run` wires import_md → categorizer → dedup and prints chunk counts +
-> sample `external_id`s (no live write). Add `tests/test_migration/test_cli.py` or
-> extend e2e stub as needed.
+> **RESUME HERE — Phase 5 export + operator gate:**
+> Extend migration CLI with `--output facts.json` (bulk_seed_importer shape) from
+> kept facts after dedup; operator runs `bulk_seed_importer.py --dry-run` then
+> approves live load. Optional: `test_e2e_migration.py` with fake Mem0 client.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 
