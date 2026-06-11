@@ -6,67 +6,65 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (memory contract + acceptance probe PASS).
+**Last updated:** 2026-06-11 (reconciled-facts CSV template; session handoff).
 Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
-up nightly + restore-drilled monthly. **Remote MCP** at `https://mcp.chandrav.dev`
-ships five tools incl. delete/update (ADR 037).
+up nightly + restore-drilled monthly. Memory **write/read contract** locked and
+**acceptance probe PASS** (`docs/reports/acceptance-probe-2026-06-11.md`).
 
-**Curated bank (`user_id=chandrav`):** extension auto-capture off by policy; MCP
-+ `scripts/memory.py` primary write surfaces.
+**Curated bank (`user_id=chandrav`):** empty of probe rows; ready for reconciled
+seed once Chandra finishes the sheet.
 
-**Contract locked (2026-06-11):** fact metadata (`event_date`, `source`,
-`source_doc_id`, `namespace`, `external_id`), idempotent shared write path, read
-convention (event_date recency, metadata filters, entity qualifier rerank). **5-fact
-acceptance probe PASS** — see `docs/reports/acceptance-probe-2026-06-11.md`.
+**Your sheet:** edit `data/reconciled-facts.csv` (Excel/Sheets OK — save as CSV
+UTF-8). Delete `example:*` rows when done. Half-day update in progress — **no
+bulk load until you say go.**
 
 ## Current phase
 
-**Infra phases 0–4 live.** Phase 5 migration — parked behind reconciled fact seed.
+**Infra phases 0–4 live.** Bulk fact seed is the active gate; Phase 5 migration
+and other buildouts **can continue in parallel** — they do not block on the CSV.
 
 ## Done this session (2026-06-11)
 
-- **`src/memory/contract.py` + `retrieval.py`** — event_date, namespace, read helpers.
-- **`src/mcp_proxy/idempotent_write.py`** — shared verify-then-skip; wired to client,
-  MCP, `memory.py`, bulk importer.
-- **`scripts/acceptance_probe.py`** — live 6-fact probe, 3/3 queries PASS, cleanup OK.
-- **ADR 037 amended** (SS6–8), interfaces §1b, tenet 20, extension `namespace` default.
+- Memory contract + idempotent writes + live acceptance probe (prior commit
+  `8aaf2c9`).
+- **`data/reconciled-facts.csv`** — operator-editable template with column contract.
+- **`scripts/csv_to_bulk_seed.py`** — CSV → JSON → `bulk_seed_importer.py`.
 
 ## Last decisions
 
-- `event_date` canonical; `occurred_at` dual-written for ADR 029 compat.
-- `namespace` = flat tags (`public` \| `sensitive`) on one `user_id` (operator choice).
-- Direct SQL on pgvector metadata deferred (ADR 037 §8 option B post-seed).
-- Bulk load **not** started this session — reconciled fact set is next.
+- Bulk ingest path: CSV (human edit) → JSON (script) → idempotent importer.
+- `infer=false` default on curated rows (verbatim facts).
+- Further infra buildouts allowed while CSV is being filled; only **bulk load**
+  waits on the reconciled sheet.
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. Top active: **reconciled fact seed** (separate
-session). Parked: Phase 5 migration TDD; market world model; weekly compaction timer.
+See **`docs/planning/BACKLOG.md`**. After seed: Phase 5 migration TDD; MCP droplet
+redeploy for extended `add_memory`; weekly compaction timer.
 
 ## Open blockers / risks
 
-- **OpenClaw adapter** — not in workspace; conformance audit blocked on checkout.
-- **MCP droplet** — redeploy needed for extended `add_memory` params (optional; bulk
-  importer path used for probe).
+- **Bulk load** — blocked on operator completing `data/reconciled-facts.csv`.
+- **OpenClaw adapter** — not in workspace.
 
 ## Environment notes
 
-- Windows PowerShell 5.1 (no `&&`); use `working_directory` param for paths with
-  spaces/parens.
-- `scripts/memory.py` shadows `src/memory/` if `scripts/` stays on `sys.path` — fixed
-  via path bootstrap in scripts.
+- Windows: open CSV in Excel, **Save As → CSV UTF-8** to keep encoding clean.
+- Rows with `external_id` starting `example:` are skipped on convert.
 
 ## Next action
 
-> **RESUME HERE — reconciled fact seed:**
-> Load the reconciled portfolio fact set via `scripts/bulk_seed_importer.py` with
-> full metadata contract (`event_date`, `source`, `external_id`, `namespace`). Do not
-> bulk-load until operator supplies the reconciled JSON. Re-run
-> `scripts/acceptance_probe.py` if contract code changes.
+> **RESUME HERE — after Chandra updates the CSV:**
+> 1. `python scripts/csv_to_bulk_seed.py data/reconciled-facts.csv`
+> 2. `python scripts/bulk_seed_importer.py data/reconciled-facts.json --dry-run`
+> 3. On clean dry-run: `python scripts/bulk_seed_importer.py data/reconciled-facts.json`
+>
+> Say **"ingest the sheet"** when ready. Until then: optional parallel work only
+> (no writes to production bank).
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 

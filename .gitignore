@@ -11,6 +11,9 @@ dist/
 build/
 *.egg-info/
 
+# Generated from reconciled-facts.csv (may contain personal facts)
+data/reconciled-facts.json
+
 # Secrets / env - NEVER commit real values
 .env
 *.env
