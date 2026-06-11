@@ -1,1 +1,22 @@
-{}
+{
+  "cases": [
+    {
+      "id": "conv-1",
+      "provider": "gpt-5-mini",
+      "expected_facts": [
+        "Chandra chose Mem0 for the memory layer",
+        "Neo4j reserved for LifeGraph"
+      ],
+      "actual_facts": [
+        "Chandra chose Mem0 for the memory layer",
+        "Neo4j reserved for LifeGraph"
+      ]
+    },
+    {
+      "id": "conv-2",
+      "provider": "gpt-5-mini",
+      "expected_facts": ["Iron Condor strategy uses ETF pledge"],
+      "actual_facts": ["Iron Condor strategy uses ETF pledge", "extra hallucination"]
+    }
+  ]
+}

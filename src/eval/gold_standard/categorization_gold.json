@@ -1,1 +1,19 @@
-{}
+{
+  "cases": [
+    {
+      "source_path": "ventures/trading-firm/plan.md",
+      "text": "Quarterly rebalance.",
+      "expected_ventures": ["trading_firm"]
+    },
+    {
+      "source_path": "docs/decisions/037-write-path.md",
+      "text": "ADR 037 contract.",
+      "expected_ventures": ["personal"]
+    },
+    {
+      "source_path": "career/migration/germany.md",
+      "text": "Germany visa milestones.",
+      "expected_ventures": ["career", "migration"]
+    }
+  ]
+}
