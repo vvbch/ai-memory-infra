@@ -6,65 +6,55 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (reconciled-facts CSV template; session handoff).
+**Last updated:** 2026-06-11 (Phase 5 migration — import_md TDD green).
 Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
-**The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
-up nightly + restore-drilled monthly. Memory **write/read contract** locked and
-**acceptance probe PASS** (`docs/reports/acceptance-probe-2026-06-11.md`).
+**The product:** self-hosted memory at `https://memory.chandrav.dev/docs`. Memory
+write/read contract locked; acceptance probe PASS. **Bulk CSV ingest** parked
+until Chandra finishes `data/reconciled-facts.csv` — unrelated to build track.
 
-**Curated bank (`user_id=chandrav`):** empty of probe rows; ready for reconciled
-seed once Chandra finishes the sheet.
-
-**Your sheet:** edit `data/reconciled-facts.csv` (Excel/Sheets OK — save as CSV
-UTF-8). Delete `example:*` rows when done. Half-day update in progress — **no
-bulk load until you say go.**
+**Active build track:** **Phase 5 migration pipeline** — markdown parser done;
+categorizer + dedup + CLI next.
 
 ## Current phase
 
-**Infra phases 0–4 live.** Bulk fact seed is the active gate; Phase 5 migration
-and other buildouts **can continue in parallel** — they do not block on the CSV.
+**Phase 5 migration (TDD).** `import_md.py` splits `.md` on headings and emits
+bulk-seed-shaped facts with stable `migration:md:…` external_ids.
 
 ## Done this session (2026-06-11)
 
-- Memory contract + idempotent writes + live acceptance probe (prior commit
-  `8aaf2c9`).
-- **`data/reconciled-facts.csv`** — operator-editable template with column contract.
-- **`scripts/csv_to_bulk_seed.py`** — CSV → JSON → `bulk_seed_importer.py`.
+- **`docs/design/migration-pipeline.md`** — short pipeline design.
+- **`src/migration/import_md.py`** + **`tests/test_migration/test_import_md.py`**
+  (7 tests green).
 
 ## Last decisions
 
-- Bulk ingest path: CSV (human edit) → JSON (script) → idempotent importer.
-- `infer=false` default on curated rows (verbatim facts).
-- Further infra buildouts allowed while CSV is being filled; only **bulk load**
-  waits on the reconciled sheet.
+- Migration outputs same contract as `bulk_seed_importer` (`infer=false`, `event_date`,
+  `source_doc_id`); does not write live bank until explicit dry-run approval.
+- CSV reconciled seed remains operator-driven; migration is for repo/docs automation.
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. After seed: Phase 5 migration TDD; MCP droplet
-redeploy for extended `add_memory`; weekly compaction timer.
+See **`docs/planning/BACKLOG.md`**. Parked: bulk CSV ingest (operator); Phase 3
+premise test (after phases 5–8); market world model.
 
 ## Open blockers / risks
 
-- **Bulk load** — blocked on operator completing `data/reconciled-facts.csv`.
+- **Bulk CSV load** — waiting on operator sheet (say "ingest the sheet" when ready).
 - **OpenClaw adapter** — not in workspace.
 
 ## Environment notes
 
-- Windows: open CSV in Excel, **Save As → CSV UTF-8** to keep encoding clean.
-- Rows with `external_id` starting `example:` are skipped on convert.
+- Windows PowerShell 5.1 (no `&&`); use `working_directory` for paths with spaces.
 
 ## Next action
 
-> **RESUME HERE — after Chandra updates the CSV:**
-> 1. `python scripts/csv_to_bulk_seed.py data/reconciled-facts.csv`
-> 2. `python scripts/bulk_seed_importer.py data/reconciled-facts.json --dry-run`
-> 3. On clean dry-run: `python scripts/bulk_seed_importer.py data/reconciled-facts.json`
->
-> Say **"ingest the sheet"** when ready. Until then: optional parallel work only
-> (no writes to production bank).
+> **RESUME HERE — Phase 5 migration (categorizer TDD):**
+> Add failing tests in `tests/test_migration/test_categorizer.py` for venture
+> tagging (ADR 003 paths/keywords), then implement `src/migration/categorizer.py`.
+> After that: `dedup.py`, then `cli.py` dry-run over a docs directory.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 
