@@ -31,6 +31,7 @@ if _SCRIPT_DIR in sys.path:
 
 from memory.retrieval import (  # noqa: E402
     best_entity_match,
+    fetch_by_external_id,
     latest_by_event_date,
     open_follow_ups,
     record_id,
@@ -38,7 +39,7 @@ from memory.retrieval import (  # noqa: E402
     search_with_contract,
 )
 from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
-from mcp_proxy.idempotent_write import list_all_memories, write_timeout_seconds  # noqa: E402
+from mcp_proxy.idempotent_write import write_timeout_seconds  # noqa: E402
 
 # Import bulk importer after path bootstrap.
 import importlib.util
@@ -55,6 +56,14 @@ PROBE_PREFIX = "probe:acceptance:"
 PROBE_OPEN_ID = f"{PROBE_PREFIX}open-item"
 PROBE_JORDAN_SIBLING_ID = f"{PROBE_PREFIX}jordan-sibling"
 PROBE_JORDAN_CONTACT_ID = f"{PROBE_PREFIX}jordan-contact"
+PROBE_EXTERNAL_IDS = [
+    f"{PROBE_PREFIX}alpha-impl",
+    f"{PROBE_PREFIX}alpha-cancel",
+    f"{PROBE_PREFIX}alpha-plan",
+    PROBE_OPEN_ID,
+    PROBE_JORDAN_SIBLING_ID,
+    PROBE_JORDAN_CONTACT_ID,
+]
 
 
 def _client(user_id: str | None) -> MemoryApiClient:
@@ -119,13 +128,13 @@ def probe_facts(*, today: str) -> list[dict[str, Any]]:
 
 def _probe_memory_ids(client: MemoryApiClient, user_id: str | None) -> list[str]:
     ids: list[str] = []
-    for rec in list_all_memories(client, user_id=user_id):
-        meta = rec.get("metadata") or {}
-        ext = meta.get("external_id") or ""
-        if isinstance(ext, str) and ext.startswith(PROBE_PREFIX):
-            mid = record_id(rec)
-            if mid:
-                ids.append(mid)
+    for ext in PROBE_EXTERNAL_IDS:
+        rec = fetch_by_external_id(client, ext, user_id=user_id)
+        if rec is None:
+            continue
+        mid = record_id(rec)
+        if mid:
+            ids.append(mid)
     return ids
 
 
@@ -136,6 +145,8 @@ def query_backdated_recency(client: MemoryApiClient, user_id: str | None) -> dic
         user_id=user_id,
         namespace="public",
         top_k=10,
+        external_id_prefix=PROBE_PREFIX,
+        external_ids=PROBE_EXTERNAL_IDS,
     )
     alpha_hits = [h for h in hits if "Project Alpha" in record_text(h)]
     latest = latest_by_event_date(alpha_hits)
@@ -164,6 +175,8 @@ def query_structured_filter(client: MemoryApiClient, user_id: str | None) -> dic
         namespace="public",
         top_k=10,
         extra_filters=None,
+        external_id_prefix=PROBE_PREFIX,
+        external_ids=PROBE_EXTERNAL_IDS,
     )
     vector_has_probe = any(
         (r.get("metadata") or {}).get("external_id") == PROBE_OPEN_ID for r in vector_only
@@ -190,6 +203,8 @@ def query_entity_collision(client: MemoryApiClient, user_id: str | None) -> dict
         user_id=user_id,
         namespace="public",
         top_k=20,
+        external_id_prefix=PROBE_PREFIX,
+        external_ids=PROBE_EXTERNAL_IDS,
     )
     jordan_hits = [h for h in hits if "Jordan" in record_text(h)]
     best = best_entity_match(hits, query)

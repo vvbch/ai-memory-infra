@@ -13,6 +13,13 @@ _spec.loader.exec_module(acceptance_probe)
 
 class FakeClient:
     def __init__(self) -> None:
+        self._corpus_noise = [
+            {
+                "id": "adr-1",
+                "memory": "ADR 034: Remote MCP HTTP endpoint for Claude mobile",
+                "metadata": {"external_id": "adr:034", "namespace": "public"},
+            },
+        ]
         self.memories: list[dict[str, Any]] = [
             {
                 "id": "a1",
@@ -45,13 +52,20 @@ class FakeClient:
             {
                 "id": "k1",
                 "memory": "Jordan, team lead's sibling, started camp",
-                "metadata": {"namespace": "public"},
+                "metadata": {
+                    "external_id": "probe:acceptance:jordan-sibling",
+                    "namespace": "public",
+                },
             },
             {
                 "id": "k2",
                 "memory": "Jordan, project contact, scheduled mock",
-                "metadata": {"namespace": "public"},
+                "metadata": {
+                    "external_id": "probe:acceptance:jordan-contact",
+                    "namespace": "public",
+                },
             },
+            *self._corpus_noise,
         ]
         self.deleted: list[str] = []
 
@@ -63,19 +77,16 @@ class FakeClient:
         top_k: int = 5,
         filters: dict[str, Any] | None = None,
     ) -> dict[str, Any]:
-        hits = self.memories
+        # Simulate vector search preferring ADR corpus over probe facts.
+        hits = list(self._corpus_noise) + [
+            m for m in self.memories if m not in self._corpus_noise
+        ]
         if filters:
             hits = [
                 m
-                for m in hits
+                for m in self.memories
                 if all((m.get("metadata") or {}).get(k) == v for k, v in filters.items())
             ]
-        if "Project Alpha" in query:
-            hits = [m for m in hits if "Project Alpha" in m["memory"]]
-        if "Jordan" in query:
-            hits = [m for m in hits if "Jordan" in m["memory"]]
-            if "project contact" in query:
-                hits = [m for m in hits if "project contact" in m["memory"]]
         return {"results": hits[:top_k]}
 
     def list_memories(self, *, user_id: str | None = None, limit: int | None = None) -> Any:

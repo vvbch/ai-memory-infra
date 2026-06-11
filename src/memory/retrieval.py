@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Protocol
 
-from memory.contract import DEFAULT_NAMESPACE, TYPE_FACT, event_date_of
+from memory.contract import DEFAULT_NAMESPACE, EXTERNAL_ID_KEY, event_date_of
 
 TYPE_OPEN_ITEM = "open_item"
 STATUS_OPEN = "open"
@@ -77,6 +77,75 @@ def latest_by_event_date(records: list[dict[str, Any]]) -> dict[str, Any] | None
     return max(records, key=_event_date_sort_key)
 
 
+def matches_external_id_prefix(rec: dict[str, Any], prefix: str) -> bool:
+    """True when record metadata external_id starts with prefix."""
+    ext = record_metadata(rec).get("external_id") or ""
+    return isinstance(ext, str) and ext.startswith(prefix)
+
+
+def fetch_by_external_id(
+    client: MemorySearchClient,
+    external_id: str,
+    *,
+    user_id: str | None = None,
+) -> dict[str, Any] | None:
+    """Fetch one memory by exact external_id (server-side metadata filter)."""
+    try:
+        filtered = client.search_memories(
+            external_id,
+            user_id=user_id,
+            top_k=5,
+            filters={EXTERNAL_ID_KEY: external_id},
+        )
+        for rec in _normalize_list(filtered):
+            if record_metadata(rec).get(EXTERNAL_ID_KEY) == external_id:
+                return rec
+    except Exception:
+        pass
+    return None
+
+
+def list_by_external_id_prefix(
+    client: MemorySearchClient,
+    prefix: str,
+    *,
+    user_id: str | None = None,
+    namespace: str | None = DEFAULT_NAMESPACE,
+    external_ids: list[str] | None = None,
+) -> list[dict[str, Any]]:
+    """List memories whose external_id starts with prefix (probe / fixture isolation).
+
+    When ``external_ids`` is provided, each id is resolved via ``fetch_by_external_id``
+    (works when ``GET /memories`` is capped). Otherwise falls back to a list scan.
+    """
+    if external_ids is not None:
+        out: list[dict[str, Any]] = []
+        for eid in external_ids:
+            if not eid.startswith(prefix):
+                continue
+            rec = fetch_by_external_id(client, eid, user_id=user_id)
+            if rec is None:
+                continue
+            if namespace is not None:
+                meta = record_metadata(rec)
+                if meta.get("namespace", DEFAULT_NAMESPACE) != namespace:
+                    continue
+            out.append(rec)
+        if out:
+            return out
+
+    scanned: list[dict[str, Any]] = []
+    for rec in _normalize_list(client.list_memories(user_id=user_id, limit=1000)):
+        if not matches_external_id_prefix(rec, prefix):
+            continue
+        if namespace is not None:
+            meta = record_metadata(rec)
+            if meta.get("namespace", DEFAULT_NAMESPACE) != namespace:
+                continue
+        scanned.append(rec)
+    return scanned
+
+
 def search_with_contract(
     client: MemorySearchClient,
     query: str,
@@ -85,8 +154,15 @@ def search_with_contract(
     namespace: str | None = DEFAULT_NAMESPACE,
     top_k: int = 10,
     extra_filters: dict[str, Any] | None = None,
+    external_id_prefix: str | None = None,
+    external_ids: list[str] | None = None,
 ) -> list[dict[str, Any]]:
-    """Similarity search with optional namespace filter; returns raw result records."""
+    """Similarity search with optional namespace filter; returns raw result records.
+
+    When ``external_id_prefix`` is set, results are scoped to that prefix. Vector hits
+    outside the prefix are dropped; the prefix pool is built from ``external_ids``
+    when provided (required at scale — ``GET /memories`` may be capped).
+    """
     filters: dict[str, Any] = dict(extra_filters or {})
     if namespace is not None:
         filters["namespace"] = namespace
@@ -96,7 +172,25 @@ def search_with_contract(
         top_k=top_k,
         filters=filters or None,
     )
-    return _normalize_list(payload)
+    hits = _normalize_list(payload)
+    if external_id_prefix is None:
+        return hits
+
+    pool = list_by_external_id_prefix(
+        client,
+        external_id_prefix,
+        user_id=user_id,
+        namespace=namespace,
+        external_ids=external_ids,
+    )
+    if pool:
+        pool_ids = {record_id(r) for r in pool}
+        vector_prefix = [h for h in hits if record_id(h) in pool_ids]
+        seen = {record_id(h) for h in vector_prefix}
+        merged = vector_prefix + [r for r in pool if record_id(r) not in seen]
+        return merged[: max(top_k, len(pool))]
+
+    return [h for h in hits if matches_external_id_prefix(h, external_id_prefix)]
 
 
 def entity_disambiguation_score(text: str, query: str) -> int:

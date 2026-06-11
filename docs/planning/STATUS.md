@@ -6,37 +6,38 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (Phase 5 live load complete; acceptance probe regression).
+**Last updated:** 2026-06-11 (acceptance probe green at scale; probe isolation fix).
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.example.com/docs` (operators
-override via env — see private `OPERATOR.md`). Memory write/read contract locked;
-acceptance probe **regressed** after bulk load (1/3 pass — see blockers).
+override via env — see private `OPERATOR.md`). Memory write/read contract **green** —
+acceptance probe **3/3 PASS** with 249 ADR facts loaded (`chandrav` @
+`memory.chandrav.dev`).
 
 **Build track:** Phases **6–8 core code** landed. **Public/private boundary** scrubbed
-(ADR 038). **Phase 5 bulk load** — **249 ADR facts live** in bank (`chandrav` @
-`memory.chandrav.dev`); all verified by `external_id` search.
+(ADR 038). **Phase 5 bulk load** — **249 ADR facts live** in bank; all verified by
+`external_id` search.
 
 ## Current phase
 
-**Post–Phase 5 acceptance probe triage.** Live load done; probe must pass at scale
-before calling the memory contract fully green.
+**Post–Phase 5 acceptance complete.** Memory contract validated at scale; Phase 9 polish
+and ops follow-ups remain.
 
 ## Done this session (2026-06-11)
 
-- **Phase 5 live load:** `bulk_seed_importer` wrote 249 ADR facts to
-  `chandrav@memory.chandrav.dev` (run 1: 193 before server disconnect on cache
-  refresh; run 2: +56 idempotent). All 249 verified via `find_by_external_id`.
-- **Acceptance probe:** `structured_filter` PASS; `backdated_recency` and
-  `entity_collision` FAIL — probe facts drowned by ADR corpus in vector search
-  (`docs/reports/acceptance-probe-2026-06-11.md`).
+- **Acceptance probe isolation:** `search_with_contract` + probe queries scope to
+  `probe:acceptance:` via `external_id_prefix` + rostered `external_ids` (exact
+  `fetch_by_external_id` — `GET /memories` capped at 20). Live probe **3/3 PASS** with
+  249-fact corpus; 6 probe memories cleaned up.
+- **Phase 5 live load** (prior): 249 ADR facts in bank; verified via `find_by_external_id`.
 
 ## Last decisions
 
 - Public repo carries engineering context only; operator profile + ventures are private.
 - Canonical public `user_id` is `primary-user`; live deploy overrides via env (private doc).
 - Git history: **option 3 accepted** — no rewrite; strangers reading HEAD only are safe.
+- Probe isolation uses rostered `external_ids` + exact metadata filter (not list scan).
 
 ## Backlog (parked work)
 
@@ -45,11 +46,11 @@ Phase 9 README/eval CI workflow/Grafana deploy.
 
 ## Open blockers / risks
 
-- **Acceptance probe regression** — 2/3 queries fail after 249-fact load; probe needs
-  isolation from ADR corpus (external_id prefix or dedicated namespace).
 - **Import cache refresh** — full `list_all_memories` after each write overloaded server
-  on run 1; idempotent re-run recovered; consider append-to-cache fix.
+  on bulk run 1; idempotent re-run recovered; consider append-to-cache fix.
 - **Phase 9 polish** — README/eval CI workflow/Grafana deploy remain.
+- **`GET /memories` cap** — live API returns ~20 rows regardless of `limit`; prefix
+  discovery must use exact `external_id` search filter (documented in retrieval layer).
 
 ## Environment notes
 
@@ -60,10 +61,10 @@ Phase 9 README/eval CI workflow/Grafana deploy.
 
 ## Next action
 
-> **RESUME HERE — triage acceptance_probe at scale:**
-> Fix probe isolation so `backdated_recency` and `entity_collision` pass with 249 ADR
-> facts loaded (filter by `probe:acceptance:` external_id prefix or dedicated namespace
-> in `search_with_contract` / probe queries). Re-run `python scripts/acceptance_probe.py`.
+> **RESUME HERE — Phase 9 polish kickoff:**
+> Pick one Phase 9 item from `BACKLOG.md` (README refresh, eval CI gate workflow, or
+> Grafana deploy doc) and land a small, verifiable slice — or tackle import cache
+> append-to-cache if bulk ingest is the priority.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 
