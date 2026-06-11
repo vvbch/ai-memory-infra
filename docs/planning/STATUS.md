@@ -22,7 +22,8 @@ data load** scheduled (operator). Phase 9 polish and production wiring remain.
 ## Current phase
 
 **Post-sanitization handoff.** Public repo is stranger-safe at HEAD. Git history still
-contains personal data — operator must choose history remediation (see session notes).
+contains personal data — **operator chose option 3 (accept history, rely on HEAD).**
+No filter-repo or repo recreate unless that decision is reversed explicitly.
 
 ## Done this session (2026-06-11)
 
@@ -35,16 +36,16 @@ contains personal data — operator must choose history remediation (see session
 
 - Public repo carries engineering context only; operator profile + ventures are private.
 - Canonical public `user_id` is `primary-user`; live deploy overrides via env (private doc).
-- Git history rewrite is explicitly **not** done — operator decides next.
+- Git history: **option 3 accepted** — no rewrite; strangers reading HEAD only are safe.
 
 ## Backlog (parked work)
 
 See **`docs/planning/BACKLOG.md`**. Parked: bulk CSV ingest; Phase 3 premise test;
-Phase 9 README/eval CI workflow/Grafana deploy; optional git history scrub.
+Phase 9 README/eval CI workflow/Grafana deploy.
 
 ## Open blockers / risks
 
-- **Git history** — personal content remains in old commits (one-way door; options in handoff).
+- **Git history** — personal content remains in old commits; accepted (option 3). Cloners who dig history may see it.
 - **Live deploy env** — operator must set `AI_MEMORY_USER_ID` / URLs to match existing bank.
 - **Phase 5 data load** — export JSON + `bulk_seed_importer` with approval.
 
