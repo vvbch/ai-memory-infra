@@ -9,7 +9,7 @@ spaces_secret_key      = "REPLACE_ME"
 
 # ---- Domain (ADR 016 — register at Cloudflare before apply) -------------
 # Buy the name at Cloudflare Registrar first (creates the zone automatically).
-domain_name = "chandrav.dev"
+domain_name = "example.com"
 
 # Subdomains default to ["memory","dash","graph","monitor"] — `dash` is kept
 # because the OSS Mem0 server ships a dashboard container. Override if needed:

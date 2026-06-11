@@ -2,13 +2,13 @@
 
 **Status:** Accepted
 **Date:** 2026-06-10
-**Deciders:** Chandra (operator: "Build minimal self-hosted OAuth now")
+**Deciders:** the operator (operator: "Build minimal self-hosted OAuth now")
 **Supersedes / extends:** ADR 034 §2 (auth v1 = static bearer token). The rest
 of ADR 034 (subdomain, container, transport, tool surface) stands unchanged.
 
 ## Context
 
-ADR 034 shipped `https://mcp.chandrav.dev/` behind a static bearer token,
+ADR 034 shipped `https://mcp.example.com/` behind a static bearer token,
 assuming claude.ai's connector UI accepts an `authorization_token`. It does not
 (COE 2026-06-10-claude-connector-auth-assumption): the **claude.ai custom
 connector UI supports only OAuth or no auth**. Verified against the
@@ -38,7 +38,7 @@ personal memory bank (same one-way-door reasoning as ADR 034).
 ### 1. Self-hosted OAuth 2.1 inside the existing `mcp-proxy` container
 
 The endpoint becomes its own **authorization server + resource server** at the
-same origin (`https://mcp.chandrav.dev`), implemented with the **auth framework
+same origin (`https://mcp.example.com`), implemented with the **auth framework
 already shipped by our pinned `mcp` Python SDK (1.27.2)** — `AuthSettings` +
 `OAuthAuthorizationServerProvider`. The SDK mounts and handles:
 
@@ -88,7 +88,7 @@ registration grants nothing — no tokens without the consent secret.
 ### 4. Unchanged from ADR 034
 
 Subdomain, Caddy route, container, internal Mem0 network path, the three tools,
-`user_id=chandrav`, `metadata.source=mcp`, `/health` open for probes.
+`user_id=primary-user`, `metadata.source=mcp`, `/health` open for probes.
 
 ## Propagation / conformance
 

@@ -1,3 +1,3 @@
 external_id,text,event_date,source,namespace,source_doc_id,type,status,infer,ventures
-example:delete-me,"Example fact — qualify colliding names inline (e.g. Krishna, interview-prep contact). Delete this row.",2026-06-01,manual,public,,fact,,false,
+example:delete-me,"Example fact — qualify colliding names inline (e.g. Jordan, project contact). Delete this row.",2026-06-01,manual,public,,fact,,false,
 portfolio:REPLACE_ME,"Replace external_id and text with your first real fact.",2026-06-11,cursor-repo,public,docs/decisions/037-write-path-idempotency-and-dedup-contract.md,fact,,false,personal

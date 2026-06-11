@@ -7,7 +7,7 @@ BASE="http://127.0.0.1:8888"
 HDR="X-API-Key: ${ADMIN_API_KEY}"
 EXT="deploy-probe-037-$(date +%s)"
 ADD="$(curl -fsS -X POST "${BASE}/memories" -H "${HDR}" -H "Content-Type: application/json" \
-  -d "{\"messages\":[{\"role\":\"user\",\"content\":\"mcp redeploy probe ${EXT}\"}],\"user_id\":\"chandrav\",\"infer\":false,\"metadata\":{\"source\":\"deploy-probe\",\"type\":\"fact\",\"external_id\":\"${EXT}\"}}")"
+  -d "{\"messages\":[{\"role\":\"user\",\"content\":\"mcp redeploy probe ${EXT}\"}],\"user_id\":\"primary-user\",\"infer\":false,\"metadata\":{\"source\":\"deploy-probe\",\"type\":\"fact\",\"external_id\":\"${EXT}\"}}")"
 MID="$(python3 - <<'PY' "${ADD}"
 import json, sys
 d = json.loads(sys.argv[1])

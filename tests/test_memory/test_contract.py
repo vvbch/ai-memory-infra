@@ -31,10 +31,10 @@ def test_build_fact_metadata_dual_writes_dates() -> None:
     assert meta["namespace"] == "public"
 
 
-def test_validate_fact_text_rejects_bare_krishna() -> None:
+def test_validate_fact_text_rejects_bare_jordan() -> None:
     with pytest.raises(MemoryContractError, match="qualify"):
-        validate_fact_text("Krishna called today")
+        validate_fact_text("Jordan called today")
 
 
-def test_validate_fact_text_allows_qualified_krishna() -> None:
-    validate_fact_text("Krishna, interview-prep contact, scheduled a call")
+def test_validate_fact_text_allows_qualified_jordan() -> None:
+    validate_fact_text("Jordan, project contact, scheduled a call")

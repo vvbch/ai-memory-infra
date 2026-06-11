@@ -61,7 +61,7 @@ class FakeClient:
 def _fact(**overrides: Any) -> dict[str, Any]:
     base = {
         "external_id": "seed:test",
-        "text": "Qualified Krishna, interview-prep contact, is a contact.",
+        "text": "Qualified Jordan, project contact, is a contact.",
         "metadata": {
             "type": "fact",
             "source": "cursor-repo",

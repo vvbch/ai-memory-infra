@@ -5,7 +5,7 @@ WHY THIS EXISTS
 ---------------
 When the agent hits a step it genuinely cannot do itself (a console click, a
 secret the operator must paste, a paid/one-way-door decision), it must hand
-Chandra **exactly one** action in the concierge format that AGENTS.md mandates
+the operator **exactly one** action in the concierge format that AGENTS.md mandates
 ("Operator-delegated action format"):
 
   1. ELI5 purpose                          — why this matters, in plain English
@@ -15,7 +15,7 @@ Chandra **exactly one** action in the concierge format that AGENTS.md mandates
 
 AGENTS.md is explicit: "If any of those four are unknown, verify first; do not
 hand him a vague 'confirm it' instruction." And "No resume prompt while waiting
-on Chandra." Those rules were prose the LLM had to remember — and a model
+on the operator." Those rules were prose the LLM had to remember — and a model
 forgot them, producing a vague "confirm it" instruction and a premature resume
 prompt (COE 2026-06-09-concierge-handoff-regression.md). This skill turns that
 prose into a deterministic mechanism: it validates the four parts (rejecting
@@ -37,7 +37,7 @@ SKILL CONTRACT (docs/agent-personas.md)
                    success, wait) and the date.
 * Must never write: secrets, API keys, recovery codes, passwords, or any copied
                    vault value. The action text must POINT at where a secret
-                   lives (Bitwarden folder), never contain it.
+                   lives (password manager folder), never contain it.
 * Success cond.  : ``--check`` passes — all four parts present, none vague, and
                    the action is a single step — so the block is safe to show.
 * Canonical truth: AGENTS.md "How to teach / collaborate" + docs/agent-personas
@@ -57,7 +57,7 @@ USAGE
   # Render the single operator action block:
   python scripts/operator_action.py \
       --purpose "Save the master API key off the server so it's never lost" \
-      --action  "Open Bitwarden, unlock, open the 'ai-memory-infra' folder" \
+      --action  "Open the password-manager project vault" \
       --success "You see an item named 'ADMIN_API_KEY' with a 43-character value" \
       --wait    "Tell me what you see and we'll continue."
 

@@ -7,7 +7,7 @@ first — they are the project's constitution.
 
 - **Two-way doors only.** You may change code, docs, configs, and tests —
   anything a `git revert` fully undoes. You must NEVER: touch live data or the
-  memory bank, run anything against the droplet or `memory.chandrav.dev`, run
+  memory bank, run anything against the droplet or `memory.example.com`, run
   Terraform, change retention/lifecycle/deletion policy, add spend, or delete
   data of any kind. If a fix has an irreversible *effect* (tenet 17: judge the
   effect, not the diff), do not apply it — record it in the report as an

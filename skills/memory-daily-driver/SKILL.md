@@ -1,6 +1,6 @@
 ---
 name: memory-daily-driver
-description: Use when Chandra says "plan my day", "what's on my plate", "what's overdue", "log this", "todo", "remind me", "follow up <day>", "recruiter reached out", "show recruiters", "we decided X", "we're reversing X", "remember that <fact>", or "done / that happened" — read/write the live ai-memory bank via scripts/memory.py with the mandatory confirmation contract.
+description: Use when the operator says "plan my day", "what's on my plate", "what's overdue", "log this", "todo", "remind me", "follow up <day>", "career contact reached out", "show career follow-ups", "we decided X", "we're reversing X", "remember that <fact>", or "done / that happened" — read/write the live ai-memory bank via scripts/memory.py with the mandatory confirmation contract.
 ---
 
 # Memory Daily Driver (Operator Assistant)
@@ -11,12 +11,12 @@ This skill is a thin trigger pointer — read those before acting; do not improv
 
 Run all commands from the `ai-memory-infra` repo root:
 
-| Chandra says | Run |
+| the operator says | Run |
 |---|---|
 | "plan my day" / "what's on my plate?" | `python scripts/memory.py agenda` |
 | "log this / todo / remind me / follow up <day>" | `python scripts/memory.py add-open-item "<verbatim>" [--due YYYY-MM-DD] [--revisit YYYY-MM-DD] [--venture <tag>]` |
 | recruiter reachout | `add-open-item … --venture career` |
-| "show recruiters" | `python scripts/memory.py recruiters` |
+| "show career follow-ups" | `python scripts/memory.py recruiters` |
 | "we decided X because Y" | `python scripts/memory.py add-decision "<decision + reason>" [--occurred YYYY-MM-DD]` |
 | reversal | new `add-decision "Supersedes <old-id> ('<gist>'): <new>. Reason: <why>."` — never edit the old one |
 | "remember that <fact>" | `python scripts/memory.py add-fact "<fact>" [--venture <tag>]` |

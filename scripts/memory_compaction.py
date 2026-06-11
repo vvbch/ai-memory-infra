@@ -10,7 +10,7 @@ still requires human review on the first production pass (see COE
 Usage::
 
     python scripts/memory_compaction.py --report compaction-2026-06-10.json
-    python scripts/memory_compaction.py --threshold 0.88 --user-id chandrav
+    python scripts/memory_compaction.py --threshold 0.88 --user-id primary-user
 """
 
 from __future__ import annotations

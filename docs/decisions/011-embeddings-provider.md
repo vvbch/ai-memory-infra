@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-05
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 

@@ -11,7 +11,7 @@
 
 ## Summary
 
-ADR 028 (2026-06-09) settled that there is exactly **one** `user_id="chandrav"`
+ADR 028 (2026-06-09) settled that there is exactly **one** `user_id="primary-user"`
 for every source and that `source` is a mandatory discriminator carried in
 **metadata** so it reaches both pgvector and the Neo4j graph. The decision was
 authored, ratified, and committed in the control-plane repo (`ai-memory-infra`)
@@ -30,7 +30,7 @@ quietly compromised at its busiest write surface:
 
 - **Identity fragmentation:** browser memories landed under
   `user_id="chrome-extension-user"`, a per-tool silo, instead of the single
-  `chandrav` bank. Cross-source recall (Cursor / MCP / OpenClaw ↔ extension) was
+  `the operatorv` bank. Cross-source recall (Cursor / MCP / OpenClaw ↔ extension) was
   broken for everything captured via the browser. This is precisely the "hard
   isolation" ADR 003 rejected and ADR 028 re-banned.
 - **Untagged writes:** because `source` was sent top-level (not in `metadata`),
@@ -46,7 +46,7 @@ quietly compromised at its busiest write surface:
 ## Timeline
 
 - `2026-06-08` — ADR 024: fork the extension, rewire transport/auth to the
-  self-hosted server (`X-API-Key`, `memory.chandrav.dev`). Identity/source were
+  self-hosted server (`X-API-Key`, `memory.example.com`). Identity/source were
   out of that scope and left at the upstream defaults.
 - `2026-06-09` — ADR 026 → superseded same day by ADR 028: one `user_id`,
   `source` is the discriminator into Mem0 **and** the graph. Committed in
@@ -54,7 +54,7 @@ quietly compromised at its busiest write surface:
 - `2026-06-09` — The decision was applied to infra-adjacent code reasoning only;
   `ai-memory-extension`'s latest commit predated ADR 028 and was never revisited.
 - `2026-06-09` — **Operator catch:** "we decided user_id/identity for mem0 as
-  chandrav — did we change the Chrome plugin? … you've been aggressive about
+  the operatorv — did we change the Chrome plugin? … you've been aggressive about
   infra and private repos but not the plugin repo — why?"
 - `2026-06-09` — Investigated, confirmed both violations, fixed the extension and
   the same latent bug in the MCP proxy, added the systemic conformance gate
@@ -89,7 +89,7 @@ actually true in every repo it governs.
 
 1. Why were browser memories mis-identified/untagged? → The extension used the
    upstream defaults (`chrome-extension-user`, top-level `OPENMEMORY_…` source),
-   not the ADR 028 contract (`chandrav`, `metadata.source="extension"`).
+   not the ADR 028 contract (`the operatorv`, `metadata.source="extension"`).
 2. Why did it still use the upstream defaults? → ADR 028 changed code reasoning
    in the control plane but no one changed the extension; the decision never
    propagated to that repo.
@@ -112,12 +112,12 @@ actually true in every repo it governs.
 
 | Action | Type (Prevent / Detect / Mitigate) | Owner | Due | Status |
 |---|---|---|---|---|
-| Extension: one canonical `user_id="chandrav"` (`DEFAULT_USER_ID`) + auto-heal legacy/empty ids; `SOURCE="extension"` carried in `metadata.source`; every write routed through `postMemory` / the normalizing background relay (single write path); one-time storage migration of stored legacy id | Mitigate + Prevent | Cursor agent | 2026-06-09 | Done |
-| Fix the same latent default in the control plane: MCP proxy `client.py` `DEFAULT_USER_ID` → `chandrav` (+ test) | Mitigate | Cursor agent | 2026-06-09 | Done |
+| Extension: one canonical `user_id="primary-user"` (`DEFAULT_USER_ID`) + auto-heal legacy/empty ids; `SOURCE="extension"` carried in `metadata.source`; every write routed through `postMemory` / the normalizing background relay (single write path); one-time storage migration of stored legacy id | Mitigate + Prevent | Cursor agent | 2026-06-09 | Done |
+| Fix the same latent default in the control plane: MCP proxy `client.py` `DEFAULT_USER_ID` → `the operatorv` (+ test) | Mitigate | Cursor agent | 2026-06-09 | Done |
 | **ADR 031** — cross-cutting decisions are contracts: every such ADR ships a "Propagation / conformance" checklist of affected client repos; the decision is not "done" until each is verified/patched | Prevent | Cursor agent | 2026-06-09 | Done |
 | Add a DoD trigger row: a memory/data-contract decision (`user_id`, `source`, schema, auth) must be verified — and patched if needed — in **every** client repo (extension, MCP proxy, OpenClaw adapter, future todo app) before it is done | Prevent | Cursor agent | 2026-06-09 | Done |
 | `scripts/check_memory_contract.py` — verifies each consumer repo's structural invariants (canonical constants + a single normalizing write path with no `fetch('/memories')` bypass), so future drift is caught by a check, not a human | Detect | Cursor agent | 2026-06-09 | Done |
-| Re-verify post-deploy: write a probe from the extension, confirm `source="extension"` on the `/search` metadata **and** the Neo4j node, under `user_id="chandrav"` | Detect | Operator + agent | next browser session | Open |
+| Re-verify post-deploy: write a probe from the extension, confirm `source="extension"` on the `/search` metadata **and** the Neo4j node, under `user_id="primary-user"` | Detect | Operator + agent | next browser session | Open |
 
 ## Lessons learned
 

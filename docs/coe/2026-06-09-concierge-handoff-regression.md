@@ -1,7 +1,7 @@
 # COE: Concierge and handoff controls regressed after prior correction
 
 - **Date:** 2026-06-09
-- **Author(s):** Chandra (detected), Cursor agent (analysis + fix)
+- **Author(s):** the operator (detected), Cursor agent (analysis + fix)
 - **Severity:** high *(no production/customer/data impact, but repeated governance failure after an earlier COE; operator attention and trust were directly affected)*
 - **Status:** closed
 - **Related:** tenets 14, 16, 17; `AGENTS.md`; `docs/coe/2026-06-09-session-handoff-omission.md`
@@ -96,7 +96,7 @@ Detect actions were not strong enough or were left too low-priority.
 | Add an `Industry benchmark` section to the COE template and retrofit all existing COEs | Prevent / Detect | Cursor agent | 2026-06-09 | Done |
 | Update `AGENTS.md` and `docs/tenets.md`: operator-delegated actions must use a concierge action format (purpose, exact UI/command, visible success, wait) | Prevent | Cursor agent | 2026-06-09 | Done |
 | Update `AGENTS.md` and `docs/tenets.md`: a resume prompt is valid only after a logical checkpoint is written; mid-step responses must say no resume prompt is available yet | Prevent | Cursor agent | 2026-06-09 | Done |
-| Tighten `AGENTS.md` and `docs/tenets.md`: no resume prompt while waiting on Chandra to perform the next action in the same active flow, even if the checkpoint is current | Prevent | Cursor agent | 2026-06-09 | Done |
+| Tighten `AGENTS.md` and `docs/tenets.md`: no resume prompt while waiting on the operator to perform the next action in the same active flow, even if the checkpoint is current | Prevent | Cursor agent | 2026-06-09 | Done |
 | Promote the final all-repo handoff verifier from P2 to P1 because the failure repeated after a COE | Detect | Cursor agent | 2026-06-09 | Done |
 | Update `STATUS.md`, public build journey, and private build log, then run repo-health, commit, and push touched repos | Mitigate | Cursor agent | 2026-06-09 | Done |
 

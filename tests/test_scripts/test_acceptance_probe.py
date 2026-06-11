@@ -34,7 +34,7 @@ class FakeClient:
             },
             {
                 "id": "o1",
-                "memory": "Follow up with Krishna, interview-prep contact, about mock",
+                "memory": "Follow up with Jordan, project contact, about mock",
                 "metadata": {
                     "external_id": "probe:acceptance:open-item",
                     "type": "open_item",
@@ -44,12 +44,12 @@ class FakeClient:
             },
             {
                 "id": "k1",
-                "memory": "Krishna, Chandra's elder son, started camp",
+                "memory": "Jordan, team lead's sibling, started camp",
                 "metadata": {"namespace": "public"},
             },
             {
                 "id": "k2",
-                "memory": "Krishna, interview-prep contact, scheduled mock",
+                "memory": "Jordan, project contact, scheduled mock",
                 "metadata": {"namespace": "public"},
             },
         ]
@@ -72,10 +72,10 @@ class FakeClient:
             ]
         if "Project Alpha" in query:
             hits = [m for m in hits if "Project Alpha" in m["memory"]]
-        if "Krishna" in query:
-            hits = [m for m in hits if "Krishna" in m["memory"]]
-            if "interview-prep" in query:
-                hits = [m for m in hits if "interview-prep contact" in m["memory"]]
+        if "Jordan" in query:
+            hits = [m for m in hits if "Jordan" in m["memory"]]
+            if "project contact" in query:
+                hits = [m for m in hits if "project contact" in m["memory"]]
         return {"results": hits[:top_k]}
 
     def list_memories(self, *, user_id: str | None = None, limit: int | None = None) -> Any:
@@ -103,4 +103,4 @@ def test_entity_collision_query_passes() -> None:
     client = FakeClient()
     result = acceptance_probe.query_entity_collision(client, None)
     assert result["passed"] is True
-    assert "interview-prep contact" in result["best_krishna_text"]
+    assert "project contact" in result["best_jordan_text"]

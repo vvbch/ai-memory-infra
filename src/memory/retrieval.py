@@ -104,9 +104,9 @@ def entity_disambiguation_score(text: str, query: str) -> int:
     text_l = text.lower()
     q_l = query.lower()
     score = 0
-    if "interview-prep contact" in q_l and "interview-prep contact" in text_l:
+    if "project contact" in q_l and "project contact" in text_l:
         score += 10
-    if "elder son" in text_l:
+    if "team lead's sibling" in text_l:
         score -= 8
     return score
 
@@ -115,9 +115,9 @@ def best_entity_match(
     records: list[dict[str, Any]],
     query: str,
     *,
-    entity_token: str = "Krishna",
+    entity_token: str = "Jordan",
 ) -> dict[str, Any] | None:
-    """Pick the best Krishna (or other entity) hit after qualifier rerank."""
+    """Pick the best entity hit after inline-qualifier rerank."""
     scoped = [r for r in records if entity_token in record_text(r)]
     if not scoped:
         return None

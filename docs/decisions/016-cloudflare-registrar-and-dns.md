@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-07
-**Deciders:** Chandra
+**Deciders:** the operator
 **Supersedes:** ADR 012 (DNS zone at DigitalOcean)
 
 ### Context
@@ -12,7 +12,7 @@ Phase 1 needs a registered domain and four subdomains (`memory.`, `dash.`, `grap
 zone at DigitalOcean with a cheap third-party registrar (Porkbun/Namecheap) and a
 one-time nameserver delegation step.
 
-Tenet 12 requires a deliberate vendor call before committing. Chandra chose
+Tenet 12 requires a deliberate vendor call before committing. the operator chose
 **Path B**: Cloudflare as both **registrar and DNS host**, with DigitalOcean
 remaining compute-only (droplet, firewall, Spaces).
 
@@ -23,12 +23,12 @@ Verified facts (2026-06-07, sources: Cloudflare docs + RDAP):
 - Cloudflare Registrar **requires Cloudflare nameservers** — you cannot register
   at Cloudflare and delegate NS to DigitalOcean.
 - DigitalOcean is **not a registrar** (unchanged from ADR 012).
-- Name chosen: **`chandrav.dev`** (`chandra.dev` taken; `chandrav.dev` available
-  via RDAP). App URL: `memory.chandrav.dev`.
+- Name chosen: **`example.com`** (`the operator.dev` taken; `example.com` available
+  via RDAP). App URL: `memory.example.com`.
 
 ### Decision
 
-1. **Register `chandrav.dev` at Cloudflare Registrar** (operator-run, before
+1. **Register `example.com` at Cloudflare Registrar** (operator-run, before
    `terraform apply` — the zone must exist for Terraform to create records).
 2. **Manage DNS A records in Terraform** via the Cloudflare provider
    (`cloudflare_dns_record`), looked up against the existing zone
@@ -42,7 +42,7 @@ Verified facts (2026-06-07, sources: Cloudflare docs + RDAP):
 ### Why not alternatives
 
 - **ADR 012 (DO DNS + Porkbun registrar):** already coded and validated, but
-  splits vendors across a small private registrar + DO. Chandra prioritized tier-1
+  splits vendors across a small private registrar + DO. the operator prioritized tier-1
   vendor profile (balance sheet, ecosystem, portability) per tenet 12.
 - **DNS-only at Cloudflare with registrar elsewhere:** possible, but Cloudflare
   Registrar at-cost with forced CF NS is simpler than two vendors for the same
@@ -59,7 +59,7 @@ Verified facts (2026-06-07, sources: Cloudflare docs + RDAP):
   block rewritten; **60-day registrar lock** after registration before transfer
   out (Cloudflare policy).
 - **Operator steps:** buy the domain at Cloudflare *before* apply; create a CF API
-  token (`Zone → DNS → Edit` for `chandrav.dev`); no nameserver delegation step.
+  token (`Zone → DNS → Edit` for `example.com`); no nameserver delegation step.
 - **Exit:** `terraform destroy` removes CF DNS records + DO compute; to stop the
   domain bill, disable auto-renew or transfer out after 60 days
   (`docs/decommission.md` §3 Step 3).

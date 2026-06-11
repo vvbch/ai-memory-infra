@@ -24,7 +24,7 @@ def _today_iso() -> str:
 
 @mcp.tool()
 def search_memories(query: str, top_k: int = 5, user_id: str | None = None) -> dict[str, Any]:
-    """Search Chandra's live ai-memory store."""
+    """Search the live ai-memory store."""
     return _client().search_memories(query, top_k=top_k, user_id=user_id)
 
 
@@ -38,7 +38,7 @@ def add_memory(
     namespace: str | None = None,
     external_id: str | None = None,
 ) -> dict[str, Any]:
-    """Save a memory to Chandra's live ai-memory store.
+    """Save a memory to the live ai-memory store.
 
     Optional metadata_json merges with contract fields. When external_id is set,
     the write is idempotent (verify-then-skip on timeout).
@@ -104,7 +104,7 @@ def list_memories(user_id: str | None = None) -> Any:
 
 @mcp.tool()
 def delete_memory(memory_id: str) -> dict[str, Any]:
-    """Delete a memory by id from Chandra's live ai-memory store."""
+    """Delete a memory by id from the live ai-memory store."""
     return _client().delete_memory(memory_id)
 
 

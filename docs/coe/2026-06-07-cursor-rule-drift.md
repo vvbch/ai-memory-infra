@@ -1,7 +1,7 @@
 # COE: Cursor rules file drifted from canonical context
 
 - **Date:** 2026-06-07
-- **Author(s):** Chandra (detected), agent (analysis + fix)
+- **Author(s):** the operator (detected), agent (analysis + fix)
 - **Severity:** low *(internal governance artifact; no production/customer impact)*
 - **Status:** actions-in-progress
 - **Related:** ADR 018 · tenets 2, 10, 14 · `.cursor/rules/00-project.mdc`
@@ -24,7 +24,7 @@ was growing turn over turn. Confidence-in-governance impact > technical impact.
 
 - (pre-existing) — `00-project.mdc` authored with an inlined rules summary.
 - 2026-06-07 — a tenet-13 bullet was added to the pointer file, extending the drift.
-- 2026-06-07 — **operator (Chandra) caught it** and asked for a root-cause + fix.
+- 2026-06-07 — **operator (the operator) caught it** and asked for a root-cause + fix.
 - 2026-06-07 — control plane fixed (tenet 2 boundary + DoD row), then data plane
   (file stripped to a pure pointer); ADR 018 recorded.
 
@@ -72,7 +72,7 @@ duplication. → see the Detect action below.
 | Strip `00-project.mdc` to a pure pointer | Mitigate (fix instance) | agent | 2026-06-07 | ✅ done |
 | Record the decision + analysis (ADR 018, this COE) | Prevent | agent | 2026-06-07 | ✅ done |
 | Codify the COE practice itself (tenet 14 + `docs/coe/`) | Prevent | agent | 2026-06-07 | ✅ done |
-| Automated pointer-lint / generate pointers from `AGENTS.md` (close the **detection** gap) | Detect | Chandra+agent | Phase-1 CI | ⏳ backlog P2 |
+| Automated pointer-lint / generate pointers from `AGENTS.md` (close the **detection** gap) | Detect | the operator+agent | Phase-1 CI | ⏳ backlog P2 |
 
 ## Lessons learned
 

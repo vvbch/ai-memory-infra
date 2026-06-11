@@ -23,7 +23,7 @@ from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
 
 def _client(handler: Any) -> MemoryApiClient:
     return MemoryApiClient(
-        MemoryApiConfig(base_url="https://memory.test", api_key="k", user_id="chandrav"),
+        MemoryApiConfig(base_url="https://memory.test", api_key="k", user_id="primary-user"),
         http_client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
 

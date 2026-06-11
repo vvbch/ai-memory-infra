@@ -8,13 +8,13 @@ from life_graph.seed import build_seed_graph
 def test_seed_graph_contains_core_people_and_ventures() -> None:
     graph = build_seed_graph()
     names = {props["name"] for props in graph.nodes.values()}
-    assert {"Chandra", "Vijaya", "TradingFirmLLP", "ContentFirm"}.issubset(names)
+    assert {"Alex", "Blake", "AlphaCorp", "MediaLab"}.issubset(names)
 
 
-def test_seed_graph_links_chandra_to_trading_firm() -> None:
+def test_seed_graph_links_alex_to_alpha_corp() -> None:
     graph = build_seed_graph()
-    neighbors = graph.neighbors("person:chandra", rel_type="WORKS_ON")
-    assert "venture:trading-firm" in neighbors
+    neighbors = graph.neighbors("person:alex", rel_type="WORKS_ON")
+    assert "venture:alpha-corp" in neighbors
 
 
 def test_seed_graph_has_skills_and_decisions() -> None:

@@ -7,7 +7,7 @@ from migration import categorizer
 
 def test_infer_ventures_from_trading_path() -> None:
     tags = categorizer.infer_ventures(
-        source_path="ventures/trading-firm/strategy.md",
+        source_path="ventures/alpha-corp/strategy.md",
         text="Quarterly rebalance notes.",
     )
     assert tags == ["trading_firm"]
@@ -15,7 +15,7 @@ def test_infer_ventures_from_trading_path() -> None:
 
 def test_infer_ventures_from_social_media_path() -> None:
     tags = categorizer.infer_ventures(
-        source_path="notes/social-media/youtube-plan.md",
+        source_path="notes/social-media/content-plan.md",
         text="Content calendar.",
     )
     assert tags == ["social_media"]
@@ -24,7 +24,7 @@ def test_infer_ventures_from_social_media_path() -> None:
 def test_infer_ventures_from_trading_keywords_in_text() -> None:
     tags = categorizer.infer_ventures(
         source_path="inbox/scratch.md",
-        text="Iron Condor on NIFTY with ETF pledge collateral.",
+        text="Equity desk derivatives strategy with portfolio rebalance.",
     )
     assert tags == ["trading_firm"]
 
@@ -32,15 +32,15 @@ def test_infer_ventures_from_trading_keywords_in_text() -> None:
 def test_infer_ventures_from_career_keywords() -> None:
     tags = categorizer.infer_ventures(
         source_path="inbox/todo.md",
-        text="Follow up with recruiter on interview prep.",
+        text="Follow up on hiring pipeline interview prep.",
     )
     assert tags == ["career"]
 
 
 def test_infer_ventures_from_migration_path_and_keywords() -> None:
     tags = categorizer.infer_ventures(
-        source_path="career/migration/germany-timeline.md",
-        text="Germany visa milestones and Australia backup plan.",
+        source_path="career/relocation/timeline.md",
+        text="Work visa milestones and international relocation backup plan.",
     )
     assert tags == ["career", "migration"]
 
@@ -72,12 +72,12 @@ def test_infer_ventures_returns_empty_when_no_signal() -> None:
 def test_categorize_fact_adds_ventures_to_metadata() -> None:
     fact = {
         "external_id": "migration:md:docs:decisions:sample:preamble",
-        "text": "Iron Condor rollout checklist.",
+        "text": "Portfolio rebalance rollout checklist.",
         "metadata": {
             "type": "fact",
             "source": "cursor-repo",
             "event_date": "2026-06-11",
-            "source_doc_id": "ventures/trading-firm/checklist.md",
+            "source_doc_id": "ventures/alpha-corp/checklist.md",
         },
         "infer": False,
     }
@@ -91,7 +91,7 @@ def test_categorize_fact_adds_ventures_to_metadata() -> None:
 def test_categorize_fact_preserves_existing_ventures() -> None:
     fact = {
         "external_id": "seed:manual:1",
-        "text": "Recruiter follow-up.",
+        "text": "Hiring pipeline follow-up.",
         "metadata": {
             "type": "fact",
             "source": "manual",
@@ -108,7 +108,7 @@ def test_categorize_facts_batch() -> None:
     facts = [
         {
             "external_id": "a",
-            "text": "YouTube content plan.",
+            "text": "Video production content plan.",
             "metadata": {
                 "type": "fact",
                 "source": "manual",
@@ -119,12 +119,12 @@ def test_categorize_facts_batch() -> None:
         },
         {
             "external_id": "b",
-            "text": "RIA registration research.",
+            "text": "Fiduciary registration research.",
             "metadata": {
                 "type": "fact",
                 "source": "manual",
                 "event_date": "2026-06-11",
-                "source_doc_id": "ventures/ria/overview.md",
+                "source_doc_id": "ventures/advisory/overview.md",
             },
             "infer": False,
         },

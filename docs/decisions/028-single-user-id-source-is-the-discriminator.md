@@ -9,7 +9,7 @@ Accepted — **supersedes ADR 026** (OpenClaw writes must be source-tagged).
 ## Context
 
 ADR 026 set a "hard rule" for OpenClaw writes: use the shared personal
-`user_id="chandrav"` *only if* the adapter could pass `source` and `agent_id`
+`user_id="primary-user"` *only if* the adapter could pass `source` and `agent_id`
 through to Mem0 and the graph; otherwise fall back to a **separate prototype
 `user_id`**. The operator rejected this on review: identity is the wrong layer
 to discriminate on, and the fallback fragments the one curated bank.
@@ -30,7 +30,7 @@ a **metadata** concern, not an **identity** concern.
 
 ## Decision
 
-1. **One `user_id` for the person, always: `user_id="chandrav"`.** Every write
+1. **One `user_id` for the person, always: `user_id="primary-user"`.** Every write
    from every source — OpenClaw, Cursor/VS Code, Claude, the Chrome extension,
    the future todo app, any future tool — uses the shared personal `user_id`.
    There is no per-source / per-prototype `user_id`. Identity is never the
@@ -76,8 +76,8 @@ Audit 2026-06-11: every in-workspace consumer conforms; OpenClaw remains externa
 
 | Consumer | Contract point | Status |
 |---|---|---|
-| `ai-memory-extension` | `user_id="chandrav"`; `metadata.source="extension"` via `normalizeMemoryWriteBody` + `postMemory` single write path; legacy id/source auto-healed | ✅ enforced (`check_memory_contract.py`) |
-| MCP proxy `client.py` | `DEFAULT_USER_ID="chandrav"` (overridable via `AI_MEMORY_USER_ID`) | ✅ enforced |
+| `ai-memory-extension` | `user_id="primary-user"`; `metadata.source="extension"` via `normalizeMemoryWriteBody` + `postMemory` single write path; legacy id/source auto-healed | ✅ enforced (`check_memory_contract.py`) |
+| MCP proxy `client.py` | `DEFAULT_user_id="primary-user"` (overridable via `AI_MEMORY_USER_ID`) | ✅ enforced |
 | MCP proxy `server.py` | `add_memory` tags `metadata.source="mcp"` on every write | ✅ enforced + `tests/test_mcp_proxy/test_server.py` |
 | `scripts/memory.py` | agent-surface writes default `metadata.source="cursor"` | ✅ tested (`tests/test_scripts/test_memory.py`) |
 | OpenClaw adapter (`serenichron/openclaw-memory-mem0`) | pass `source`/`agent_id` into Mem0 **and** graph; patch adapter, never fork `user_id` | ⬜ pending — repo not in workspace; BACKLOG P2 |
@@ -92,7 +92,7 @@ ships no graph store; ADR 032). Graph-side `source` enforcement moves to
 
 ## Notes
 
-- Initial OpenClaw scope is unchanged: email processing from Chandra's desk only;
+- Initial OpenClaw scope is unchanged: email processing from the operator's desk only;
   no LinkedIn crawling. ClawPack/fallback config remains prototype reasoning
   plumbing only; Mem0 extraction is unchanged.
 - Verification (OpenClaw adapter, when checked out): write a probe with

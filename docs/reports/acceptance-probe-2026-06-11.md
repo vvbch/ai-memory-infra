@@ -3,7 +3,7 @@
 **Overall:** PASS
 
 **Date:** 2026-06-11  
-**Bank:** `user_id=chandrav` @ `https://memory.chandrav.dev`  
+**Bank:** `user_id=primary-user` @ `https://memory.example.com`  
 **Script:** `scripts/acceptance_probe.py`
 
 ## backdated_recency — PASS
@@ -23,9 +23,9 @@ Backdated cancel fact (event_date 2026-05-15, written after newer rows) did not 
 
 ## entity_collision — PASS
 
-- Expected: Among Krishna hits, inline qualifier rerank picks interview-prep contact, not elder son
-- best_krishna_text: Follow up with Krishna, interview-prep contact, about system design mock
-- krishna_hit_count: 3
+- Expected: Among Jordan hits, inline qualifier rerank picks project contact, not team lead's sibling
+- best_Jordan_text: Follow up with Jordan, project contact, about system design mock
+- Jordan_hit_count: 3
 
 Pure vector top-5 included elder-son fact; contract read path (`best_entity_match`) disambiguated correctly.
 

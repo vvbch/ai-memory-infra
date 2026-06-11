@@ -4,7 +4,7 @@
 (claude.ai's connector UI accepts only OAuth/no-auth; see COE
 2026-06-10-claude-connector-auth-assumption). Endpoint architecture stands.
 **Date:** 2026-06-10
-**Deciders:** Chandra (operator goal 2 of 2026-06-10 day plan)
+**Deciders:** the operator (operator goal 2 of 2026-06-10 day plan)
 **Supersedes / extends:** ADR 025 (local stdio proxy only)
 
 ## Context
@@ -41,7 +41,7 @@ Key client requirements (web-verified 2026-06-10):
    header on the connector definition.
 
 Exposing an unauthenticated MCP endpoint on the public internet would let anyone
-read and write Chandra's memory bank. **Auth model choice is a one-way door**
+read and write the operator's memory bank. **Auth model choice is a one-way door**
 (tenet 17 effect test: a mistaken public launch cannot be un-seen). This ADR
 deliberates before any droplet route goes live.
 
@@ -55,7 +55,7 @@ upstream to grow HTTP MCP routes (ADR 025 confirmed Mem0 returns `404` on `/mcp`
 
 ### 1. Add a dedicated remote MCP service (not a path on `memory.`)
 
-- **URL:** `https://mcp.{domain}/` (new subdomain `mcp.chandrav.dev`).
+- **URL:** `https://mcp.{domain}/` (new subdomain `mcp.example.com`).
 - **Why a subdomain:** keeps MCP session traffic separate from the Mem0 REST API,
   allows distinct auth and future rate limits without touching the extension/CORS
   surface on `memory.`.
@@ -74,9 +74,9 @@ For a **single-user** deployment, ship v1 with:
   Chrome extension or local stdio proxy).
 - The HTTP MCP server rejects requests without
   `Authorization: Bearer <MCP_CONNECTOR_BEARER_TOKEN>` (`401 Unauthorized`).
-- Chandra registers the connector at `claude.ai` → Customize → Connectors with:
+- the operator registers the connector at `claude.ai` → Customize → Connectors with:
   - Transport: **Streamable HTTP**
-  - URL: `https://mcp.chandrav.dev/`
+  - URL: `https://mcp.example.com/`
   - Auth: paste the bearer token (Claude's connector UI and API both support
     `authorization_token` per Anthropic docs, 2026-06-10).
 
@@ -93,7 +93,7 @@ OAuth remains the documented **v2 upgrade path** if we outgrow a static bearer.
 ### 3. Tool surface and contracts
 
 - **Tools:** same three as ADR 025 / `docs/interfaces.md` §3.
-- **Identity:** default `user_id=chandrav`; `metadata.source=mcp` on writes (ADR
+- **Identity:** default `user_id=primary-user`; `metadata.source=mcp` on writes (ADR
   028).
 - **No new memory contract fields** — this is transport only.
 

@@ -49,14 +49,14 @@
 | id | rule | severity | enforcement | mechanism |
 |---|---|---|---|---|
 | `dod-01` | Architecture / a component / a provider | high | **prose** | DoD trigger-table conformance is in the ADR 033 enforcement backlog |
-| `dod-02` | A major decision, or reverse one | high | **prose** | convention: new/superseded ADR + interview_packet + STATUS |
+| `dod-02` | A major decision, or reverse one | high | **prose** | convention: new/superseded ADR + private interview_packet + STATUS |
 | `dod-03` | A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport) | critical | **enforced** | scripts/check_memory_contract.py (ADR 028/031, cross-repo) |
 | `dod-04` | A tenet | high | **enforced** | scripts/render_contract.py --check (tenets.md + AGENTS.md summary stay in sync) |
 | `dod-05` | An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`) | high | **enforced** | scripts/check_pointer_purity.py (ADR 018; alwaysApply rules + CLAUDE.md) |
 | `dod-06` | Infra/IaC (terraform, compose, Caddy, `.env`) | normal | **prose** | convention: runbook/setup/README/STATUS on infra change |
 | `dod-07` | A new phase, `src/` module, or capability | high | **prose** | convention: design doc before code, then TDD; partial test coverage |
-| `dod-08` | Anything cost-relevant (plan, provider, bucket) | normal | **prose** | convention: architecture cost table + interview_packet |
+| `dod-08` | Anything cost-relevant (plan, provider, bucket) | normal | **prose** | convention: architecture cost table; private interview_packet if needed |
 | `dod-09` | Security / guardrail behaviour | high | **prose** | partial: security tests exist; guardrail set is partly aspirational |
-| `dod-10` | Create / obtain / rotate any account, API token, key, or secret | critical | **enforced** | gitleaks blocks committing secret values; scripts/check_secrets_catalog.py (pre-commit gate 6) blocks declared secrets lacking a private catalog row; the Bitwarden-vault half stays operator-verified (external store) |
+| `dod-10` | Create / obtain / rotate any account, API token, key, or secret | critical | **enforced** | gitleaks blocks committing secret values; scripts/check_secrets_catalog.py (pre-commit gate 6) blocks declared secrets lacking a private catalog row; the password-manager vault half stays operator-verified (external store) |
 | `dod-11` | End of any working session | critical | **enforced** | scripts/check_status_snapshot.py (shape) + completion_gate.py (commit/push) |
 | `dod-12` | Every logical step + every response (tenet 16) | high | **enforced** | scripts/completion_gate.py (turn-end commit/push) + scripts/handoff_verify.py (agent-run final check incl. behind + STATUS freshness) |

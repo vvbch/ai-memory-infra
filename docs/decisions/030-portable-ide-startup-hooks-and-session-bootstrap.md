@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-09
-**Deciders:** Chandra (operator), Cursor agent
+**Deciders:** the operator (operator), Cursor agent
 **Related:** Tenets 1, 2, 3, 16; ADR 015 (git-hook installer model); ADR 018
 (editor pointer files carry zero canonical content); ADR 027 (deterministic
 completion gate — this ADR corrects its *placement*); COE

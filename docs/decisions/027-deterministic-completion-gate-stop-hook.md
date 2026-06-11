@@ -7,7 +7,7 @@ never loads, and coupled the gate to Cursor against tenet 2. ADR 030 moves the
 logic to `scripts/completion_gate.py` and generates thin per-IDE adapters at the
 workspace root.)
 **Date:** 2026-06-09
-**Deciders:** Chandra (operator), Cursor agent
+**Deciders:** the operator (operator), Cursor agent
 **Related:** Tenets 1, 2, 11, 14, 16, 17; ADR 015 (git pre-commit hook / repo
 integrity); COE `2026-06-09-model-dependent-completion-gate.md` (and the three
 prior handoff COEs). Implements the long-promised **repo handoff verifier**

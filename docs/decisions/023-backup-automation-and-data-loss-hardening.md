@@ -7,7 +7,7 @@ is the operator console step to create the drill's second healthchecks.io check
 (`DRILL_HEALTHCHECK_URL`). This ADR is the spec; the Implementation updates record what was
 verified and built.
 **Date:** 2026-06-08
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 

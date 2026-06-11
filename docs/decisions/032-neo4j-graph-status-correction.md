@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-10
-**Deciders:** Chandra (+ agent)
+**Deciders:** the operator (+ agent)
 **Corrects:** ADR 005 (premise #1 only). **Ties:** tenet 8 (verify at source),
 tenet 10 (no drift), COE 2026-06-10-delayed-memory-buildout (action: "correct the
 Neo4j dual-namespace claim").

@@ -2,7 +2,7 @@
 
 **Status:** Accepted (ratifies Tenet 11)
 **Date:** 2026-06-06
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 

@@ -15,9 +15,9 @@
 # Required repository secrets:
 #   CURSOR_API_KEY    — agent CLI auth (swap with another vendor's key+CLI).
 #   PRIVATE_REPO_PAT  — fine-grained PAT scoped to
-#                       vvbch/ai-memory-infra-private; needs Contents:
+#                       <org>/ai-memory-infra-private; needs Contents:
 #                       read+write AND Pull requests: read+write (job 2).
-#                       Bitwarden: "PRIVATE_REPO_PAT / ai-memory-interview-refresh".
+#                       password manager: "PRIVATE_REPO_PAT / ai-memory-interview-refresh".
 name: weekly-scan
 
 on:
@@ -77,7 +77,7 @@ jobs:
 
       - uses: actions/checkout@v4
         with:
-          repository: vvbch/ai-memory-infra-private
+          repository: <org>/ai-memory-infra-private
           token: ${{ secrets.PRIVATE_REPO_PAT }}
           path: ai-memory-infra-private
 
@@ -90,7 +90,7 @@ jobs:
         env:
           CURSOR_API_KEY: ${{ secrets.CURSOR_API_KEY }}
         run: |
-          agent -p "$(cat ai-memory-infra/docs/automation/interview-refresh-prompt.md)" \
+          agent -p "$(cat ai-memory-infra-private/docs/automation/interview-refresh-prompt.md)" \
             --force --output-format text
 
       - name: Open PR on the private repo

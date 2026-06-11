@@ -8,7 +8,7 @@
 **Owner persona:** Operator Assistant
 **Related layer:** the Build Agent's `scripts/session_checkpoint.py` (capture) and
 `scripts/completion_gate.py` (trigger) protect *repo* handoffs; this protects the
-*operator* handoff — the moment the agent must delegate a step to Chandra.
+*operator* handoff — the moment the agent must delegate a step to the operator.
 
 ## What pain it removes
 
@@ -41,7 +41,7 @@ checklist, because `--check` fails before the operator ever sees it.
 | | |
 |---|---|
 | **May write** | the rendered operator action block (purpose, action, success, wait) + the date |
-| **Must never write** | secrets, API keys, recovery codes, passwords, or any copied vault value — the action must **point at** where a secret lives (e.g. the Bitwarden `ai-memory-infra` folder), never contain it |
+| **Must never write** | secrets, API keys, recovery codes, passwords, or any copied vault value — the action must **point at** where a secret lives (e.g. the password-manager project vault), never contain it |
 | **Canonical truth** | AGENTS.md "How to teach / collaborate" (Operator-delegated action format) + `docs/agent-personas.md` Operator Assistant success criteria |
 
 ## Success condition
@@ -61,7 +61,7 @@ python scripts/operator_action.py --check \
 # Render the single operator action block:
 python scripts/operator_action.py \
     --purpose "Save the master API key off the server so it's never lost" \
-    --action  "Open Bitwarden, unlock, open the 'ai-memory-infra' folder" \
+    --action  "Open the password-manager project vault" \
     --success "You see an item named 'ADMIN_API_KEY' with a 43-character value" \
     --wait    "Tell me what you see and we'll continue."
 

@@ -2,13 +2,13 @@
 
 **Status:** Accepted
 **Date:** 2026-06-07
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 
 The estate/exit path (tenet 12, `docs/decommission.md`) assumes credentials live
 in a password manager — *not* in either git repo — and that a **nominee** can get
-in if Chandra can't. Three billable accounts must be reachable to stop all spend:
+in if the operator can't. Three billable accounts must be reachable to stop all spend:
 DigitalOcean, Cloudflare, OpenAI; plus the SSH private-key passphrase.
 
 Hard constraints:
@@ -53,7 +53,7 @@ Access as the nominee handoff.**
    [bitwarden.com/help/emergency-access](https://bitwarden.com/help/emergency-access/)).
    Storing these in a Families Collection would silently defeat the nominee
    handoff. (Families is still required — it's what unlocks Emergency Access.)
-2. Chandra runs **Bitwarden Families** ($47.88/yr, up to 6 users — *taken
+2. the operator runs **Bitwarden Families** ($47.88/yr, up to 6 users — *taken
    2026-06-07*) so he can *configure* emergency contacts **and** cover the family
    directly. Each member gets Premium features (so Emergency Access works); the
    nominee can alternatively be a free external Bitwarden account. (Originally
@@ -71,7 +71,7 @@ Access as the nominee handoff.**
   is a printed Emergency Kit PDF, which is fragile for an estate scenario and
   pricier with no free tier.
 - **Proton Pass:** strong privacy, but emergency access requires a paid plan *and*
-  a Proton-address account; Chandra's primary identity is Gmail, so the feature
+  a Proton-address account; the operator's primary identity is Gmail, so the feature
   wouldn't apply without restructuring his email.
 - **KeePassXC:** unbeatable on cost/portability and a good *secondary* offline
   backup, but it has no guided takeover — a non-engineer nominee following
@@ -93,7 +93,7 @@ Access as the nominee handoff.**
 
 ### Update — 2026-06-07: chose Families over individual Premium
 
-Chandra took **Bitwarden Families** ($47.88/yr, 6 users) rather than individual
+the operator took **Bitwarden Families** ($47.88/yr, 6 users) rather than individual
 Premium ($19.80/yr). Rationale: (1) the family password-sharing need (a year of
 Gmail/WhatsApp sharing) is real and was always coming — buying it once avoids
 paying twice and a later migration; (2) **front-loading an annual cost while the

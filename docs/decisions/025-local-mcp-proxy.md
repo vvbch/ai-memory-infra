@@ -9,7 +9,7 @@ Accepted
 ## Context
 
 Phase 4 needs Claude Code, Cursor, and VS Code to reach the same live memory store
-through MCP. The deployed `memory.chandrav.dev` Mem0 API exposes REST routes
+through MCP. The deployed `memory.example.com` Mem0 API exposes REST routes
 (`/memories`, `/search`) but returns `404` for the expected MCP routes (`/mcp`,
 `/mcp/.../http/...`, `/mcp/.../sse/...`). OpenAPI confirms no MCP path is currently
 served by our self-hosted build.

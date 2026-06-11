@@ -3,7 +3,7 @@
 
 WHY THIS EXISTS
 ---------------
-ADR 028 settled the memory write contract: one ``user_id="chandrav"`` for the
+ADR 028 settled the memory write contract: one ``user_id="primary-user"`` for the
 person, and ``source`` is a mandatory discriminator carried in **metadata**
 (so it reaches both pgvector and the Neo4j graph). That decision was committed
 in the control plane but was silently *false* in the Chrome extension and the
@@ -22,7 +22,7 @@ Rather than try to parse every write payload, it enforces the *structural*
 invariants that make the contract impossible to violate at runtime:
 
   Extension (``ai-memory-extension``)
-    1. The canonical constants are declared once: ``DEFAULT_USER_ID='chandrav'``
+    1. The canonical constants are declared once: ``DEFAULT_USER_ID='primary-user'``
        and ``SOURCE='extension'`` in ``src/types/api.ts``.
     2. There is a single normalizing write path: ``normalizeMemoryWriteBody`` is
        the body of ``postMemory`` (``src/utils/api.ts``) and the background relay
@@ -34,7 +34,7 @@ invariants that make the contract impossible to violate at runtime:
        fine precisely because they are healed at this chokepoint.)
 
   MCP proxy (``ai-memory-infra/src/mcp_proxy/``)
-    4. ``client.py``: ``DEFAULT_USER_ID = "chandrav"`` and no legacy
+    4. ``client.py``: ``DEFAULT_USER_ID = "primary-user"`` and no legacy
        ``"chrome-extension-user"`` default.
     5. ``server.py``: ``add_memory`` tags every write ``metadata.source = "mcp"``
        before delegating to the client (the tool surface is the single write path).
@@ -53,7 +53,7 @@ import re
 import sys
 from pathlib import Path
 
-CANONICAL_USER_ID = "chandrav"
+CANONICAL_USER_ID = "primary-user"
 LEGACY_USER_ID = "chrome-extension-user"
 
 
@@ -86,10 +86,10 @@ def check_extension(repo: Path) -> tuple[list[str], list[str]]:
 
     # 1. canonical constants declared once
     api_ts = _read(src / "types" / "api.ts") or ""
-    if not re.search(r"DEFAULT_USER_ID\s*=\s*['\"]chandrav['\"]", api_ts):
+    if not re.search(r"DEFAULT_USER_ID\s*=\s*['\"]primary-user['\"]", api_ts):
         violations.append(
             "ai-memory-extension/src/types/api.ts: "
-            "missing canonical DEFAULT_USER_ID = 'chandrav' (ADR 028)"
+            "missing canonical DEFAULT_USER_ID = 'primary-user' (ADR 028)"
         )
     if not re.search(r"\bSOURCE\s*=\s*['\"]extension['\"]", api_ts):
         violations.append(

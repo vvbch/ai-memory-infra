@@ -1,7 +1,7 @@
 # COE: Global Cursor user rules conflicted with workspace commit+push standing authorization
 
 - **Date:** 2026-06-10
-- **Author(s):** Cursor agent + operator (Chandra)
+- **Author(s):** Cursor agent + operator (the operator)
 - **Severity:** Medium
 - **Status:** actions-in-progress (control plane done; global Cursor rule update is operator step)
 - **Related:** Tenets 2, 10, 11, 14, 16, 17; COEs `2026-06-08-atomic-handoff-failure.md`,

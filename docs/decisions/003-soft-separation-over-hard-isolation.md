@@ -20,7 +20,7 @@ Option B — soft separation with metadata categories.
 ### Reasoning
 
 The ventures are deeply interlinked:
-- Vijaya is co-founder of the trading firm AND involved in the social media firm
+- One person may be involved in multiple ventures (e.g. co-founder roles)
 - Financial runway calculations affect ALL ventures simultaneously
 - The LLP structure decision touches trading AND RIA
 - Career decisions (international migration) constrain all venture timelines

@@ -25,6 +25,6 @@ def test_blocks_injection_pattern() -> None:
 
 
 def test_allows_clean_text() -> None:
-    reject, reason = should_reject_memory_write("Chandra, founder chose Mem0.")
+    reject, reason = should_reject_memory_write("Alex, platform lead chose Mem0.")
     assert reject is False
     assert reason is None

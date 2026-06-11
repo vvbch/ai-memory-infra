@@ -24,14 +24,14 @@
 
 ## One-time setup (operator)
 
-1. **`CURSOR_API_KEY`** repo secret on `vvbch/ai-memory-infra` — from
+1. **`CURSOR_API_KEY`** repo secret on `<org>/ai-memory-infra` — from
    cursor.com → Dashboard → API keys.
-2. **`PRIVATE_REPO_PAT`** repo secret on `vvbch/ai-memory-infra` — GitHub
+2. **`PRIVATE_REPO_PAT`** repo secret on `<org>/ai-memory-infra` — GitHub
    fine-grained PAT (named "ai-memory-interview-refresh" on GitHub) scoped to
-   `vvbch/ai-memory-infra-private` with **Contents: Read and write** AND
+   `<org>/ai-memory-infra-private` with **Contents: Read and write** AND
    **Pull requests: Read and write** (checkout + push the branch needs
    Contents; opening the PR needs Pull requests). Used only by the interview
-   job. Bitwarden: `ai-memory-infra` folder →
+   job. password manager: `ai-memory-infra` folder →
    "PRIVATE_REPO_PAT / ai-memory-interview-refresh".
 
 ## Known caveat

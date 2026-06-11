@@ -4,7 +4,7 @@
 > 2026-06-09). Unlike the previous skills this is **not a new script** — the
 > mechanism (`scripts/memory.py`, Phase 1) already exists and is live-proven.
 > This skill is the **operating practice** that wires it into conversation, so
-> the agent reads/writes the memory bank when Chandra talks to it.
+> the agent reads/writes the memory bank when the operator talks to it.
 
 **Implementation:** `scripts/memory.py` (Phase 1 helper, unit-tested + live-proven)
 **Owner persona:** Operator Assistant (`docs/agent-personas.md`)
@@ -15,18 +15,18 @@
 
 The memory layer is live but unused — the product premise (*does self-hosted
 memory make my AI tools better?*) stays untested while open items live in
-Chandra's head. After this skill, saying *"plan my day"* or *"log this, follow
+the operator's head. After this skill, saying *"plan my day"* or *"log this, follow
 up Friday"* in a normal chat is enough: the agent runs the contract-enforcing
 helper and the bank does the remembering.
 
 ## Trigger table (operator phrase → agent action)
 
-| Chandra says (any phrasing like…) | Agent runs | Then says |
+| the operator says (any phrasing like…) | Agent runs | Then says |
 |---|---|---|
 | "plan my day" / "what's on my plate?" / "what's overdue?" | `python scripts/memory.py agenda` | The buckets in plain English (overdue first), ending with one recommended next action |
 | "log this…" / "todo: …" / "remind me…" / "follow up &lt;day&gt;" | `python scripts/memory.py add-open-item "<verbatim text>" [--due YYYY-MM-DD] [--revisit YYYY-MM-DD] [--venture <tag>]` | Confirmation: stored text, type, dates, ventures, short id |
-| "recruiter X reached out…" / "track this reachout" | `add-open-item … --venture career` (+ due/revisit from phrasing) | Same confirmation |
-| "show recruiters" / "recruiter board" | `python scripts/memory.py recruiters` | The board, soonest follow-up first |
+| "career contact reached out…" / "track this reachout" | `add-open-item … --venture career` (+ due/revisit from phrasing) | Same confirmation |
+| "show career follow-ups" / "career follow-up board" | `python scripts/memory.py recruiters` | The board, soonest follow-up first |
 | "we decided X (because Y)" | `python scripts/memory.py add-decision "<decision + reason>" [--occurred YYYY-MM-DD] [--venture <tag>]` | Confirmation incl. occurred date |
 | "we're reversing X / changed our mind (because Z)" | **Supersession flow** (below) | Confirmation: new decision stored + which old decision it supersedes |
 | "done" / "that happened: …" / "drop it" | `python scripts/memory.py close <id> --resolution "<what happened>" [--status dropped]` | Confirmation: closed, with resolution |
@@ -57,14 +57,14 @@ ADD/UPDATE/DELETE with old/new values as a server-side audit trail.
 
 Every write is followed by a plain-English confirmation of **exactly what was
 stored**: verbatim text, type, status, resolved dates, ventures, short id. A
-silent write is a contract violation — Chandra must always be able to catch a
+silent write is a contract violation — the operator must always be able to catch a
 mis-tag or wrong date in the same breath.
 
 ## Store / retrieve boundary
 
 | | |
 |---|---|
-| **May write** | `open_item` / `decision` / `fact` memories under `user_id="chandrav"`, `source=cursor`, validated ventures/dates (the helper enforces this) |
+| **May write** | `open_item` / `decision` / `fact` memories under `user_id="primary-user"`, `source=cursor`, validated ventures/dates (the helper enforces this) |
 | **Must never write** | secrets, API keys, vault values; multi-paragraph transcript dumps (capture the item, not the chat); unverified hypotheses as facts |
 | **Canonical truth** | repo files (STATUS/ADRs) for project state — the bank holds *personal operating* items; if memory and repo disagree, repo wins (Memory Steward rule) |
 
@@ -74,7 +74,7 @@ In a fresh session, "plan my day" returns the real agenda (proven: read-only
 `agenda` runs green against the live bank), and a "log this / follow up
 &lt;date&gt;" round-trips: captured → visible in the next `agenda` under the right
 bucket → closeable with a resolution. Phase 3 (the premise test) exercises this
-with Chandra's real items.
+with the operator's real items.
 
 ## Deliberately not built (tenet 7 / BACKLOG)
 

@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-06-07
-**Deciders:** Chandra
+**Deciders:** the operator
 **Type:** Governance correction (sharpens tenets 2 & 10)
 
 ### Context — the defect

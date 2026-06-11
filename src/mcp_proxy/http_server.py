@@ -32,7 +32,7 @@ from mcp_proxy.oauth import (
 
 DEFAULT_HOST = "0.0.0.0"  # container-internal; only Caddy is public (ADR 009)
 DEFAULT_PORT = 8765
-DEFAULT_PUBLIC_HOST = "mcp.chandrav.dev"
+DEFAULT_PUBLIC_HOST = "mcp.example.com"
 DEFAULT_STATE_PATH = "/data/oauth_state.json"
 
 

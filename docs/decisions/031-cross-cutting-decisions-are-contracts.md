@@ -8,7 +8,7 @@ Accepted.
 
 ## Context
 
-ADR 028 (one `user_id="chandrav"`; `source` is the discriminator carried in
+ADR 028 (one `user_id="primary-user"`; `source` is the discriminator carried in
 `metadata` so it reaches both pgvector and the Neo4j graph) was authored,
 ratified, and committed in `ai-memory-infra` — and then was simply **false** in
 the repo that writes most browser memories. The Chrome extension
@@ -55,7 +55,7 @@ governs**, enforced by both a soft (process) and a hard (mechanical) control.
    added here when introduced. "Every consumer" means this list.
 
 3. **A canonical-constants source of truth + a detect gate.** Each consumer
-   defines the contract constants once (`DEFAULT_USER_ID="chandrav"`,
+   defines the contract constants once (`DEFAULT_user_id="primary-user"`,
    `SOURCE`/source-in-`metadata`, the legacy values being migrated *away* from)
    and routes writes through a single normalizing chokepoint. `scripts/
    check_memory_contract.py` greps the consumer repos and **fails** if a stray
@@ -86,8 +86,8 @@ governs**, enforced by both a soft (process) and a hard (mechanical) control.
 
 | Consumer repo | Contract point | Status |
 |---|---|---|
-| `ai-memory-extension` | `user_id="chandrav"`, `metadata.source="extension"`, single write path (`postMemory` + background relay `normalizeMemoryWriteBody`), legacy id/source auto-healed | ✅ patched + committed |
-| `ai-memory-infra` MCP proxy (`client.py` + `server.py`) | `DEFAULT_USER_ID="chandrav"`; `add_memory` tags `metadata.source="mcp"` | ✅ patched + gate-enforced |
+| `ai-memory-extension` | `user_id="primary-user"`, `metadata.source="extension"`, single write path (`postMemory` + background relay `normalizeMemoryWriteBody`), legacy id/source auto-healed | ✅ patched + committed |
+| `ai-memory-infra` MCP proxy (`client.py` + `server.py`) | `DEFAULT_user_id="primary-user"`; `add_memory` tags `metadata.source="mcp"` | ✅ patched + gate-enforced |
 | OpenClaw adapter (`serenichron/openclaw-memory-mem0`) | pass `source`/`agent_id` into Mem0 **and** graph; patch adapter, never fork `user_id` (ADR 028 §4) | ⬜ pending — tracked in BACKLOG P2 (memory model) |
 | Future todo app | reads/writes the same `user_id` + `source`/`type` contract | ⬜ N/A until built (ADR 029) |
 
@@ -99,4 +99,4 @@ governs**, enforced by both a soft (process) and a hard (mechanical) control.
   substitutes for the other.
 - Verification one-liner (post-deploy, ADR 028): write a probe from the
   extension, confirm `source="extension"` on the `/search` result metadata **and**
-  on the corresponding Neo4j node, under `user_id="chandrav"`.
+  on the corresponding Neo4j node, under `user_id="primary-user"`.

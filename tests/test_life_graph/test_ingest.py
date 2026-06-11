@@ -10,10 +10,10 @@ def test_ingest_decision_from_memory_adds_nodes_and_edges() -> None:
     graph = build_seed_graph()
     key = ingest_decision_from_memory(
         graph,
-        person_key="person:chandra",
+        person_key="person:alex",
         decision_name="chose Terraform for IaC",
         event_date="2026-06-01",
-        venture_key="venture:trading-firm",
+        venture_key="venture:alpha-corp",
     )
     assert key in graph.nodes
     assert graph.nodes[key]["label"] == "Decision"

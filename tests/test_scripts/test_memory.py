@@ -27,7 +27,7 @@ from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
 
 def _client(handler: Any) -> MemoryApiClient:
     return MemoryApiClient(
-        MemoryApiConfig(base_url="https://memory.test", api_key="k", user_id="chandrav"),
+        MemoryApiConfig(base_url="https://memory.test", api_key="k", user_id="primary-user"),
         http_client=httpx.Client(transport=httpx.MockTransport(handler)),
     )
 
@@ -56,7 +56,7 @@ def test_capture_open_item_sends_contract_metadata_and_infer_false() -> None:
 
     body = captured["body"]
     assert body["infer"] is False
-    assert body["user_id"] == "chandrav"
+    assert body["user_id"] == "primary-user"
     assert body["metadata"] == {
         "type": "open_item",
         "status": "open",

@@ -1,6 +1,6 @@
 ---
 name: operator-action
-description: Use before asking Chandra to click, type, or run anything (console steps, account setup, credentials, consent) — format the single operator-delegated action as purpose + exact action + visible success + wait point via scripts/operator_action.py.
+description: Use before asking the operator to click, type, or run anything (console steps, account setup, credentials, consent) — format the single operator-delegated action as purpose + exact action + visible success + wait point via scripts/operator_action.py.
 ---
 
 # Operator Action Formatter (Operator Assistant — concierge mode)
@@ -9,7 +9,7 @@ Canonical spec: `ai-memory-infra/docs/skills/operator-assistant-concierge-action
 (governs). Concierge rules: `ai-memory-infra/AGENTS.md` § "How to teach / collaborate".
 This skill is a thin trigger pointer.
 
-Before delegating anything to Chandra:
+Before delegating anything to the operator:
 
 1. **Pre-delegation gate:** verify the action cannot be done via CLI/API/MCP
    (`gh`, `curl`, shell). Delegate only genuinely operator-exclusive steps
@@ -28,4 +28,4 @@ Rules:
 
 - **One step at a time** — never a multi-step dump; wait for "tell me what you see".
 - Vague "confirm it"-class verbs fail `--check` by design; fix the action, don't bypass.
-- No Resume prompt while waiting on Chandra inside the same flow.
+- No Resume prompt while waiting on the operator inside the same flow.

@@ -33,7 +33,7 @@ variable "spaces_secret_key" {
 # Register the name and create the zone *before* terraform apply.
 
 variable "domain_name" {
-  description = "Registered apex domain at Cloudflare, e.g. chandrav.dev. No default on purpose — set it in terraform.tfvars."
+  description = "Registered apex domain at Cloudflare, e.g. example.com. No default on purpose — set it in terraform.tfvars."
   type        = string
 
   validation {

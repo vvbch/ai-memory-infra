@@ -1,7 +1,7 @@
 {
   "cases": [
     {
-      "source_path": "ventures/trading-firm/plan.md",
+      "source_path": "ventures/alpha-corp/plan.md",
       "text": "Quarterly rebalance.",
       "expected_ventures": ["trading_firm"]
     },
@@ -11,8 +11,8 @@
       "expected_ventures": ["personal"]
     },
     {
-      "source_path": "career/migration/germany.md",
-      "text": "Germany visa milestones.",
+      "source_path": "career/relocation/timeline.md",
+      "text": "Work visa milestones.",
       "expected_ventures": ["career", "migration"]
     }
   ]

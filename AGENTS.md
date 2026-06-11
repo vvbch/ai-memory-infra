@@ -6,85 +6,48 @@
 >
 > **▶ Resuming / "what's next?" → read `docs/planning/STATUS.md` first** (current
 > phase, last decisions, blockers, next action). Then `docs/setup.md` for the
-> live operational walkthrough, and `docs/interview_packet.md` for the narrative.
+> operational walkthrough.
 
 ## What we're building
 
 Self-hosted, cross-platform AI memory infrastructure with a knowledge graph —
 a persistent memory layer under Claude, ChatGPT, Gemini, and DeepSeek, on any
-device. Also a portfolio showcase: it must read as production-grade infra.
+device. The public repo is platform infrastructure and a LifeGraph POC only
+(tenet 5); it must read as production-grade infra to any visitor.
 
-## Who
+## Private agent context
 
-**Chandra** — ex-Amazon SDE3 (3y) then SDM/EM (10y+), Bangalore. Direct,
-action-oriented, pushback-tolerant. Be concise; prefer one clear next action
-over option lists; flag scope creep; call out trade-offs explicitly.
+Operator profile, collaboration preferences, venture tag definitions, deployment-
+specific URLs/`user_id`, and interview/portfolio narrative live in the private
+companion repo **`ai-memory-infra-private`**:
 
-**How to teach / collaborate (apply every interaction):**
-- **Architecture / system design:** he's senior here, but still ground each
-  discussion in **basics and first principles** — don't skip the "why it works
-  this way." Explain concepts as **ELI5 → one layer technical → trade-offs + how
-  industry actually uses it**, with concrete *where-used-vs-not* examples.
-- **Hands-on ops (git / cloud / docker / deploy) — concierge mode, zero cognitive
-  load.** Treat Chandra as computer-illiterate *for ops/account/console setup*
-  (this is about saving his attention, not ability). Rules:
-  - **One step at a time. Never dump a multi-step list and ask him to execute it.**
-    Give exactly one action, wait for "done", then the next.
-  - **Lead, don't quiz.** Pre-make every mechanical decision and state a single
-    recommended default; only ask him for things that are genuinely his choice
-    (e.g. a brand name, a spend ceiling) — and even then, propose concrete options.
-  - **Hand-hold web consoles click-by-click:** exact button/link text, what page
-    he'll land on, and what to ignore (consoles push templates/upsells/wizards —
-    pre-empt those: "the homepage will try to make you pick a template; skip it,
-    go straight to X"). Anticipate the thing that will throw him off.
-  - **Operator-delegated action format:** before asking Chandra to click/type/run
-    anything, give exactly one action with: (1) ELI5 purpose, (2) exact UI path or
-    command, (3) visible success condition, and (4) "tell me what you see." If any
-    of those four are unknown, verify first; do not hand him a vague "confirm it"
-    instruction.
-  - **No resume prompt while waiting on Chandra.** If the response asks Chandra to do
-    the next step in the current flow, it is not a fresh-session handoff, even if
-    `STATUS.md` is current. End with the single requested action and wait.
-  - **Web-verify volatile UI steps before prompting.** Browser and SaaS console
-    layouts drift; check current official docs or the live UI immediately before
-    giving click-by-click instructions. State the exact artifact to pick (e.g.,
-    "select the folder containing `manifest.json`") and the success condition
-    ("OpenMemory appears on `chrome://extensions`"). If a prompt is stale, update
-    these control-plane instructions and the affected docs in the same session.
-  - **Pre-delegation gate (COE 2026-06-10):** before delegating any action to
-    the operator, verify it cannot be performed via CLI/API (`gh`, `curl`,
-    shell, MCP). Delegate only genuinely operator-exclusive actions
-    (credentials entry, consent, account creation requiring PII). If the agent
-    can describe the UI path, it can almost certainly run the CLI equivalent.
-  - **Credential handoff via clipboard (2026-06-10):** when a secret already
-    lives in Bitwarden (SSH key passphrase, paste-once tokens), the
-    operator-exclusive step is **copy to clipboard** — not run unlock commands.
-    After Chandra says **"copied"** / **"in clipboard"**, the agent runs the
-    handoff script (`scripts/ssh_unlock.py` for SSH; spec
-    `docs/skills/operator-assistant-credential-handoff.md`; skill
-    `operator-credential-handoff`). Never echo clipboard contents; the script
-    clears the clipboard after a successful load.
-  - **Persist agent credentials on the machine — handoffs are one-time, not
-    recurring (pattern, 2026-06-10):** if the agent needs the same secret in
-    more than one session, a per-session handoff is a smell. Do the one-time
-    setup that makes it durably available on this machine, in order of
-    preference: (1) OS-native secure stores — Windows `ssh-agent` service set
-    to **Automatic** with the key registered once (keys persist across
-    reboots), Git Credential Manager, `gh` keyring; (2) **Windows *user*
-    environment variables** for API tokens that scripts read via `os.environ`
-    (e.g. `AI_MEMORY_API_KEY`); (3) gitignored local files
-    (`infra/terraform/terraform.tfvars`, `infra/.env`). Bitwarden remains the
-    master copy (ADR 017); the machine store is a working cache. When a new
-    agent-needed secret is created, persist it this way **in the same
-    session** — and verify with a non-interactive probe (e.g.
-    `ssh -o BatchMode=yes`) before declaring it fixed. Origin: the droplet-SSH
-    passphrase was hand-delivered repeatedly until the agent service was made
-    Automatic (2026-06-10); never repeat that loop for any credential.
-  - Say what each command/click does (**ELI5 → one layer deeper**) *before* he or
-    I run it. Do the parts I can do; only delegate clicks I genuinely can't.
-- **Research discipline:** web-verify volatile facts (model IDs, prices, API
-  shapes, what a compose file ships) *before* baking them in, and **state which
-  source you used** (tenet 8).
+- `OPERATOR.md` — who the operator is, how to collaborate, live env overrides
+- `ventures.md` — venture metadata vocabulary and import heuristics for real data
+- `docs/interview_packet.md` — portfolio narrative (never duplicated here)
+
+Agents with private-repo access read those files after this one.
+
+## Operator collaboration (generic patterns)
+
+- **Pre-delegation gate (COE 2026-06-10):** before delegating any action to the
+  operator, verify it cannot be performed via CLI/API (`gh`, `curl`, shell, MCP).
+  Delegate only genuinely operator-exclusive actions (credentials entry, consent,
+  account creation requiring PII).
+- **Operator-delegated action format:** when delegation is required, give exactly
+  one action with: (1) plain-language purpose, (2) exact UI path or command,
+  (3) visible success condition, and (4) "tell me what you see."
+- **Credential handoff via clipboard:** when a secret lives in the password manager,
+  the operator copies; after **"copied"** / **"in clipboard"**, the agent runs the
+  handoff script (`scripts/ssh_unlock.py`; spec
+  `docs/skills/operator-assistant-credential-handoff.md`). Never echo clipboard
+  contents.
+- **Persist agent credentials on the machine** (ssh-agent, GCM, `gh` keyring, user
+  env vars like `AI_MEMORY_API_KEY`, gitignored tfvars). Password manager remains
+  master copy (ADR 017).
+- **No resume prompt while waiting on the operator** in the same active flow.
+- **Web-verify volatile UI steps** before giving click-by-click instructions.
+- **Research discipline:** web-verify volatile facts before baking them in; state
+  the source (tenet 8).
 
 ## Tenets (non-negotiable — see docs/tenets.md)
 
@@ -109,7 +72,7 @@ over option lists; flag scope creep; call out trade-offs explicitly.
    recurring rupee, annotate `(~₹X/mo)`. Justified spend is OK in seed stage.
    `(~₹X/mo)` annotations are vendor **list price**; the operator's **landed cost
    ≈ list × 1.3** (+18% GST, +~4–6% forex) — budget on landed, not sticker. Actual
-   ₹ outflow lives in the private `financial-decisions.md`.
+   ₹ outflow lives in the private operator financial ledger.
 7. **Fewer moving parts.** For a solo project, simplicity wins; add a
    container/provider/dep only when its value exceeds lifetime maintenance.
 8. **Verify in the right tier.** Web/docs/repo for dated facts → deep research
@@ -150,7 +113,7 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     industry benchmark · 5-whys to a systemic root cause · Prevent/Detect/Mitigate
     actions w/ owner+date).
     **Fix the control plane (rule/spec/mechanism) before the data plane (instance)**;
-    capture the lesson in a tenet/ADR + `interview_packet.md`. Depth ∝ blast radius.
+    capture the lesson in a tenet/ADR (+ private interview packet if portfolio-facing). Depth ∝ blast radius.
 15. **Fixed, capped cost beats variable — even at a mild premium.** Prefer
     predictable flat-rate pricing over usage-based/on-demand, even when on-demand is
     mildly cheaper: a known bill can't spiral. Default to flat-rate resources; put a
@@ -209,25 +172,14 @@ over option lists; flag scope creep; call out trade-offs explicitly.
 ## Architecture (summary)
 
 Caddy (auto-HTTPS) → Mem0 (FastAPI REST) over PostgreSQL/pgvector, plus
-Neo4j (running + backed up but **not yet written**: reserved for LifeGraph,
-Phase 6; the deployed Mem0 ships no graph store, so it writes no graph today —
-ADR 032, corrects the earlier "dual namespace" claim). A local stdio MCP
-proxy (ADR 025) lets Claude Code, Cursor, and VS Code call the live REST API.
-Prometheus + Grafana for observability. Reach: Chrome extension (desktop / ChromeOS) +
-Claude remote MCP connector still needs a later HTTP endpoint for iOS; Claude Code +
-Cursor/VS Code use the local MCP proxy.
-Android extension coverage is best-effort only (Kiwi archived Jan 2025; see
-ADR 004) and iOS non-Claude LLMs are a known gap.
-Models: single OpenAI provider — `gpt-5-mini` (extraction, Mem0's current
-default) + `text-embedding-3-small` (embeddings), swappable (ADR 013, supersedes
-ADR 002).
-Full diagram: `docs/architecture.md`.
-
-## Ventures (metadata tags for memory categorization)
-
-`trading_firm` (algo LLP, ETF pledge + Iron Condor; co-founder Vijaya) ·
-`social_media` (YouTube; Vijaya + cousin) · `ria` (future) ·
-`personal` / `career` / `migration` (job search, Germany/Australia, PhD Dec 2026).
+Neo4j (running + backed up; LifeGraph POC uses in-memory `GraphStore` today —
+live Neo4j seed is a follow-up ops step, ADR 032). A local stdio MCP proxy
+(ADR 025) lets Claude Code, Cursor, and VS Code call the REST API. Remote HTTP
+MCP + OAuth for mobile connectors (ADR 034/035). Prometheus + Grafana for
+observability. Reach: Chrome extension + local MCP proxy; remote MCP for Claude
+mobile and other OAuth-capable connectors.
+Models: single OpenAI provider — `gpt-5-mini` + `text-embedding-3-small`
+(swappable, ADR 013). Full diagram: `docs/architecture.md`.
 
 ## Engineering practices (standards — with honest status)
 
@@ -246,9 +198,10 @@ not yet built). Keep these tags honest — a claim outrunning reality is itself 
   full ephemeral Docker stack — **[target]**.)
 - **CD** — **[target — Phase 1/ops]** push-to-main SSH deploy → health check →
   rollback. **Today deploys are manual SSH** (`make deploy`); no `cd.yml` yet.
-- **Eval framework** — **[target — Phase 7]** retrieval (precision@k, MRR),
-  extraction (cross-LLM), categorization, guardrails, blocking on regression.
-  Designed (ADR 007/014); `src/eval/` is still a stub.
+- **Eval framework** — **partly [in place], partly [target — Phase 7/9]**. In
+  place: retrieval/extraction/categorization metrics, guardrails, starter synthetic
+  gold data in `src/eval/`. Target: blocking CI regression gate, expanded gold
+  datasets, full cross-LLM extraction matrix (ADR 007/014).
 - **Security** — **partly [in place], partly [target — Phase 9/security]**. In
   place: HTTPS (Caddy), an admin `X-API-Key` + JWT support on the API, basic auth on
   admin UIs, least-privilege backup key, gitleaks. Target (not yet built): PII filter
@@ -261,167 +214,68 @@ not yet built). Keep these tags honest — a claim outrunning reality is itself 
 
 ## Build phases (with reality status)
 
-Status as of 2026-06-10 — keep honest (a stub-only phase must not read as progress;
-COE 2026-06-10-delayed-memory-buildout):
+Status as of 2026-06-11 — keep honest (COE 2026-06-10-delayed-memory-buildout):
 
 - **0 scaffold + accounts** — ✅ done
 - **1 IaC (Terraform/Compose/Caddy)** — ✅ done (deploy is manual SSH; no CD yet)
-- **2 backup/restore + drills** — ✅ done (nightly timer, dead-man's-switch, monthly drill)
-- **3 Chrome extension fork** — ✅ live (some polish parked, BACKLOG)
-- **4 Claude + Cursor/VS Code MCP** — ✅ done (local stdio proxy)
-- **3-premise** *(product premise / usefulness test)* — 🅿️ **parked** until phases
-  5–8 land (operator 2026-06-10; overrides COE premise-first gate)
-- **5 migration (TDD)** — ⬜ stub (`src/migration/` placeholder) — **next build phase**
-- **6 LifeGraph (TDD)** — ⬜ stub (`src/life_graph/` placeholder; Neo4j reserved, ADR 032)
-- **7 eval framework (TDD)** — ⬜ stub (`src/eval/` placeholder; designed in ADR 007/014)
-- **8 observability** — ⬜ stub (`src/observability/`, `src/health/` placeholders; `monitor.` reserved)
+- **2 backup/restore + drills** — ✅ done
+- **3 Chrome extension fork** — ✅ live
+- **4 Claude + Cursor/VS Code MCP** — ✅ done (local stdio proxy + remote HTTP MCP)
+- **5 migration (TDD)** — ✅ core pipeline (`src/migration/`); live bulk load pending
+- **6 LifeGraph (TDD)** — ✅ in-memory POC (`src/life_graph/`); live Neo4j seed **[target]**
+- **7 eval framework (TDD)** — ✅ starter metrics + synthetic gold; CI gate **[target]**
+- **8 observability** — ✅ metrics, drift, alerts, health checker
 - **9 docs/polish** — ⬜ ongoing
-
-`⬜ stub` means the `src/` module is a placeholder file, not an implementation.
 
 ## Conventions
 
 - Python 3.12, `pyproject.toml` is source of truth (ruff/mypy/pytest configured).
 - Tooling entrypoints are cross-platform: `scaffold.py`, not `scaffold.sh`.
 - Secrets only via `.env` (gitignored) and CI secrets. Never in code/commits/logs.
-- **Credential custody:** every account login, API token, and key for the project
-  is stored in the **Bitwarden `ai-memory-infra` individual-vault folder** the moment
-  it's created (ADR 017) **and** indexed (no value) in the private
-  `docs/security/secrets-catalog.md` — purpose, where it lives, rotation, blast
-  radius. The vault is the single home for secret *values*; the catalog is the single
-  index of *what exists and where to find/rotate it*, mirroring how git (tenet 1) is
-  the single home for everything non-secret — nothing important lives only in a chat
-  window. For SSO logins, store a note (e.g. "DigitalOcean = Google SSO, <email>") so
-  the nominee can still get in.
+- **Default API identity:** `user_id=primary-user`, `AI_MEMORY_BASE_URL=https://memory.example.com`
+  in code/examples; operators override via env (see private `OPERATOR.md`).
+- **Credential custody:** store secret values in the operator's password-manager vault
+  (ADR 017) and index them (no value) in private
+  `ai-memory-infra-private/docs/security/secrets-catalog.md` — purpose, where it
+  lives, rotation, blast radius.
 - When a fact about an external product/API could be stale, verify before coding.
 
 ## Working model (sessions, tooling, governance)
 
-- **One surface (Cursor), but sessions are short-lived and disposable (tenet 16).**
-  Planning, decisions, fact-verification, doc upkeep, **and execution/build** all happen
-  in Cursor — there is no separate CONTROL vs BUILD *surface* (the earlier Claude.ai
-  control surface + the parallel build session are both **retired**). But a session is
-  **one task, single-shot**, not a marathon thread: a long-lived chat re-sends its whole
-  transcript every turn (≈quadratic token cost — *context-window amplification*) and once
-  burned a month's Cursor plan credits in half a day (COE 2026-06-08). So **state lives in
-  files, not chat** — checkpoint `STATUS.md` after *each logical step*. A copy-paste
-  Resume prompt is allowed only after that checkpoint is current **and** the response is
-  a true handoff/closeout, not while waiting for Chandra to perform the next action in
-  the same flow. If the session is mid-step or awaiting an operator action, say so plainly
-  and do **not** print a false resume token. Prefer a new chat over a long follow-up
-  thread once a checkpoint exists.
-- **Workspace/root discipline:** the root operating surface is the parent `ai-memory`
-  workspace containing the three sibling repos. Treat `ai-memory-infra` as the
-  **control plane** for cross-package planning, rules, docs, STATUS, and orchestration,
-  with the parent workspace `AGENTS.md` and `.cursor/rules/00-workspace-control-plane.mdc`
-  kept as thin pointers into this repo.
-  while `ai-memory-extension` and other package repos are first-class touched repos when
-  they carry implementation changes. Do **not** move the agent/chat root into
-  `ai-memory-extension` or another package repo just to gain context; use package repos
-  only as targeted data-plane workspaces for the files being edited. If a package needs
-  changes, make the package edits deliberately, verify in that repo, commit+push that repo,
-  then return the checkpoint/control-plane updates to `ai-memory-infra`.
-- Sessions (sequential *or* parallel) share **files, not chat memory** — **re-read a file
-  before acting**, and never edit the same file from two sessions at once.
-- **The safeguard against agent error is the Definition-of-Done verification
-  gate below — not a second tool.** Trust comes from the DoD + tests + ADRs +
-  no-drift check, applied every change, not from which editor is open. The
-  commit/push portion of that gate is now a **deterministic mechanism, not a
-  prose hope**: `scripts/completion_gate.py` (ADR 027), invoked by a harness
-  turn-end adapter, enforces it for any model (the long-promised repo handoff
-  verifier). The adapter is generated at the workspace root, not Cursor-owned
-  (tenet 2; ADR 030).
-- **Repo integrity (Tenet 11), third/soft layer:** run
-  `scripts/check-repo-health.*` **at session start and before every commit**.
-  (The hard layers are the git pre-commit hook + the daily scheduled run; this
-  line is the human/agent reminder so a missing hook never means a missing check.)
-- **Session bootstrap, soft layer (ADR 030):** a harness `sessionStart` adapter
-  runs `scripts/session_bootstrap.py`, which injects a compact block (control
-  plane = `ai-memory-infra`, current phase, the Next action from `STATUS.md`) so a
-  fresh session does **not** re-read all of `AGENTS.md`/`STATUS.md` just to learn
-  where it is and what's next (token cost, tenet 16). The script is canonical and
-  editor-agnostic; `additional_context` injection is best-effort (a known Cursor
-  timing bug can drop it), so the script also exports `env` pointers and prints the
-  same block to the Hooks output channel.
-- **Completion gate, hard layer (ADR 027; placement ADR 030):** `scripts/
-  completion_gate.py` checks every project repo at turn-end and, if any is dirty/
-  unpushed, forces the agent to finish the commit/push DoD (and after a few loops,
-  surfaces a loud operator-facing blocker). Two distinct mechanisms: the **git
-  pre-commit** hook *validates* a commit's content (integrity + gitleaks); the
-  **harness turn-end** adapter *triggers* the commit/push that would otherwise be
-  skipped. The prose gate is the happy path; the hook is the model-independent
-  guarantee.
-- **Hooks are portable, not Cursor-owned (tenet 2, ADR 030).** Both the bootstrap
-  and the completion gate live as editor-agnostic Python in `scripts/`. Cursor
-  reads project hooks from the **workspace root** (`ai-memory/.cursor/hooks.json`),
-  not from `ai-memory-infra/.cursor/`, and the parent workspace is not a git repo —
-  so `scripts/install_ide_hooks.py` (versioned) generates the thin per-IDE adapters
-  (`<root>/.cursor/hooks.json` for Cursor, `<root>/.claude/settings.json` for
-  Claude Code) from one definition — and also installs the **agent skills**
-  (versioned `skills/*/SKILL.md` thin trigger pointers → workspace-root
-  `.cursor/skills/` + `.claude/skills/`, where harnesses auto-discover them;
-  `docs/interfaces.md` §12). **Re-run it after any re-clone** (same model as
-  the git-hook installer, ADR 015). VS Code has no native session hook — wire the
-  bootstrap as a folder-open task (see `docs/setup.md`).
-- **Completion gate:** when a reversible work item is done and verified, commit the
-  relevant changes and push **every touched repo** to remote in the same session, including
-  package repos such as `ai-memory-extension` and private docs repos such as
-  `ai-memory-infra-private`. Do **not** leave a routine "operator will commit/push" gate
-  or push only the control-plane docs while package code remains local/ahead. Pause before
-  commit/push only for one-way-door effects (spend, lock-in, deletion, data overwrite/
-  retention policy), secrets, destructive operations, or an explicit operator pause.
-  The instruction to read `AGENTS.md`/`STATUS.md` and continue the next action is the
-  standing operator authorization for this workspace's reversible completion commit+push;
-  do not require a second "please commit" prompt — and **never ask** "want me to
-  commit?" / "say if you want that committed" at session end when this applies
-  (COE 2026-06-10-session-end-commit-permission-ask). Generic agent habits that
-  conflict with this workspace rule lose; name a blocker or commit+push. If a
-  higher-level tool policy or a real blocker prevents commit/push, say that before
-  the final answer and leave the repo in a clearly documented handoff state.
-- **"Park" semantics:** when the operator says *park*, *defer*, or *let another
-  session do it*, stop **new** work on that thread — but still checkpoint
-  `STATUS.md` and **commit+push** all completed, verified changes in every touched
-  repo. Parking is not permission to leave local-only handoff state.
-- **Rule-conflict protocol (COE 2026-06-10-global-workspace-rule-conflict):** if a
-  global Cursor user rule conflicts with this file, **workspace rules win for
-  ai-memory** (tenet 2). Ask the operator **once** which wins if the conflict is
-  novel or ambiguous; after clarification, follow the workspace rule and fix the
-  control plane in the **same session** (update the global rule text + any doc
-  drift + commit+push). Do not default to the conservative "don't commit" habit.
-  **`cursor_dialog` MCP is not exposed** and Cursor User rules are **not local
-  files** on disk (cloud KnowledgeBase — COE `2026-06-10-cursor-user-rules-not-on-disk.md`).
-  For global-rule alignment: run `python scripts/cursor_user_rules.py show commit`
-  and **print the text in chat** for the operator to copy; never cite internal
-  prompt tags (e.g. `committing-changes-with-git`) as Settings UI labels (COE
-  `2026-06-10-hallucinated-cursor-rule-name.md`). Clipboard only if operator asks
-  (COE `2026-06-10-clipboard-over-print-delegation.md`).
-- **Final response gate:** before any final answer, explicitly verify and satisfy all
-  handoff requirements: (1) every touched git repo is committed and pushed, or the blocker
-  is named plainly; (2) `STATUS.md` and required logs have been updated to a logical
-  checkpoint; (3) the answer either ends with a copy-paste **Resume prompt** that tells the
-  next fresh chat to read `docs/planning/STATUS.md` + `AGENTS.md`, run repo-health, and do
-  the latest Next action, or explicitly says no resume prompt is valid because the work is
-  mid-step or awaiting an operator action. Missing any item is a COE-class handoff failure.
+- **Short-lived, disposable sessions (tenet 16).** State lives in **files, not chat** —
+  checkpoint `STATUS.md` after each logical step. Emit a Resume prompt only after a
+  real handoff checkpoint, not while awaiting an operator action.
+- **Workspace/root discipline:** parent `ai-memory` workspace; `ai-memory-infra` is the
+  **control plane**; package repos are touched deliberately when they carry changes.
+- **Repo integrity (tenet 11):** run `scripts/check-repo-health.*` at session start and
+  before every commit.
+- **Session bootstrap (ADR 030):** `scripts/session_bootstrap.py` injects compact context.
+- **Completion gate (ADR 027/030):** `scripts/completion_gate.py` enforces commit+push
+  at turn-end for every touched repo.
+- **Hooks are portable (tenet 2, ADR 030):** `scripts/install_ide_hooks.py` generates
+  per-IDE adapters from versioned Python in `scripts/`.
+- **Completion gate:** when reversible work is verified, commit+push **every touched
+  repo** in the same session. Standing authorization applies; do not ask "want me to
+  commit?" at session end (COE 2026-06-10-session-end-commit-permission-ask).
+- **"Park" semantics:** stop new work on the thread; still checkpoint and commit+push
+  completed changes.
+- **Final response gate:** touched repos pushed or blocker named; `STATUS.md` current;
+  Resume prompt or explicit mid-step statement.
 
-## Memory Daily Driver — conversational practice (Operator Assistant)
+## Memory Daily Driver — conversational practice
 
-The live memory bank is part of every conversation, via `scripts/memory.py`
-(contract-enforcing helper; spec `docs/skills/operator-assistant-memory-daily-driver.md`):
+The live memory bank is available via `scripts/memory.py` (spec
+`docs/skills/operator-assistant-memory-daily-driver.md`):
 
-- **"plan my day" / "what's on my plate?"** → run `python scripts/memory.py agenda`,
-  present the buckets plain-English (overdue first), recommend one next action.
-- **"log this / remind me / follow up <day>"** → `add-open-item` with resolved ISO
-  dates (+ `--venture career` for recruiter reachouts); **"show recruiters"** → `recruiters`.
-- **"we decided X because Y"** → `add-decision` (verbatim, `--occurred` date).
-  **Reversals**: never edit the old decision — capture a new one:
-  `"Supersedes <old-id> ('<gist>'): <new decision>. Reason: <why>."` The trail is
-  the history; the latest decision is the snapshot.
-- **"done / that happened"** → `close <id> --resolution "<what happened>"`.
-- **Confirmation contract:** after every write, echo exactly what was stored
-  (verbatim text, type, resolved dates, ventures, short id). Silent writes are a
-  violation — mis-tags must be catchable immediately.
-- Never store secrets or transcript dumps; repo files beat memory for project
-  state (the bank is for *personal operating* items: todos, reachouts, decisions, facts).
+- **"plan my day" / "what's on my plate?"** → `python scripts/memory.py agenda`
+- **"log this / remind me / follow up <day>"** → `add-open-item` with resolved ISO dates
+- **"we decided X because Y"** → `add-decision` (verbatim, `--occurred` date). Reversals:
+  capture a superseding decision; never edit the old row.
+- **"done / that happened"** → `close <id> --resolution "<what happened>"`
+- **Confirmation contract:** after every write, echo exactly what was stored.
+- Never store secrets or transcript dumps; repo files beat memory for project state.
+
+Operator-specific verbs (e.g. career-tagged boards) are in private `OPERATOR.md`.
 
 ## Documentation discipline / Definition of Done
 
@@ -433,16 +287,16 @@ docs to update:
 
 | When you change… | Update these |
 |---|---|
-| Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, `docs/interview_packet.md` (arch-at-a-glance + decision log) |
-| A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), `interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |
+| Architecture / a component / a provider | `docs/architecture.md` (diagram + Components & cost), `README.md` summary, an ADR, private `ai-memory-infra-private/docs/interview_packet.md` if portfolio narrative needed |
+| A major decision, or reverse one | new ADR (or set the old one **Superseded by NNN**), private `ai-memory-infra-private/docs/interview_packet.md` decision log (append, dated), `STATUS.md` last-decisions |
 | A cross-cutting / data-contract decision (`user_id`, `source`, `type`, schema, auth, transport) | The decision is **a contract, not a document** (ADR 031): verify — and patch where needed — in **every** consumer repo (`ai-memory-extension`, MCP proxy `src/mcp_proxy/client.py`, the OpenClaw adapter, the future todo app) before it is done; register it in `docs/interfaces.md` (with enforcement status); add a "Propagation / conformance" section to the ADR; `scripts/check_memory_contract.py` must pass. A clean control-plane repo with a violating consumer is **not** done |
 | A tenet | `docs/tenets.md` (PR + rationale), the tenet summary in `AGENTS.md` — **never** restate it in the editor pointer files (they stay pure pointers; see next row + ADR 018) |
 | An editor pointer file (`.cursor/rules/*`, `CLAUDE.md`) | Keep it a **pure pointer** — frontmatter + "read `AGENTS.md`"; it carries **zero** tenets/rules/decisions (tenet 2, ADR 018). If you're adding substance here, it belongs in `AGENTS.md` instead |
 | Infra/IaC (terraform, compose, Caddy, `.env`) | `docs/runbook.md` / `docs/setup.md` if ops or commands change, `README.md` quick-start if commands change, `STATUS.md` |
-| A new phase, `src/` module, or capability | **a design doc first** (`docs/design/<name>.md` from `docs/design/TEMPLATE.md` — HLD + LLD: components, interfaces, data contracts, failure modes, test plan) **before code**, proportional to stakes (tenet 8); then tests first (TDD), `README.md`/`architecture.md` if user-facing, `docs/interfaces.md` if it adds/changes a contract, `interview_packet.md` (practice highlights / STAR), eval gold-standard if applicable |
-| Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost, `interview_packet.md` results/metrics |
-| Security / guardrail behaviour | ADR 009 area, `interview_packet.md` security highlight, tests |
-| Create / obtain / rotate any account, API token, key, or secret | Store the value **immediately** in the Bitwarden `ai-memory-infra` individual-vault folder (ADR 017) **and** add/update a row (no value) in the private `docs/security/secrets-catalog.md` (purpose · where it lives · rotation · blast radius); note SSO logins so the nominee can get in. **Never** commit it or paste it in chat/logs. Not done until it's in the vault **and** the catalog |
+| A new phase, `src/` module, or capability | **a design doc first** (`docs/design/<name>.md` from `docs/design/TEMPLATE.md` — HLD + LLD: components, interfaces, data contracts, failure modes, test plan) **before code**, proportional to stakes (tenet 8); then tests first (TDD), `README.md`/`architecture.md` if user-facing, `docs/interfaces.md` if it adds/changes a contract, eval gold-standard with **synthetic** fixtures if applicable |
+| Anything cost-relevant (plan, provider, bucket) | `docs/architecture.md` Components & cost |
+| Security / guardrail behaviour | ADR 009 area, tests |
+| Create / obtain / rotate any account, API token, key, or secret | Store the value **immediately** in the operator's password-manager vault (ADR 017) **and** add/update a row (no value) in the private `ai-memory-infra-private/docs/security/secrets-catalog.md` (purpose · where it lives · rotation · blast radius); note SSO logins for nominee access. **Never** commit it or paste it in chat/logs. Not done until it's in the vault **and** the catalog |
 | End of any working session | (1) `docs/planning/STATUS.md` — **overwrite means replace**: current phase, the *current* session's decisions, open blockers, next action. **Never keep "Prior update" blocks or older dated sections** — superseded narrative moves to BUILD-LOG *in the same step* (it's already there if the DoD was followed). Shape is machine-enforced by `scripts/check_status_snapshot.py` (pre-commit gate 3 + CI; COE 2026-06-10-status-snapshot-log-drift). (2) **Append** a session entry to the private `docs/planning/BUILD-LOG.md` (steps · gotchas/micro-lessons · time: wall-clock + rough human/agent split) and a curated, no-personal-detail summary to public `docs/BUILD-JOURNEY.md` (keep them in agreement, tenet 10) |
 | Every logical step + every response (tenet 16) | Checkpoint `STATUS.md` ("Next action" / "Done this session") at each logical step boundary — not just at session end — so the file is resume-ready at real handoff points. End a response with a copy-paste **Resume prompt** only when that checkpoint exists; otherwise say the work is mid-step and keep going in the current chat |
 

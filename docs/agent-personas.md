@@ -1,191 +1,69 @@
 # Agent Personas
 
-This is the product-design gate before building more skills/tools. The memory
-layer is shared infrastructure, but agents need clear jobs. A skill without an
-agent owner is just a command with no success criteria.
+Product-design gate before building more skills/tools. The memory layer is shared
+infrastructure, but agents need clear jobs. A skill without an agent owner is just a
+command with no success criteria.
 
 ## Design Inputs From COEs
 
-The recent COEs shaped this design:
-
-- `2026-06-08-cursor-credit-exhaustion.md`: agents must keep context bounded,
-  checkpoint durable state, and avoid long stateful threads.
-- `2026-06-08-atomic-handoff-failure.md`: a handoff is only real when every
-  touched repo or system of record is updated, verified, and pushed.
-- `2026-06-09-session-handoff-omission.md`: final responses need an explicit
-  checkpoint contract, not agent memory.
-- `2026-06-09-concierge-handoff-regression.md`: operator-facing work must be
-  concierge-formatted: purpose, exact action, visible success, and wait point.
-
-So the first build rule is: every skill must declare its owning persona, what it
-may store, what it may retrieve, and what proves success.
+Recent COEs shaped this design: bounded sessions (2026-06-08), atomic handoff
+(2026-06-08), explicit checkpoint contract (2026-06-09), and delegated-action
+formatting (2026-06-09). Every skill must declare its owning persona, what it may
+store, what it may retrieve, and what proves success.
 
 ## Primary Personas
 
 ### 1. Build Agent
 
-**Job:** implement and maintain the code, infrastructure, tests, docs, and
-deployment workflow.
+**Job:** implement and maintain code, infrastructure, tests, docs, and deployment.
 
-**Uses the memory layer for:**
+**Uses memory for:** ADR outcomes, gotchas, verification commands, cross-repo handoff
+facts.
 
-- Prior build decisions, ADR outcomes, known gotchas, and environment quirks.
-- Error patterns, failed fixes, recovery steps, and verification commands.
-- Cross-repo handoff facts: which repo was touched, what was pushed, and what
-  remains next.
+**Must not store:** secrets, long transcripts duplicating `STATUS.md`/ADRs.
 
-**May store:**
-
-- Durable technical facts: "PowerShell needs `npm.cmd` here", "content scripts
-  must call the background relay for cross-origin API fetches", "repo-health was
-  green before commit".
-- Concise lessons from COEs and debugging sessions.
-- Pushed commit identifiers and verification outcomes.
-
-**Must not store:**
-
-- Secrets, API keys, passwords, private key material, or raw vault values.
-- Long transcripts that duplicate `STATUS.md`, ADRs, or build logs.
-- Unverified hypotheses as durable facts.
-
-**Success criteria:**
-
-- A fresh session can resume from repo files plus targeted memories without
-  replaying a long chat.
-- Completed reversible work is verified, committed, pushed, and checkpointed.
-- Any operator step is delegated only when the agent cannot do it itself.
+**Success:** fresh session resumes from repo files; reversible work verified,
+committed, pushed, checkpointed.
 
 ### 2. Research and Strategy Agent
 
-**Job:** evaluate product direction, vendors, models, architecture trade-offs,
-costs, and roadmap sequencing before implementation.
+**Job:** evaluate vendors, models, architecture trade-offs, roadmap sequencing.
 
-**Uses the memory layer for:**
+**Uses memory for:** dated external facts, rejected paths, revisit triggers.
 
-- Dated external facts and source summaries.
-- Prior trade-off decisions, rejected paths, and revisit triggers.
-- Portfolio/interview framing: what decision demonstrates which competency.
+**Must not store:** full web dumps, firm IP, private financial specifics.
 
-**May store:**
-
-- Short research conclusions with date, source class, and confidence.
-- Decision rationale that will later become an ADR or backlog item.
-- Explicit revisit conditions, such as "re-check Claude remote MCP when HTTP
-  endpoint work starts".
-
-**Must not store:**
-
-- Full web dumps, article copies, or stale source text.
-- Firm IP, trading strategy details, or private financial specifics that belong
-  outside this public repo.
-- Decisions that have not been accepted or checkpointed.
-
-**Success criteria:**
-
-- The next build step is clear, scoped, and tied to an owner.
-- Vendor/model choices are reversible or have an ADR before adoption.
-- Research memories are dated so stale facts are easy to challenge.
+**Success:** next build step is clear, scoped, and tied to an owner; choices are
+reversible or ADR-backed.
 
 ### 3. Operator Assistant
 
-**Job:** reduce Chandra's cognitive load for console work, account setup,
-routine checks, reminders, and personal operating context.
+**Job:** reduce operator cognitive load for console work, account setup, reminders,
+and personal operating context.
 
-**Uses the memory layer for:**
+**Uses memory for:** stable preferences, non-secret task state, reminder facts.
 
-- Preferences: concierge mode, one step at a time, plain English.
-- Non-secret account custody facts: which Bitwarden folder holds project
-  credentials, which checks exist, which UI path was last verified.
-- Pending operator actions and visible success conditions.
+**Must not store:** passwords, API keys, medical/financial/family details unless
+explicitly required for the task.
 
-**May store:**
-
-- Stable preferences and working agreements.
-- Non-secret task state: "Cursor lists workspace MCP server `ai-memory`".
-- Reminder-style facts with dates and trigger conditions.
-
-**Must not store:**
-
-- Passwords, API keys, recovery codes, or copied secret values.
-- Medical, financial, or family details unless Chandra explicitly asks and the
-  detail is necessary for the task.
-- Multi-step instruction dumps when a single next action is required.
-
-**Success criteria:**
-
-- Chandra gets exactly one action when action is needed.
-- The action includes purpose, exact UI path or command, visible success, and
-  "tell me what you see".
-- No resume prompt is emitted while waiting on Chandra inside the same active
-  flow.
+**Success:** one delegated action at a time with purpose, path, success condition,
+and wait point. Operator-specific collaboration rules live in private `OPERATOR.md`.
 
 ## Supporting Role: Memory Steward
 
-This is not a fourth user-facing agent at first. It is a governance role that can
-later become skills under the Build Agent.
-
-**Job:** keep memories useful, scoped, deduplicated, and safe.
-
-**Responsibilities:**
-
-- Enforce metadata: persona owner, source surface, date, sensitivity, and
-  venture tag where relevant.
-- Detect conflicts between memory and repo truth; repo files win.
-- Prefer small durable facts over transcript-sized memories.
-- Surface stale memories for refresh instead of silently trusting them.
-
-**Success criteria:**
-
-- Search returns actionable facts, not duplicated chat debris.
-- Sensitive values are absent from memory.
-- Memory can explain why a fact is believed and where canonical truth lives.
+Governance role (future skills under Build Agent): enforce metadata, detect
+conflicts with repo truth, flag stale or oversized memories.
 
 ## First Skill Build Order
 
-1. ✅ **DONE (2026-06-09) — Build Agent: session checkpoint skill.** Capture the
-   current work item, verification, touched repos, and next action in the right
-   repo docs. Implemented as `scripts/session_checkpoint.py` (spec:
-   `docs/skills/build-agent-session-checkpoint.md`): gathers git truth per repo,
-   validates the handoff contract (`--check`), and renders no-drift STATUS +
-   BUILD-LOG entries from real facts.
-2. ✅ **DONE (2026-06-09) — Build Agent: repo handoff verifier.** Mechanically
-   check dirty/ahead/behind state for touched repos before final response.
-   Implemented as the turn-end gate `scripts/completion_gate.py` (ADR 027/030).
-3. ✅ **DONE (2026-06-09) — Operator Assistant: concierge action formatter.** Turn
-   an unavoidable operator step into purpose + exact action + visible success +
-   wait point. Implemented as `scripts/operator_action.py` (spec:
-   `docs/skills/operator-assistant-concierge-action.md`): validates the four-part
-   contract (`--check`), rejecting vague "confirm it"-class verbs and multi-step
-   dumps, then renders the single operator action block.
-4. **(Absorbed into Memory Daily Driver v0, direction pivot 2026-06-09.)**
-   Decision capture now ships as the `add-decision` verb + supersession flow of
-   the Daily Driver practice below, not a standalone skill.
-   ✅ **DONE (2026-06-10) — Operator Assistant: Memory Daily Driver conversational
-   practice.** "plan my day" / "log this, follow up Friday" / "we decided X" /
-   "done" now map to `scripts/memory.py` verbs with a mandatory stored-exactly-this
-   confirmation; decision reversals are captured as superseding decisions (trail +
-   snapshot). Spec: `docs/skills/operator-assistant-memory-daily-driver.md`;
-   canonical practice text in `AGENTS.md`.
-5. **Memory Steward: memory hygiene checks.** Flag secrets, oversized memories,
-   missing owner metadata, and stale facts. (Deferred behind real utility.)
-6. ✅ **DONE (2026-06-10) — Operator Assistant: credential handoff (clipboard →
-   agent).** SSH unlock and future paste-once secrets: operator copies; agent runs
-   `scripts/ssh_unlock.py`. Spec:
-   `docs/skills/operator-assistant-credential-handoff.md`; skill
-   `operator-credential-handoff`.
-
-This order directly follows the COEs: first fix handoff and operator-action
-mechanics, then expand capability.
+1. ✅ Session checkpoint (`scripts/session_checkpoint.py`)
+2. ✅ Repo handoff verifier (`scripts/completion_gate.py`, ADR 027/030)
+3. ✅ Delegated-action formatter (`scripts/operator_action.py`)
+4. ✅ Memory Daily Driver (`scripts/memory.py`)
+5. **Deferred:** memory hygiene checks
+6. ✅ Credential handoff (`scripts/ssh_unlock.py`)
 
 ## Acceptance Criteria For Future Skills
 
-Before a skill is built, it must answer:
-
-- Which persona owns it?
-- What exact user pain does it remove?
-- What may it store and retrieve?
-- What must it never store?
-- What is the visible success condition?
-- Which repo/doc is canonical if memory and files disagree?
-
-If any answer is unclear, do not build the skill yet.
+Before building: owning persona, pain removed, store/retrieve bounds, success
+condition, canonical doc if memory and files disagree.

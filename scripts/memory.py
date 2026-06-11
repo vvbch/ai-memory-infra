@@ -15,7 +15,7 @@ brain. Every function shapes a contract-correct request and delegates to
 
 CONTRACT ENFORCED (ADR 028 + ADR 029)
 -------------------------------------
-* One ``user_id`` for the person (``chandrav``); identity is never the
+* One ``user_id`` for the person (``primary-user`` default; override via env); identity is never the
   discriminator (ADR 028). ``source`` is mandatory on every write.
 * Every memory carries a ``type`` (``fact`` | ``decision`` | ``open_item``).
 * Authored items (open items, decisions) are written ``infer=False`` so the live

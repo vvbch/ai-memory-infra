@@ -4,7 +4,7 @@
 single-source + renderer + gates are live. Step 5 (this status update) complete.
 Direction was Accepted (Option B) the prior session.
 **Date:** 2026-06-10
-**Deciders:** Chandra (chose Option B), agent (design)
+**Deciders:** the operator (chose Option B), agent (design)
 **Ties:** tenet 2 (editor/model-agnostic), tenet 10 (no drift), tenet 14 (errors are
 mechanisms — fix the control plane), ADR 018 (pointer files carry no content), ADR
 027/030 (deterministic gates + portable hooks), `docs/interfaces.md` §8.

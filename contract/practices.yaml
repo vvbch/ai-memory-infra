@@ -51,9 +51,10 @@ rules:
     mechanism: target (Phase 7); src/eval/ is a stub
     gate_id: null
   agents_md: |-
-    - **Eval framework** — **[target — Phase 7]** retrieval (precision@k, MRR),
-      extraction (cross-LLM), categorization, guardrails, blocking on regression.
-      Designed (ADR 007/014); `src/eval/` is still a stub.
+    - **Eval framework** — **partly [in place], partly [target — Phase 7/9]**. In
+      place: retrieval/extraction/categorization metrics, guardrails, starter synthetic
+      gold data in `src/eval/`. Target: blocking CI regression gate, expanded gold
+      datasets, full cross-LLM extraction matrix (ADR 007/014).
 - id: practice-security
   title: Security
   severity: high

@@ -1,7 +1,7 @@
 # COE: Completed session work was not atomically committed and pushed
 
 - **Date:** 2026-06-08
-- **Author(s):** Chandra (detected), agent (analysis + fix)
+- **Author(s):** the operator (detected), agent (analysis + fix)
 - **Severity:** medium *(no production/customer/data impact; high governance and handoff risk because the next stateless session would resume from stale remote state)*
 - **Status:** actions-in-progress
 - **Related:** tenets 1, 11, 14, 16, 17 · `AGENTS.md` Working model + Completion gate · `docs/planning/STATUS.md`
@@ -87,7 +87,7 @@ declare handoff complete with a stale package remote.
 | Sharpen `AGENTS.md`: package repos are first-class touched repos; completion gate covers every touched repo, not just control-plane docs | Prevent | agent | 2026-06-08 | ✅ done |
 | Update `STATUS.md` next-action reminder: next session must verify all touched repos clean/aligned after commit+push | Prevent | agent | 2026-06-08 | ✅ done |
 | Record this COE and index it | Prevent | agent | 2026-06-08 | ✅ done |
-| Add a final handoff checklist or script that enumerates touched repos and fails if any are dirty/ahead/behind before final response | Detect | Chandra+agent | P1 governance hardening | ⏳ promoted after 2026-06-09 recurrence |
+| Add a final handoff checklist or script that enumerates touched repos and fails if any are dirty/ahead/behind before final response | Detect | the operator+agent | P1 governance hardening | ⏳ promoted after 2026-06-09 recurrence |
 | Until automated, final response must name every touched repo and latest pushed commit | Detect/Mitigate | agent | every session | ⏳ in effect |
 
 ## Lessons learned

@@ -29,7 +29,7 @@ You need these before Step 1:
    secret pair (NOT the API token) for the backups bucket and remote state.
 4. **SSH keypair** — `ssh-keygen -t ed25519 -C "ai-memory-infra"`. Terraform
    uploads the *public* key; the private key is how you SSH in.
-5. **Domain registered at Cloudflare** — buy `chandrav.dev` (or your chosen name)
+5. **Domain registered at Cloudflare** — buy `example.com` (or your chosen name)
    at Cloudflare Registrar *before* `terraform apply`. This creates the DNS zone
    Terraform writes records into. See Step 0b below.
 6. **An OpenAI API key** — platform.openai.com. Serves both extraction
@@ -49,7 +49,7 @@ You need these before Step 1:
 
 1. Log in at **dash.cloudflare.com** (create a free account if needed).
 2. Left sidebar → **Domain Registration** → **Register Domains**.
-3. Search **`chandrav.dev`** → add to cart → complete checkout (~$10–12/yr
+3. Search **`example.com`** → add to cart → complete checkout (~$10–12/yr
    at-cost). Cloudflare assigns its nameservers automatically — **no delegation
    step** (unlike the old ADR 012 flow).
 4. Confirm the domain appears under **Websites** with status *Active*.
@@ -233,7 +233,7 @@ The scripts read the bucket + Spaces keys from `infra/.env`. Add these (the same
 Spaces pair as `terraform.tfvars`; see `.env.example`) — **never** commit them:
 
 ```bash
-BACKUP_BUCKET=ai-memory-infra-backups-chandrav
+BACKUP_BUCKET=ai-memory-infra-backups-the operatorv
 SPACES_REGION=sgp1
 SPACES_ACCESS_KEY=...      # DO console → API → Spaces Keys
 SPACES_SECRET_KEY=...
@@ -310,9 +310,9 @@ an MCP endpoint. Phase 4 therefore starts with a local stdio MCP proxy
 Set these on the machine that starts the MCP client:
 
 ```powershell
-$env:AI_MEMORY_BASE_URL = "https://memory.chandrav.dev"
-$env:AI_MEMORY_USER_ID = "chandrav"
-$env:AI_MEMORY_API_KEY = "<from Bitwarden: ai-memory-infra ADMIN_API_KEY>"
+$env:AI_MEMORY_BASE_URL = "https://memory.example.com"
+$env:AI_MEMORY_USER_ID = "the operatorv"
+$env:AI_MEMORY_API_KEY = "<from the password manager: ai-memory-infra ADMIN_API_KEY>"
 ```
 
 Do not commit the key. `AI_MEMORY_BASE_URL` and `AI_MEMORY_USER_ID` have those
@@ -329,8 +329,8 @@ Use a stdio server that runs the installed entrypoint:
       "type": "stdio",
       "command": "ai-memory-mcp",
       "env": {
-        "AI_MEMORY_BASE_URL": "https://memory.chandrav.dev",
-        "AI_MEMORY_USER_ID": "chandrav",
+        "AI_MEMORY_BASE_URL": "https://memory.example.com",
+        "AI_MEMORY_USER_ID": "the operatorv",
         "AI_MEMORY_API_KEY": "${env:AI_MEMORY_API_KEY}"
       }
     }
@@ -361,20 +361,20 @@ stdio process.
 ### Remote MCP connector for Claude (incl. iPhone) — ADR 034/035
 
 The droplet serves the same three tools over Streamable HTTP at
-`https://mcp.chandrav.dev/` (Caddy → `mcp-proxy` container) behind self-hosted
+`https://mcp.example.com/` (Caddy → `mcp-proxy` container) behind self-hosted
 OAuth 2.1 — the only auth model claude.ai custom connectors accept (ADR 035).
-`MCP_CONNECTOR_BEARER_TOKEN` (droplet `infra/.env`; master copy in Bitwarden —
+`MCP_CONNECTOR_BEARER_TOKEN` (droplet `infra/.env`; master copy in password manager —
 not the admin API key) is the **consent password** for the OAuth approval page,
 and still works as a plain bearer token for curl-style verification.
 
 Register it once on the web (mobile inherits connectors from web/desktop):
 
 1. Open `claude.ai` → **Settings** → **Connectors** → **Add custom connector**.
-2. Name: `ai-memory`. URL: `https://mcp.chandrav.dev/`. Leave the optional
+2. Name: `ai-memory`. URL: `https://mcp.example.com/`. Leave the optional
    OAuth Client ID / Client Secret fields **empty** (Claude registers itself
    via DCR).
-3. Save — Claude redirects to `mcp.chandrav.dev/consent`. Paste the connector
-   secret from Bitwarden (`MCP_CONNECTOR_BEARER_TOKEN`) and click **Approve**.
+3. Save — Claude redirects to `mcp.example.com/consent`. Paste the connector
+   secret from the password manager (`MCP_CONNECTOR_BEARER_TOKEN`) and click **Approve**.
 4. You land back on claude.ai with the connector connected. Enable it in a chat
    (search-and-tools menu). On the iPhone Claude app it appears after the web
    registration syncs.
@@ -393,12 +393,12 @@ Pro (or higher) plan.
 
 1. On `perplexity.ai` → **Account settings** → **Connectors** → **+ Custom
    connector** → choose **Remote**.
-2. Name: `ai-memory`. MCP Server URL: `https://mcp.chandrav.dev/`. Under
+2. Name: `ai-memory`. MCP Server URL: `https://mcp.example.com/`. Under
    Advanced: Authentication **OAuth 2.0** (Client ID/Secret empty — DCR),
    Transport **Streamable HTTP** (or default). Tick the risk acknowledgement,
    click **Add**.
 3. Click the new connector card — Perplexity redirects to
-   `mcp.chandrav.dev/consent` (the page names the requesting client). Paste the
+   `mcp.example.com/consent` (the page names the requesting client). Paste the
    connector secret and click **Approve**.
 4. In a thread, switch the connector ON (sources/connectors toggle near the
    input box) before asking memory questions.
@@ -417,7 +417,7 @@ inherits the connector from web — operator-verified 2026-06-10).
 1. On `chatgpt.com` → **Settings** → **Apps & Connectors** → **Advanced
    settings** → toggle **Developer mode** ON.
 2. **Create app** (or "Add new connector"): Name `ai-memory`, MCP Server URL
-   `https://mcp.chandrav.dev/`, Authentication **OAuth** (DCR — no client
+   `https://mcp.example.com/`, Authentication **OAuth** (DCR — no client
    credentials), tick the trust acknowledgement, **Create**.
 3. ChatGPT redirects to the consent page — paste the connector secret,
    **Approve**.

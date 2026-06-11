@@ -32,7 +32,7 @@ _SOURCE_ALIASES = {
 }
 
 # Entity names that require inline qualification (comma-disambiguation pattern).
-_COLLIDING_ENTITIES = frozenset({"Krishna"})
+_COLLIDING_ENTITIES = frozenset({"Jordan"})
 
 
 class MemoryContractError(ValueError):

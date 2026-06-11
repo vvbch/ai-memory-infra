@@ -2,7 +2,7 @@
 
 **Status:** Superseded by ADR 016
 **Date:** 2026-06-05
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 

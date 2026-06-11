@@ -100,7 +100,7 @@ and what happens when a decision is reversed later?
 - **The conversational practice shipped.** The agent's canonical instructions now
   map natural phrases to the daily-driver verbs: planning requests render the
   agenda (overdue first, one recommended next action); "log / remind / follow up"
-  phrases capture open items with resolved dates; recruiter reachouts are tagged
+  phrases capture open items with resolved dates; career-tagged follow-ups are tagged
   to the career category automatically; decisions are captured verbatim with
   their reasons; "done" closes an item with *what actually happened*. Every write
   is followed by a confirmation of exactly what was stored — a silent write is
@@ -113,7 +113,7 @@ and what happens when a decision is reversed later?
   memory service also keeps its own change-log of every add/edit/delete with
   before-and-after values (verified from the deployed version's source).
 - **Proven live, safely.** Read-only agenda ran green against the real bank; a
-  full capture → plan → recruiter board → close → delete round-trip ran under a
+  full capture → plan → career follow-up board → close → delete round-trip ran under a
   throwaway account, leaving the real bank untouched.
 - **An honest discovery, parked deliberately.** While verifying the history
   story from source, we found the deployed open-source memory service ships *no*
@@ -135,7 +135,7 @@ and what happens when a decision is reversed later?
 ## 2026-06-09 — Memory Daily Driver v0, Phase 1: the helper that the daily features sit on
 
 **Focus:** with the read/write foundation proven (Phase 0), build the thin tool
-layer that captures and retrieves to-dos, decisions, and recruiter follow-ups —
+layer that captures and retrieves to-dos, decisions, and career follow-ups —
 with the right labels enforced automatically — so the conversational features
 have something safe to call.
 
@@ -149,7 +149,7 @@ have something safe to call.
   verbs: log an open item / a decision / a fact; *plan the day* (it sorts open
   items into overdue, due today, needs-a-follow-up, and upcoming — sorted by date
   on the client so it works regardless of server-side date filtering); show the
-  recruiter board (open items tagged as career); and close an item with a note of
+  career follow-up board (open items tagged as career); and close an item with a note of
   *what actually happened*, which updates it in place so its id and original
   creation time are preserved.
 - **Made the labelling non-optional.** Every write goes in under the single
@@ -159,7 +159,7 @@ have something safe to call.
 - **Verified two ways.** A unit-test suite (client + helper, using a mock
   transport) plus type and lint gates all pass; then the whole flow was exercised
   *live* against the real service under a throwaway test account — capture, plan,
-  recruiter board, close, confirm the closure stuck with all fields intact, delete
+  career follow-up board, close, confirm the closure stuck with all fields intact, delete
   — leaving the real bank untouched.
 
 **Next**
@@ -178,7 +178,7 @@ item" (a todo with a due date and a follow-up date) survives the round-trip with
 all of its structure intact.
 
 **Why this first:** the whole point of the Daily Driver is to *use* the memory
-layer conversationally (plan the day, track recruiter follow-ups). That premise
+layer conversationally (plan the day, track career follow-ups). That premise
 is worthless if the agent can't reliably talk to the service, so this session was
 pure de-risking — no feature code.
 
@@ -192,7 +192,7 @@ pure de-risking — no feature code.
   both a direct read and a search — and the service auto-stamps when it was
   created.
 - Search can filter on those fields on the server side, so "show me only the open
-  recruiter items" won't require pulling everything down and sifting locally.
+  career-tagged items" won't require pulling everything down and sifting locally.
 - Deleting a todo works, so the full lifecycle is reachable.
 
 **Outcome:** the read/write foundation is solid. The probe ran against throwaway
@@ -511,10 +511,10 @@ the operating model rather than just buying more credits.
 **all 5 secret sets gathered** — Phase-1 prerequisites complete.
 
 **Milestones**
-- Credential vault + **time-delayed nominee handoff** set up (Bitwarden Emergency
+- Credential vault + **time-delayed nominee handoff** set up (password manager Emergency
   Access), with a verified design fix: secrets must live in the *individual* vault,
   not a shared collection, or the handoff silently fails.
-- Domain **`chandrav.dev`** registered with privacy redaction; 10-year registration.
+- Domain **`example.com`** registered with privacy redaction; 10-year registration.
 - Cloud account + billing + a spend **alert** in place; all provider API
   credentials generated under **least-privilege, zone/scope-bound** where possible.
 - **Model-API billing** set up with a true hard cap — **prepaid credits + auto-recharge
@@ -534,7 +534,7 @@ the operating model rather than just buying more credits.
   number, and re-baselined the cost model.
 
 **Engineering notes**
-- Verified each volatile fact before baking it in (Bitwarden emergency-access scope,
+- Verified each volatile fact before baking it in (password manager emergency-access scope,
   Cloudflare multi-year registration, live VPS pricing, OpenAI billing flow).
 - Caught two silent-failure traps before they bit (vault-scope; a changed provider
   console flow) and turned recurring questions into durable tenets/ADRs.
@@ -845,7 +845,7 @@ whole thing with a real run. Short concierge session.
   because it already has the fragile per-site browser plumbing for ChatGPT, Claude, Gemini,
   DeepSeek, Grok, and Perplexity, while still matching our mem0 server model.
 - **Decision captured in ADR 024.** We will fork mem0's extension and rewire it to the self-hosted
-  server (`memory.chandrav.dev`) with `X-API-Key`, removing mem0 cloud login and telemetry.
+  server (`memory.example.com`) with `X-API-Key`, removing mem0 cloud login and telemetry.
 - **Repo boundary corrected before committing.** The extension will live in its own private GitHub
   repo, not inside the infra repo. The infra repo now keeps only the decision record and a pointer.
 
@@ -859,7 +859,7 @@ whole thing with a real run. Short concierge session.
 still builds before changing it.
 
 **Milestones**
-- **Private repo created.** We created `vvbch/ai-memory-extension` as a private GitHub repo and
+- **Private repo created.** We created `<org>/ai-memory-extension` as a private GitHub repo and
   imported the upstream MIT `mem0ai/mem0-chrome-extension` history, preserving attribution while
   keeping the raw fork out of public view during cleanup.
 - **Baseline build is green.** After installing normal Node.js tooling on Windows, the raw upstream
@@ -878,7 +878,7 @@ still builds before changing it.
   baseline before we understand compatibility.
 
 **Next**
-- Rewire the extension in `ai-memory-extension`: server URL to `memory.chandrav.dev`, auth to
+- Rewire the extension in `ai-memory-extension`: server URL to `memory.example.com`, auth to
   `X-API-Key`, replace mem0 cloud login with local settings, remove telemetry, then verify the REST
   shapes against the live server.
 
@@ -891,14 +891,14 @@ still builds before changing it.
   sign-in, or sends `Authorization: Bearer/Token`. The popup now stores local settings: server URL,
   API key, and user id.
 - **Self-hosted API wired.** Memory writes and searches now target the live server shape:
-  `https://memory.chandrav.dev`, `X-API-Key`, `/memories`, and `/search`.
+  `https://memory.example.com`, `X-API-Key`, `/memories`, and `/search`.
 - **Telemetry stripped.** The mem0 extension telemetry path is removed/no-op, and the manifest no
   longer grants host permissions to `api.mem0.ai` or `app.mem0.ai`.
 - **Build is green.** The rewritten extension passes TypeScript and production build. Code search shows
   no remaining mem0 cloud URLs, PostHog references, or live `Authorization` headers.
 
 **Engineering notes**
-- **The live OpenAPI was the source of truth.** We fetched `https://memory.chandrav.dev/openapi.json`
+- **The live OpenAPI was the source of truth.** We fetched `https://memory.example.com/openapi.json`
   before changing paths, confirming `/memories`, `/search`, and `X-API-Key`.
 - **Lint/format are upstream-noisy.** The imported repo fails `lint:check` / `format:check` on
   Prettier/CRLF issues across many untouched files. We did not reformat the whole fork in the same
@@ -906,7 +906,7 @@ still builds before changing it.
 
 **Next**
 - Load `ai-memory-extension/dist` as an unpacked Chrome extension, enter the real API key from
-  Bitwarden, then prove add/search/get from the browser against the running server.
+  password manager, then prove add/search/get from the browser against the running server.
 
 ## 2026-06-08 — Chrome unpacked load verified; prompt control-plane tightened
 
@@ -923,7 +923,7 @@ the step harder than it should be.
   condition.
 
 **Next**
-- Enter the real `ADMIN_API_KEY` from Bitwarden in the OpenMemory popup, then prove add/search/get from
+- Enter the real `ADMIN_API_KEY` from the password manager in the OpenMemory popup, then prove add/search/get from
   the browser against the running server.
 
 ## 2026-06-08 — Sidebar Recent Memories fetch fixed
@@ -1045,10 +1045,10 @@ and pushed.
 - **Configured clients without secrets in git.** Added Cursor, VS Code, and Claude Code project configs
   that read `AI_MEMORY_API_KEY` from the local environment.
 - **Verified live MCP search.** A Python MCP client listed the tools and found the Phase 3 codeword through
-  `search_memories` against `https://memory.chandrav.dev`.
+  `search_memories` against `https://memory.example.com`.
 
 **Next**
-- Set the persistent `AI_MEMORY_API_KEY` user environment variable from Bitwarden, reload Cursor, and
+- Set the persistent `AI_MEMORY_API_KEY` user environment variable from the password manager, reload Cursor, and
   confirm the `ai-memory` MCP server appears.
 
 ## 2026-06-09 — Corrected MCP handoff
@@ -1093,7 +1093,7 @@ and pushed.
 ## 2026-06-09 — A decision is a contract, not a document (ADR 031)
 
 **Milestones**
-- **Caught a cross-repo blind spot.** A settled rule — every memory uses one identity (`chandrav`)
+- **Caught a cross-repo blind spot.** A settled rule — every memory uses one identity (`the operatorv`)
   and is tagged by a `source` that must reach both stores — had been written and committed in the
   control-plane repo but never applied to the browser extension or the local API proxy, the clients
   that actually write memories. So most browser-captured memories were landing under the wrong
@@ -1305,7 +1305,7 @@ connector in the Claude account settings.
 ## 2026-06-10 — ChatGPT joins the same remote MCP server (ADR 036)
 
 **Focus:** close the last ADR 036 web surface — ChatGPT developer-mode custom app on the
-existing `mcp.chandrav.dev` OAuth endpoint (same server as Claude and Perplexity).
+existing `mcp.example.com` OAuth endpoint (same server as Claude and Perplexity).
 
 **Milestones**
 - **OAuth connected** after a consent-page fix: ChatGPT's popup stalled on a bare HTTP

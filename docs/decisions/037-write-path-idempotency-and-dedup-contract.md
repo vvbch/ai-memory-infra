@@ -107,9 +107,9 @@ Every fact written through scripted/bulk/probe paths carries controlled metadata
 | `event_date` | ISO `YYYY-MM-DD` — when the event actually happened (canonical; dual-write `occurred_at` for ADR 029 compat) |
 | `source` | `cursor-repo` \| `chatgpt` \| `perplexity` \| `claude` \| `manual` \| `mcp` \| `extension` |
 | `source_doc_id` | optional traceable origin (ADR path, chat id, URL slug) |
-| `namespace` | flat tag on `user_id=chandrav`: `public` (default) \| `sensitive` |
+| `namespace` | flat tag on `user_id=primary-user`: `public` (default) \| `sensitive` |
 | `external_id` | required on bulk/probe; recommended on `add-fact` |
-| entity text | qualify colliding names inline (e.g. `Krishna, interview-prep contact`) |
+| entity text | qualify colliding names inline (e.g. `Jordan, project contact`) |
 
 Implemented: `src/memory/contract.py`, `scripts/bulk_seed_importer.py`,
 `scripts/memory.py`, MCP `add_memory` optional fields.

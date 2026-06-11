@@ -64,7 +64,7 @@ def add_memory(text: str, user_id: str | None = None):
 
 
 def test_mcp_client_passes_canonical_user_id(tmp_path: pathlib.Path) -> None:
-    _write_client(tmp_path, 'DEFAULT_USER_ID = "chandrav"\n')
+    _write_client(tmp_path, 'DEFAULT_USER_ID = "primary-user"\n')
     violations, _ = gate.check_mcp_proxy_client(tmp_path)
     assert violations == []
 

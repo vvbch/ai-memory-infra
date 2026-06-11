@@ -13,13 +13,13 @@ from life_graph.seed import build_seed_graph
 
 def test_people_for_venture_returns_workers() -> None:
     graph = build_seed_graph()
-    people = people_for_venture(graph, "TradingFirmLLP")
-    assert people == ["Chandra", "Vijaya"]
+    people = people_for_venture(graph, "AlphaCorp")
+    assert people == ["Alex", "Blake"]
 
 
 def test_skills_for_person_lists_has_skill_edges() -> None:
     graph = build_seed_graph()
-    skills = skills_for_person(graph, "Chandra")
+    skills = skills_for_person(graph, "Alex")
     assert "Python" in skills
     assert "distributed systems" in skills
 
@@ -34,6 +34,6 @@ def test_decisions_timeline_sorted_and_filterable() -> None:
 
 
 def test_cypher_people_for_venture_is_parameterized_template() -> None:
-    query = cypher_people_for_venture("TradingFirmLLP")
+    query = cypher_people_for_venture("AlphaCorp")
     assert "MATCH (p:Person)" in query
-    assert "TradingFirmLLP" in query
+    assert "AlphaCorp" in query

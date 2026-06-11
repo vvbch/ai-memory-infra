@@ -23,7 +23,7 @@
 
 ### 1. Memory write contract — ENFORCED (cross-repo)
 
-- **What:** one `user_id` per person (`"chandrav"`); `metadata.source` is the
+- **What:** one `user_id` per person (`"the operatorv"`); `metadata.source` is the
   mandatory discriminator (pgvector live — probed 2026-06-11; graph when LifeGraph
   writes Neo4j); `type` ∈
   `fact | decision | open_item`; `created_at` always (capture time); **`event_date`**
@@ -32,7 +32,7 @@
   `external_id` on bulk/probe paths; entity names qualified inline in fact text;
   authored writes use `infer=False`.
 - **Schema lives in:** `ai-memory-extension/src/types/api.ts`
-  (`DEFAULT_USER_ID='chandrav'`, `LEGACY_DEFAULT_USER_ID`, `source` + `namespace`
+  (`DEFAULT_user_id='primary-user'`, `LEGACY_DEFAULT_USER_ID`, `source` + `namespace`
   in metadata), `src/memory/contract.py`, `src/mcp_proxy/client.py`,
   `scripts/memory.py` (normalizing write path).
 - **Producers:** Chrome extension, MCP proxy `add_memory`, `scripts/memory.py`,
@@ -50,7 +50,7 @@
 ### 2. Extension ↔ API identity contract — ENFORCED (cross-repo)
 
 - **What:** the extension tags every write `metadata.source = "extension"` and uses
-  `user_id = "chandrav"`; legacy `"chrome-extension-user"` ids are auto-healed.
+  `user_id = "the operatorv"`; legacy `"chrome-extension-user"` ids are auto-healed.
 - **Schema lives in:** `ai-memory-extension/src/types/api.ts`.
 - **ADRs:** 028. **Ties:** COE 2026-06-09-extension-memory-identity-drift.
 - **Enforcement:** `scripts/check_memory_contract.py` (extension-constants check).
@@ -213,13 +213,13 @@
 
 ### 13. Remote MCP HTTP surface (`mcp.` subdomain) — TESTED / live
 
-- **What:** Streamable HTTP MCP at `https://mcp.chandrav.dev/` for remote
+- **What:** Streamable HTTP MCP at `https://mcp.example.com/` for remote
   OAuth connector clients: claude.ai (incl. iPhone), Perplexity custom
   connectors (live 2026-06-10), and ChatGPT developer-mode apps (ADR 036 —
   all three consume the same OAuth 2.1 + DCR surface; the consent page names
   the requesting client). Same three tools as §3 (shared
   `src/mcp_proxy/server.py` tool code, `metadata.source=mcp` on writes, default
-  `user_id=chandrav`). **Auth is self-hosted OAuth 2.1** (ADR 035 — the only
+  `user_id=primary-user`). **Auth is self-hosted OAuth 2.1** (ADR 035 — the only
   model claude.ai custom connectors accept): discovery at
   `/.well-known/oauth-authorization-server` + `/.well-known/oauth-protected-resource`,
   DCR at `/register`, PKCE S256 `/authorize` → operator `/consent`

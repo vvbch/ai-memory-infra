@@ -15,6 +15,7 @@ VALID_VENTURES = frozenset(
 _PATH_RULES: tuple[tuple[str, str], ...] = (
     ("trading-firm", "trading_firm"),
     ("trading_firm", "trading_firm"),
+    ("alpha-corp", "trading_firm"),
     ("/trading/", "trading_firm"),
     ("social-media", "social_media"),
     ("social_media", "social_media"),
@@ -23,7 +24,7 @@ _PATH_RULES: tuple[tuple[str, str], ...] = (
     ("/ria/", "ria"),
     ("ventures/ria", "ria"),
     ("career/", "career"),
-    ("recruiter", "career"),
+    ("hiring-pipeline", "career"),
     ("migration/", "migration"),
     ("src/migration/", "migration"),
     ("docs/decisions/", "personal"),
@@ -33,12 +34,12 @@ _PATH_RULES: tuple[tuple[str, str], ...] = (
 
 # Keyword groups → venture (checked on lowercased text).
 _KEYWORD_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("iron condor", "nifty", "banknifty", "etf pledge", "algo trading"), "trading_firm"),
-    (("youtube", "content firm", "social media"), "social_media"),
-    (("registered investment adviser", "registered investment advisor", " ria "), "ria"),
-    (("recruiter", "job search", "interview prep", "interview-prep"), "career"),
+    (("equity desk", "derivatives strategy", "portfolio rebalance", "algo trading"), "trading_firm"),
+    (("content calendar", "video production", "social media"), "social_media"),
+    (("registered investment adviser", "registered investment advisor", "fiduciary"), "ria"),
+    (("hiring pipeline", "role transition", "interview prep", "interview-prep"), "career"),
     (
-        ("germany", "australia", "visa", "international migration", "phd deadline"),
+        ("work visa", "international relocation", "relocation timeline"),
         "migration",
     ),
 )

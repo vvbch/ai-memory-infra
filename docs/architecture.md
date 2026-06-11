@@ -12,7 +12,7 @@ flowchart TB
     subgraph Devices["Devices — native LLM UIs, unchanged"]
         D1["Desktop / ChromeOS Chromium<br/>OpenMemory extension — FULL coverage"]
         D2["Android<br/>best-effort (Kiwi archived Jan-2025;<br/>Edge Canary / Quetta) — see ADR 004"]
-        D3["iOS<br/>Claude app remote MCP<br/>mcp.chandrav.dev (ADR 034/035)"]
+        D3["iOS<br/>Claude app remote MCP<br/>mcp.example.com (ADR 034/035)"]
         D4["Claude Code / Cursor / VS Code<br/>local MCP proxy"]
         D5["Future tools<br/>via REST API"]
     end
@@ -103,7 +103,7 @@ AWS/GCP/Azure/Hetzner).
 
 | Sub-component | Role | Cost |
 |---|---|---|
-| Cloudflare Registrar | Where `chandrav.dev` is bought and renewed at-cost | (in domain fee) |
+| Cloudflare Registrar | Where `example.com` is bought and renewed at-cost | (in domain fee) |
 | DNS zone @ Cloudflare | Authoritative DNS; zone created at registration, A records managed by Terraform | **(₹0)** |
 | DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.` (+ apex) → the droplet IP; `proxied=false` for ACME | **(₹0)** |
 | Caddy + Let's Encrypt TLS | Auto-provisions and renews HTTPS certificates for every subdomain; only component facing the internet | **(₹0)** |

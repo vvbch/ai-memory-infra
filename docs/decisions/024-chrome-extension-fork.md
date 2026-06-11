@@ -3,14 +3,14 @@
 **Status:** Accepted — extension will live in its own **private** GitHub repo; repo
 setup + cloud-auth → self-hosted `X-API-Key` rewiring are the next implementation steps.
 **Date:** 2026-06-08
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 
 Phase 3 (build phases, `AGENTS.md`) is **browser reach**: a Chrome/Chromium extension so
 the AI assistants used in a desktop browser (Claude, ChatGPT, Gemini, DeepSeek — tenet-3
 cross-platform; ChromeOS is the first-class mobile path per ADR 004) can read from and write
-to our self-hosted memory server (`https://memory.chandrav.dev`, Phase 1). ADR 004 already
+to our self-hosted memory server (`https://memory.example.com`, Phase 1). ADR 004 already
 named the **OpenMemory Chrome extension** as the intended memory-injection mechanism; this
 ADR ratifies *which* extension and *how* we adopt it (tenet 12 — a fork is a dependency we
 will maintain, so it is deliberated + documented + has an exit).

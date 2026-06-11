@@ -53,8 +53,8 @@ import_facts = _bulk.import_facts
 
 PROBE_PREFIX = "probe:acceptance:"
 PROBE_OPEN_ID = f"{PROBE_PREFIX}open-item"
-PROBE_KRISHNA_SON_ID = f"{PROBE_PREFIX}krishna-son"
-PROBE_KRISHNA_CONTACT_ID = f"{PROBE_PREFIX}krishna-contact"
+PROBE_JORDAN_SIBLING_ID = f"{PROBE_PREFIX}jordan-sibling"
+PROBE_JORDAN_CONTACT_ID = f"{PROBE_PREFIX}jordan-contact"
 
 
 def _client(user_id: str | None) -> MemoryApiClient:
@@ -92,7 +92,7 @@ def probe_facts(*, today: str) -> list[dict[str, Any]]:
         {
             "external_id": PROBE_OPEN_ID,
             "text": (
-                "Follow up with Krishna, interview-prep contact, about system design mock"
+                "Follow up with Jordan, project contact, about system design mock"
             ),
             "metadata": {
                 **common,
@@ -103,14 +103,14 @@ def probe_facts(*, today: str) -> list[dict[str, Any]]:
             "infer": False,
         },
         {
-            "external_id": PROBE_KRISHNA_SON_ID,
-            "text": "Krishna, Chandra's elder son, started summer coding camp",
+            "external_id": PROBE_JORDAN_SIBLING_ID,
+            "text": "Jordan, team lead's sibling, started summer coding camp",
             "metadata": {**common, "type": "fact", "event_date": "2026-06-01"},
             "infer": False,
         },
         {
-            "external_id": PROBE_KRISHNA_CONTACT_ID,
-            "text": "Krishna, interview-prep contact, scheduled mock interview",
+            "external_id": PROBE_JORDAN_CONTACT_ID,
+            "text": "Jordan, project contact, scheduled mock interview",
             "metadata": {**common, "type": "fact", "event_date": "2026-06-02"},
             "infer": False,
         },
@@ -183,7 +183,7 @@ def query_structured_filter(client: MemoryApiClient, user_id: str | None) -> dic
 
 
 def query_entity_collision(client: MemoryApiClient, user_id: str | None) -> dict[str, Any]:
-    query = "Tell me about Krishna the interview-prep contact"
+    query = "Tell me about Jordan the project contact"
     hits = search_with_contract(
         client,
         query,
@@ -191,25 +191,25 @@ def query_entity_collision(client: MemoryApiClient, user_id: str | None) -> dict
         namespace="public",
         top_k=20,
     )
-    krishna_hits = [h for h in hits if "Krishna" in record_text(h)]
+    jordan_hits = [h for h in hits if "Jordan" in record_text(h)]
     best = best_entity_match(hits, query)
     best_text = record_text(best) if best else ""
     passed = bool(
         best_text
-        and "interview-prep contact" in best_text
-        and "elder son" not in best_text
+        and "project contact" in best_text
+        and "team lead's sibling" not in best_text
     )
     texts = [record_text(h) for h in hits]
     return {
         "name": "entity_collision",
         "passed": passed,
         "expected": (
-            "Among Krishna hits, inline qualifier rerank picks interview-prep contact, "
-            "not elder son"
+            "Among Jordan hits, inline qualifier rerank picks project contact, "
+            "not team lead's sibling"
         ),
-        "best_krishna_text": best_text,
+        "best_jordan_text": best_text,
         "top_texts": texts[:5],
-        "krishna_hit_count": len(krishna_hits),
+        "jordan_hit_count": len(jordan_hits),
     }
 
 

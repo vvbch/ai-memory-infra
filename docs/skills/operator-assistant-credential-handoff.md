@@ -3,7 +3,7 @@
 > Fourth Operator Assistant mechanism (2026-06-10). Complements
 > `operator_action.py`: that skill formats steps the operator must do in a
 > browser/console; **this** skill covers secrets the operator copies once and
-> the agent consumes via a script — zero shell commands for Chandra.
+> the agent consumes via a script — zero shell commands for the operator.
 
 **Implementation:** `scripts/ssh_unlock.py` (SSH passphrase today; same pattern
 for future paste-handoff scripts)
@@ -13,7 +13,7 @@ delegation); AGENTS.md pre-delegation gate
 
 ## What pain it removes
 
-The agent asked Chandra to run `ssh-add` and paste a passphrase in PowerShell —
+The agent asked the operator to run `ssh-add` and paste a passphrase in PowerShell —
 mechanical work the agent can do once the value is on the clipboard. That wastes
 operator attention and violates the spirit of the pre-delegation gate ("if the
 agent can run the CLI equivalent, it should").
@@ -22,7 +22,7 @@ agent can run the CLI equivalent, it should").
 
 | Who | Does what |
 |---|---|
-| **Operator** | Copy the SSH key passphrase from Bitwarden to the system clipboard (one copy). Say **"copied"**, **"in clipboard"**, or **"key is copied to clipboard"**. |
+| **Operator** | Copy the SSH key passphrase from the password manager to the system clipboard (one copy). Say **"copied"**, **"in clipboard"**, or **"key is copied to clipboard"**. |
 | **Agent** | Run `python scripts/ssh_unlock.py` from `ai-memory-infra`. Never echo clipboard contents. Report only the script's safe status lines. Continue droplet work if probe passes. |
 
 The script:

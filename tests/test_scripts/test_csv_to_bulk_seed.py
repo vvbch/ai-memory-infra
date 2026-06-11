@@ -15,8 +15,8 @@ csv_to_facts = csv_to_bulk_seed.csv_to_facts
 
 def test_csv_to_facts_skips_example_rows() -> None:
     csv_text = """external_id,text,event_date,source,namespace
-example:skip,"Krishna, interview-prep contact, is a contact",2026-06-01,manual,public
-seed:real,"Chandra prefers Python over shell",2026-06-02,cursor-repo,public
+example:skip,"Jordan, project contact, is a contact",2026-06-01,manual,public
+seed:real,"Alex prefers Python over shell",2026-06-02,cursor-repo,public
 """
     with tempfile.NamedTemporaryFile("w", suffix=".csv", delete=False, encoding="utf-8") as fh:
         fh.write(csv_text)
@@ -33,7 +33,7 @@ seed:real,"Chandra prefers Python over shell",2026-06-02,cursor-repo,public
 
 def test_main_writes_json() -> None:
     csv_text = """external_id,text,event_date,source
-seed:a,"Krishna, elder son of Chandra, likes coding",2026-06-01,manual
+seed:a,"Jordan, team lead's sibling, likes coding",2026-06-01,manual
 """
     with tempfile.TemporaryDirectory() as tmp:
         csv_path = pathlib.Path(tmp) / "facts.csv"

@@ -4,49 +4,49 @@
 > 2026-06-10-status-snapshot-log-drift; shape machine-enforced by
 > `scripts/check_status_snapshot.py` in pre-commit + CI). **Read this first to
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
-> `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
+> `docs/decisions/`; working model in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (Phases 6–8 core TDD green).
-Repo-health green; committing+pushing.
+**Last updated:** 2026-06-11 (public repo sanitization + Phases 6–8).
+Repo-health pending final verify; committing+pushing both repos.
 
 ## Plain English — where we are (resume here)
 
-**The product:** self-hosted memory at `https://memory.chandrav.dev/docs`. Memory
-write/read contract locked; acceptance probe PASS.
+**The product:** self-hosted memory at `https://memory.example.com/docs` (operators
+override via env — see private `OPERATOR.md`). Memory write/read contract locked;
+acceptance probe PASS.
 
-**Build track:** Phases **6–8 core code** landed today (LifeGraph, eval, observability
-+ health). **Phase 5 live data load** scheduled tomorrow (operator). Phase 9 polish
-and production wiring (Neo4j live seed, eval CI workflow, Grafana deploy) remain.
+**Build track:** Phases **6–8 core code** landed. **Public/private boundary** scrubbed
+(ADR 038): personal/venture content moved to `ai-memory-infra-private`. **Phase 5 live
+data load** scheduled (operator). Phase 9 polish and production wiring remain.
 
 ## Current phase
 
-**Phases 6–8 (TDD stubs → implemented).** 209 tests green. LifeGraph in-memory POC;
-eval metrics + starter gold data; Prometheus metrics + drift/alerts; health checker.
+**Post-sanitization handoff.** Public repo is stranger-safe at HEAD. Git history still
+contains personal data — operator must choose history remediation (see session notes).
 
 ## Done this session (2026-06-11)
 
-- **Phase 6:** `life_graph/{schema,graph_store,seed,queries,ingest}.py` + tests
-- **Phase 7:** `eval/{retrieval,extraction,categorization,reporters,runners,guardrails}.py`
-  + starter `gold_standard/*.json` + tests
-- **Phase 8:** `observability/{metrics,drift_detector,alerts}.py` + tests
-- **Health:** `health/checker.py` + tests
+- **ADR 038:** public/private content boundary; synthetic LifeGraph/eval fixtures
+- **Private:** `OPERATOR.md`, `ventures.md`, `setup-prompt.md`, interview automation prompt
+- **Public:** `AGENTS.md` rewrite; `primary-user` / `example.com` defaults; docs/skills scrub
+- **Extension:** aligned `DEFAULT_USER_ID` and default server URL with public contract
 
 ## Last decisions
 
-- LifeGraph uses in-memory `GraphStore` for TDD; live Neo4j seed is a follow-up ops step.
-- Eval gold datasets are starter-sized (not full 50+); expand after Phase 5 memory load.
-- Phase 5 JSON export + live bulk load: **tomorrow** (operator).
+- Public repo carries engineering context only; operator profile + ventures are private.
+- Canonical public `user_id` is `primary-user`; live deploy overrides via env (private doc).
+- Git history rewrite is explicitly **not** done — operator decides next.
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. Parked: bulk CSV ingest (operator); Phase 3
-premise test; market world model; Phase 9 README/eval CI workflow/Grafana deploy.
+See **`docs/planning/BACKLOG.md`**. Parked: bulk CSV ingest; Phase 3 premise test;
+Phase 9 README/eval CI workflow/Grafana deploy; optional git history scrub.
 
 ## Open blockers / risks
 
-- **Phase 5 data load** — tomorrow: export JSON + `bulk_seed_importer` with approval.
-- **Bulk CSV load** — waiting on operator sheet.
-- **OpenClaw adapter** — not in workspace.
+- **Git history** — personal content remains in old commits (one-way door; options in handoff).
+- **Live deploy env** — operator must set `AI_MEMORY_USER_ID` / URLs to match existing bank.
+- **Phase 5 data load** — export JSON + `bulk_seed_importer` with approval.
 
 ## Environment notes
 
@@ -54,13 +54,13 @@ premise test; market world model; Phase 9 README/eval CI workflow/Grafana deploy
 
 ## Next action
 
-> **RESUME HERE — Phase 5 operator load (tomorrow):**
-> Add migration CLI `--output facts.json`, run dry-run with `--use-bank`, operator
-> approves, then `bulk_seed_importer.py` live load. After load: expand eval gold from
-> real memories + optional Neo4j LifeGraph seed.
+> **RESUME HERE — operator env alignment + Phase 5 load:**
+> Confirm private `OPERATOR.md` env overrides match the live bank (`user_id`, base URL).
+> Then migration CLI `--output facts.json`, dry-run with `--use-bank`, operator approves,
+> `bulk_seed_importer.py` live load.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 
 ```
-Resume ai-memory-infra — read docs/planning/STATUS.md (Plain English + Next action) and AGENTS.md, run repo-health, then do the Next action. Concierge mode: one step at a time, plain English.
+Resume ai-memory-infra — read docs/planning/STATUS.md (Plain English + Next action) and AGENTS.md, run repo-health, then do the Next action.
 ```

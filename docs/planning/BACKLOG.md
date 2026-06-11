@@ -206,7 +206,7 @@
 - **`[deploy]` Build & re-enable the Mem0 dashboard.** No published `mem0/mem0-dashboard`
   image exists; it's gated behind the compose `dashboard` profile and deferred. Build it
   from the mem0 repo's `server/dashboard` context (Next.js, needs a node build), then
-  `docker compose --profile dashboard up -d` and confirm `dash.chandrav.dev` works
+  `docker compose --profile dashboard up -d` and confirm `dash.example.com` works
   (the Caddy route + DNS already exist). The `/setup` wizard lives here too.
 - **`[extension]` Fix the ChatGPT inline composer modal placement.** The OpenMemory icon is visible
   inside the ChatGPT composer and the modal appears to be created, but in the current ChatGPT layout
@@ -218,7 +218,7 @@
   pass if inline manual injection becomes useful.
 - **`[cosmetic]` Silence the bcrypt Compose warning.** `BASIC_AUTH_HASH` (bcrypt, full of
   `$`) makes Compose log `"…" variable is not set`. Harmless (Caddy gets the right hash via
-  `env_file`); escape `$`→`$$` in `infra/.env` to quiet it. Also: apex `chandrav.dev` TLS
+  `env_file`); escape `$`→`$$` in `infra/.env` to quiet it. Also: apex `example.com` TLS
   didn't verify from a Windows client — confirm Caddy issued the apex cert.
 - **`[ops]` Define an OS patch + reboot cadence for the droplet (flagged 2026-06-10).**
   The box runs `unattended-upgrades` (security auto-patch) but has **no defined

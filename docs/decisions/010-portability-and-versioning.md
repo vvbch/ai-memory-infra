@@ -18,6 +18,6 @@
 
 ### Consequences
 
-These tenets constrain every technical decision. "Should we use Railway?" fails tenet 2 (proprietary). "Should we write a bash script?" fails tenet 3 (cross-platform). "Should we add the Iron Condor backtest to the README?" fails tenet 5 (IP leakage). They're enforced via `AGENTS.md` so that any AI agent working in the repo follows them automatically.
+These tenets constrain every technical decision. "Should we use Railway?" fails tenet 2 (proprietary). "Should we write a bash script?" fails tenet 3 (cross-platform). "Should we add a firm-specific trading backtest to the README?" fails tenet 5 (IP leakage). They're enforced via `AGENTS.md` so that any AI agent working in the repo follows them automatically.
 
 ---

@@ -4,9 +4,9 @@
 WHY THIS EXISTS
 ---------------
 Droplet work is blocked until ssh-agent holds the decrypted key. The passphrase
-lives in Bitwarden — operator-exclusive — but the *unlock command* is not: once
+lives in password manager — operator-exclusive — but the *unlock command* is not: once
 the passphrase is on the clipboard, the agent can run ssh-add without asking
-Chandra to type shell commands (credential handoff skill; AGENTS.md).
+the operator to type shell commands (credential handoff skill; AGENTS.md).
 
 SECURITY
 --------

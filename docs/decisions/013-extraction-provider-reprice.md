@@ -2,7 +2,7 @@
 
 **Status:** Accepted (supersedes ADR 002)
 **Date:** 2026-06-05 · **Corrected:** 2026-06-06 (model id + rationale; see below)
-**Deciders:** Chandra
+**Deciders:** the operator
 
 ### Context
 

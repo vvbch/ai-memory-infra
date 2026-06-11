@@ -6,7 +6,7 @@ Date: 2026-06-09
 
 **Superseded by ADR 028.** The source-tagging requirement survives, but the
 `user_id`-split fallback this ADR allowed is removed: there is now exactly one
-`user_id="chandrav"`, and `source` is the discriminator (carried through Mem0 and
+`user_id="primary-user"`, and `source` is the discriminator (carried through Mem0 and
 graph metadata). An adapter that cannot pass `source`/`agent_id` is a blocker to
 fix, not a reason to fork `user_id`. See ADR 028 (and ADR 029 for temporal tags +
 open-item lifecycle).
@@ -14,16 +14,16 @@ open-item lifecycle).
 ## Context
 
 OpenClaw is being added as a prototype consumer of the memory layer for AI-proof projects:
-first email processing from Chandra's desk, later expanded only if it proves useful. The
+first email processing from the operator's desk, later expanded only if it proves useful. The
 memory bank is the durable asset; OpenClaw is disposable prototype code.
 
-OpenClaw should read the same curated personal memory context as Chandra's other agents,
+OpenClaw should read the same curated personal memory context as the operator's other agents,
 but its writes must not land as indistinguishable curated facts.
 
 ## Decision
 
-All OpenClaw agent writes use the shared personal `user_id` for Chandra's spaces:
-`user_id="chandrav"`.
+All OpenClaw agent writes use the shared personal `user_id` for the operator's spaces:
+`user_id="primary-user"`.
 
 Every OpenClaw write must also carry `source="openclaw"` and its `agent_id` through the
 Mem0 write path, and the same `source` must propagate to the graph database metadata.

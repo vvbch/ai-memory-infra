@@ -2,7 +2,7 @@
 
 ## 0. Metadata
 
-- **Scope:** capability — OAuth 2.1 AS+RS on `https://mcp.chandrav.dev/` (replaces the BearerGate transport check)
+- **Scope:** capability — OAuth 2.1 AS+RS on `https://mcp.example.com/` (replaces the BearerGate transport check)
 - **Status:** `built`
 - **Author / date:** Build Agent, 2026-06-10
 - **Related ADRs:** ADR 035 (decision), ADR 034 (endpoint), ADR 028 (identity contract — untouched)
@@ -74,7 +74,7 @@ flowchart LR
 
 - **Env contract:** `MCP_CONNECTOR_BEARER_TOKEN` (consent secret + fallback
   access token), `MCP_PUBLIC_BASE_URL` (issuer, default
-  `https://mcp.chandrav.dev`), `MCP_OAUTH_STATE_PATH` (default
+  `https://mcp.example.com`), `MCP_OAUTH_STATE_PATH` (default
   `/data/oauth_state.json`), plus existing `MCP_ALLOWED_HOSTS`,
   `AI_MEMORY_BASE_URL`, `AI_MEMORY_API_KEY`.
 - **Memory contract (ADR 028):** untouched — transport/auth only.
@@ -121,7 +121,7 @@ flowchart LR
 - **Mem0 down:** OAuth still answers; tool calls return the API error — same
   as today (tenet 4: other surfaces unaffected).
 - **Blast radius of a leaked access token:** 1 h of the three MCP tools as
-  `chandrav`; refresh leak: 60 d, revocable by deleting the state file entry or
+  `the operatorv`; refresh leak: 60 d, revocable by deleting the state file entry or
   rotating the consent secret.
 
 ## 6. Security & privacy

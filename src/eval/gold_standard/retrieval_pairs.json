@@ -6,9 +6,9 @@
       "retrieved_ids": ["mem0-adr", "other", "mem0-context"]
     },
     {
-      "query": "Germany migration timeline",
-      "expected_ids": ["migration-1"],
-      "retrieved_ids": ["unrelated", "migration-1"]
+      "query": "relocation timeline",
+      "expected_ids": ["relocation-1"],
+      "retrieved_ids": ["unrelated", "relocation-1"]
     }
   ]
 }

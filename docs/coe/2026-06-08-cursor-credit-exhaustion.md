@@ -1,7 +1,7 @@
 # COE: A long-lived Cursor session exhausted a month's plan credits in half a day
 
 - **Date:** 2026-06-08
-- **Author(s):** Chandra (detected — credit balance), agent (analysis + fix)
+- **Author(s):** the operator (detected — credit balance), agent (analysis + fix)
 - **Severity:** medium *(no production/customer/data impact; operational + budget blast radius — the agent-tooling budget that funds the whole build was spent ~60× faster than planned)*
 - **Status:** actions-in-progress
 - **Related:** tenet 16 (new) · tenets 1, 13, 15 · `docs/coe/README.md` · `AGENTS.md` Working model + DoD
@@ -86,8 +86,8 @@ surprise is itself a detection gap → see the Detect action below.
 | Rewrite the AGENTS **Working model** ("single session" → one surface, short disposable sessions) | Prevent | agent | 2026-06-08 | ✅ done |
 | Add a **DoD gate**: checkpoint `STATUS.md` per logical step + emit a Resume prompt only after the checkpoint exists | Prevent | agent | 2026-06-08 | ✅ done; tightened 2026-06-09 after over-broad wording caused a false handoff token |
 | Apply the cost model to the tooling: frame the agent session as a metered resource (tenet 16 ties to tenet 15) | Prevent | agent | 2026-06-08 | ✅ done |
-| Operator watches the Cursor usage meter; consider a periodic context-size / cost check-in | Detect | Chandra | next sessions | ⏳ |
-| Automated context-budget / "session getting expensive → checkpoint & restart" signal | Detect | Chandra+agent | backlog P2 | ⏳ backlog |
+| Operator watches the Cursor usage meter; consider a periodic context-size / cost check-in | Detect | the operator | next sessions | ⏳ |
+| Automated context-budget / "session getting expensive → checkpoint & restart" signal | Detect | the operator+agent | backlog P2 | ⏳ backlog |
 | Mitigate the live incident: from now, one task per chat, resume from `STATUS.md` (cost per session bounded) | Mitigate | agent | 2026-06-08 | ✅ in effect |
 
 ## Lessons learned

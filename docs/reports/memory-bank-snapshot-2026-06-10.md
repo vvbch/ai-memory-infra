@@ -3,7 +3,7 @@
 > Honest point-in-time report of the live Mem0 bank and Neo4j graph store.
 > No personal memory content included — counts and metadata only.
 
-## Mem0 (pgvector) — live at `https://memory.chandrav.dev`
+## Mem0 (pgvector) — live at `https://memory.example.com`
 
 | Metric | Value |
 |---|---|
@@ -17,7 +17,7 @@
 | `user_id` | Count | Notes |
 |---|---|---|
 | `chrome-extension-user` | 47 | Extension auto-capture (desktop) |
-| `chandrav` | 3 | Operator / MCP path |
+| `primary-user` | 3 | Primary user / MCP path |
 | `diag-roundtrip-20260608` | 2 | Deploy verification |
 | `diag-rebuild-20260608` | 2 | Image rebuild verification |
 | `drill-canary` | 2 | Restore-drill canary |
@@ -54,6 +54,6 @@ land through the connector path.
 
 ## Method
 
-- Mem0: `GET https://memory.chandrav.dev/memories` with admin API key (env var;
+- Mem0: `GET https://memory.example.com/memories` with admin API key (env var;
   not logged).
 - Neo4j: `cypher-shell` on droplet via SSH (`MATCH (n) RETURN count(n)`).

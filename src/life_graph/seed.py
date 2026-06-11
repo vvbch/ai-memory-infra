@@ -1,4 +1,4 @@
-"""Initial LifeGraph seed data (Phase 6 POC)."""
+"""Initial LifeGraph seed data (Phase 6 POC — synthetic fixtures)."""
 
 from __future__ import annotations
 
@@ -7,36 +7,35 @@ from life_graph.schema import EdgeSpec, NodeSpec
 
 
 def build_seed_graph() -> GraphStore:
-    """Return the canonical starter LifeGraph for demos and tests."""
+    """Return a synthetic starter LifeGraph for demos and tests."""
     graph = GraphStore()
 
     people = [
-        NodeSpec("Person", "person:chandra", {"name": "Chandra", "role": "founder"}),
-        NodeSpec("Person", "person:vijaya", {"name": "Vijaya", "role": "co-founder"}),
-        NodeSpec("Person", "person:chinnu", {"name": "Chinnu", "role": "family"}),
-        NodeSpec("Person", "person:swapna", {"name": "Swapna", "role": "family"}),
+        NodeSpec("Person", "person:alex", {"name": "Alex", "role": "founder"}),
+        NodeSpec("Person", "person:blake", {"name": "Blake", "role": "co-founder"}),
+        NodeSpec("Person", "person:casey", {"name": "Casey", "role": "contributor"}),
     ]
     ventures = [
         NodeSpec(
             "Venture",
-            "venture:trading-firm",
-            {"name": "TradingFirmLLP", "status": "planning", "venture_tag": "trading_firm"},
+            "venture:alpha-corp",
+            {"name": "AlphaCorp", "status": "planning", "venture_tag": "trading_firm"},
         ),
         NodeSpec(
             "Venture",
-            "venture:content-firm",
-            {"name": "ContentFirm", "status": "planning", "venture_tag": "social_media"},
+            "venture:media-lab",
+            {"name": "MediaLab", "status": "planning", "venture_tag": "social_media"},
         ),
         NodeSpec(
             "Venture",
-            "venture:ria",
-            {"name": "RIA", "status": "future", "venture_tag": "ria"},
+            "venture:advisory",
+            {"name": "AdvisoryCo", "status": "future", "venture_tag": "ria"},
         ),
     ]
     skills = [
         NodeSpec("Skill", "skill:python", {"name": "Python"}),
         NodeSpec("Skill", "skill:distributed-systems", {"name": "distributed systems"}),
-        NodeSpec("Skill", "skill:options-trading", {"name": "options trading"}),
+        NodeSpec("Skill", "skill:data-engineering", {"name": "data engineering"}),
     ]
     decisions = [
         NodeSpec(
@@ -46,25 +45,25 @@ def build_seed_graph() -> GraphStore:
         ),
         NodeSpec(
             "Decision",
-            "decision:llp",
-            {"name": "LLP structure for tax efficiency", "date": "2026-05-01"},
+            "decision:entity-structure",
+            {"name": "chose LLP structure for new venture", "date": "2026-05-01"},
         ),
     ]
     milestones = [
         NodeSpec(
             "Milestone",
-            "milestone:amazon-exit",
-            {"name": "Amazon exit", "date": "2026-07-01"},
+            "milestone:platform-launch",
+            {"name": "platform MVP launch", "date": "2026-07-01"},
         ),
         NodeSpec(
             "Milestone",
-            "milestone:phd-deadline",
-            {"name": "PhD deadline", "date": "2026-12-01"},
+            "milestone:cert-deadline",
+            {"name": "certification deadline", "date": "2026-12-01"},
         ),
     ]
     goals = [
-        NodeSpec("Goal", "goal:migration", {"name": "international migration"}),
-        NodeSpec("Goal", "goal:ai-role", {"name": "AI engineering role"}),
+        NodeSpec("Goal", "goal:relocation", {"name": "international relocation"}),
+        NodeSpec("Goal", "goal:platform-scale", {"name": "scale memory platform"}),
     ]
     tools = [
         NodeSpec("Tool", "tool:mem0", {"name": "Mem0"}),
@@ -75,21 +74,21 @@ def build_seed_graph() -> GraphStore:
         graph.add_node(node)
 
     edges = [
-        EdgeSpec("CO_FOUNDER", "person:chandra", "person:vijaya"),
-        EdgeSpec("WORKS_ON", "person:chandra", "venture:trading-firm"),
-        EdgeSpec("WORKS_ON", "person:vijaya", "venture:trading-firm"),
-        EdgeSpec("WORKS_ON", "person:vijaya", "venture:content-firm"),
-        EdgeSpec("HAS_SKILL", "person:chandra", "skill:python"),
-        EdgeSpec("HAS_SKILL", "person:chandra", "skill:distributed-systems"),
-        EdgeSpec("HAS_SKILL", "person:chandra", "skill:options-trading"),
-        EdgeSpec("DECIDED", "person:chandra", "decision:mem0", {"date": "2026-06-04"}),
-        EdgeSpec("DECIDED", "person:chandra", "decision:llp", {"date": "2026-05-01"}),
-        EdgeSpec("TARGETS", "person:chandra", "goal:migration", {"deadline": "2026-12-01"}),
-        EdgeSpec("TARGETS", "person:chandra", "goal:ai-role"),
-        EdgeSpec("ACHIEVED", "person:chandra", "milestone:amazon-exit", {"date": "2026-07-01"}),
-        EdgeSpec("USES", "person:chandra", "tool:mem0"),
-        EdgeSpec("USES", "person:chandra", "tool:neo4j"),
-        EdgeSpec("RELATED_TO", "decision:mem0", "venture:trading-firm"),
+        EdgeSpec("CO_FOUNDER", "person:alex", "person:blake"),
+        EdgeSpec("WORKS_ON", "person:alex", "venture:alpha-corp"),
+        EdgeSpec("WORKS_ON", "person:blake", "venture:alpha-corp"),
+        EdgeSpec("WORKS_ON", "person:blake", "venture:media-lab"),
+        EdgeSpec("HAS_SKILL", "person:alex", "skill:python"),
+        EdgeSpec("HAS_SKILL", "person:alex", "skill:distributed-systems"),
+        EdgeSpec("HAS_SKILL", "person:alex", "skill:data-engineering"),
+        EdgeSpec("DECIDED", "person:alex", "decision:mem0", {"date": "2026-06-04"}),
+        EdgeSpec("DECIDED", "person:alex", "decision:entity-structure", {"date": "2026-05-01"}),
+        EdgeSpec("TARGETS", "person:alex", "goal:relocation", {"deadline": "2026-12-01"}),
+        EdgeSpec("TARGETS", "person:alex", "goal:platform-scale"),
+        EdgeSpec("ACHIEVED", "person:alex", "milestone:platform-launch", {"date": "2026-07-01"}),
+        EdgeSpec("USES", "person:alex", "tool:mem0"),
+        EdgeSpec("USES", "person:alex", "tool:neo4j"),
+        EdgeSpec("RELATED_TO", "decision:mem0", "venture:alpha-corp"),
     ]
     for edge in edges:
         graph.add_edge(edge)

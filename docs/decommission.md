@@ -20,8 +20,8 @@ rule — see ADR 017). It holds the *procedure*; the *credentials* live **outsid
 it, in a password manager. The two are meant to be combined: this runbook tells
 you **what to do**, the password manager gives you the **logins to do it with**.
 
-- **Password manager: Bitwarden** — a **Folder named `ai-memory-infra` in
-  Chandra's individual vault** (NOT a Families/Organization Collection) holds the
+- **Password manager: password manager** — a **Folder named `ai-memory-infra` in
+  the operator's individual vault** (NOT a Families/Organization Collection) holds the
   DigitalOcean login, Cloudflare login, OpenAI login, and the SSH private-key
   passphrase. Chosen for a *managed nominee handoff* (ADR 017). The individual-vault
   placement is load-bearing: Emergency Access can only read the individual vault,
@@ -32,28 +32,28 @@ you **what to do**, the password manager gives you the **logins to do it with**.
 
 ### For the nominee / executor — how you get in
 
-You do **not** need Chandra's master password. Bitwarden has a built-in
+You do **not** need the operator's master password. password manager has a built-in
 **Emergency Access** handoff that was set up for you in advance:
 
-1. You should already have a (free) **Bitwarden account** and have **accepted an
-   emergency-access invitation** from Chandra. (If you never accepted it, this
+1. You should already have a (free) **password manager account** and have **accepted an
+   emergency-access invitation** from the operator. (If you never accepted it, this
    path won't work — that step can only happen while he's able to invite you.)
-2. Sign in at **bitwarden.com** → **Settings → Emergency Access**.
-3. Under **Emergencies that trust me** (people who named you), find Chandra and
+2. Sign in at **password manager.com** → **Settings → Emergency Access**.
+3. Under **Emergencies that trust me** (people who named you), find the operator and
    click **Request access**.
 4. There is a **wait period** (set when the contact was created — typically a few
-   days). If Chandra doesn't decline within that window, access is granted
+   days). If the operator doesn't decline within that window, access is granted
    automatically. With **Takeover** access you can then read every login in the
    `ai-memory-infra` group.
 5. With those logins, follow Steps 1–5 below to stop all charges. Every account is
    reachable by logging in on its website.
 
-> **Operator (Chandra) — one-time setup that makes the above work:**
-> Bitwarden → **Settings → Emergency Access → Add emergency contact** → enter the
-> nominee's email (they need a free Bitwarden account) → access level **Takeover**
+> **Operator (the operator) — one-time setup that makes the above work:**
+> password manager → **Settings → Emergency Access → Add emergency contact** → enter the
+> nominee's email (they need a free password manager account) → access level **Takeover**
 > → set a **wait time** (e.g. 2–7 days, so an early/accidental request can still
 > be denied) → **Save**. The nominee accepts the emailed invite. Setting up
-> contacts requires a paid Bitwarden plan (**Families**, ~₹330/mo, taken
+> contacts requires a paid password manager plan (**Families**, ~₹330/mo, taken
 > 2026-06-07); the nominee can be a free account.
 
 The three companies that bill money are: **DigitalOcean** (the server, ~₹2,000/mo),
@@ -149,7 +149,7 @@ DNS records, and backups bucket. When it finishes it prints the manual checklist
 ### Step 3 — Cloudflare: stop the domain renewal
 
 1. Log in at **dash.cloudflare.com**.
-2. **Domain Registration** → select **`chandrav.dev`** (or your domain) →
+2. **Domain Registration** → select **`example.com`** (or your domain) →
    **turn OFF auto-renew**. It will lapse at expiry and cost nothing further.
    (Transfer out is possible after the 60-day registrar lock; see ADR 016 exit
    notes.)

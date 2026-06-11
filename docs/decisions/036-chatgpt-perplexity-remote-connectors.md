@@ -2,14 +2,14 @@
 
 **Status:** Accepted
 **Date:** 2026-06-10
-**Deciders:** Chandra (operator direction 2026-06-10 evening: "similar remote
+**Deciders:** the operator (operator direction 2026-06-10 evening: "similar remote
 integrations for Perplexity and ChatGPT")
 **Extends:** ADR 034 (endpoint), ADR 035 (self-hosted OAuth 2.1). Neither is
 superseded; this ADR adds two client platforms to the same server.
 
 ## Context
 
-Goal 2 closed with claude.ai connected to `https://mcp.chandrav.dev/` via
+Goal 2 closed with claude.ai connected to `https://mcp.example.com/` via
 self-hosted OAuth 2.1 (ADR 035). The operator's next direction is the same
 class of native remote integration for **ChatGPT** and **Perplexity**. Today
 ChatGPT is covered only by the Chrome extension on desktop; Perplexity has
@@ -62,7 +62,7 @@ Per COE 2026-06-10-claude-connector-auth-assumption, each platform's
 
 ### 1. One server, three platforms — no new endpoint, no new auth code
 
-Both platforms register against the **existing** `https://mcp.chandrav.dev/`
+Both platforms register against the **existing** `https://mcp.example.com/`
 endpoint with the **existing** ADR 035 OAuth 2.1 AS+RS. DCR means each
 platform self-registers its client and redirect URI; PKCE S256 and the consent
 page work unchanged. Expected build delta is **near zero server code**:

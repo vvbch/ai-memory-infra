@@ -61,7 +61,7 @@ trade-off is always visible. **These `(~₹X/mo)` annotations are vendor *list
 price*** (locale-neutral); the operator's **landed cost ≈ list × 1.3** — +18% GST
 on imported digital services, +~4–6% forex (card markup + FX spread). **Budget
 and size spend ceilings on landed cost, not the sticker.** The personal wallet
-view (actual ₹ outflow) lives in the private `financial-decisions.md`.
+view (actual ₹ outflow) lives in the private operator financial ledger.
 
 ## 7. Fewer moving parts
 For a one-person project, simplicity beats sophistication. Every container,
@@ -99,7 +99,7 @@ interface (tenet 2) and the split must be justified in an ADR.
 ## 10. Single source of truth; no instruction drift
 The repo is the one authoritative record (tenet 1). When the same fact or
 decision is restated across artifacts — `AGENTS.md`, ADRs, `README.md`,
-`docs/architecture.md`, `docs/interview_packet.md`, `docs/planning/STATUS.md` —
+`docs/architecture.md`, `docs/planning/STATUS.md` —
 they must agree. A change in one **triggers** updates to the others; this is
 enforced by the Definition of Done in `AGENTS.md`. Prefer a pointer over a copy
 (tenet 2) so there's less to keep in sync in the first place.
@@ -233,7 +233,7 @@ Two rules carry the most weight:
    mechanism that *allowed* the defect before fixing the instance — or the instance
    regenerates (ADR 018 is the worked example).
 2. **Capture the lesson where it compounds.** The systemic fix lands in a tenet or
-   ADR; the narrative lands in `interview_packet.md`; follow-ups are ranked in
+   ADR; portfolio narrative lands in the private interview packet; follow-ups are ranked in
    `docs/planning/BACKLOG.md`.
 
 **Blameless:** the target is always the system, never the operator or the agent.
@@ -294,7 +294,7 @@ Operating rules:
 - **Emit a resume token only after a real checkpoint and only for a true handoff.** A
   copy-paste **Resume prompt** is valid only when `STATUS.md` reflects a logical handoff
   point (read `STATUS.md` + `AGENTS.md`, run repo-health, do the Next action) **and** the
-  response is not waiting on Chandra to do the next click/command in the same flow. If the
+  response is not waiting on the operator to do the next click/command in the same flow. If the
   session is mid-step or awaiting an operator action, say that plainly and do not print a
   false resume token.
 - **One task per session; prefer a new chat over a long thread.** When the task is done —
@@ -306,7 +306,7 @@ Operating rules:
 
 Complements tenet 1 (everything versioned, so the repo *can* be the backing store),
 tenet 13 (one goal per session), and tenet 15 (cap variable cost). Added after the
-credit-exhaustion COE; the transferable lesson lives in `interview_packet.md`.
+credit-exhaustion COE; the transferable lesson lives in the private interview packet.
 
 ## 17. Minimize operator cognitive load — act on reversible (two-way-door) decisions, deliberate only on one-way doors
 The scarcest resource is the **operator's attention**, so the agent spends it sparingly.
@@ -414,12 +414,12 @@ fact or decision actually happened, carry `event_date` (ISO date) in metadata �
 `occurred_at` for ADR 029 compatibility. "What is the current status of X?" resolves by
 **`max(event_date)`** among candidates, never by most recently written row.
 
-**Namespace is a flat tag** on the single `user_id=chandrav` bank: `public` (default)
+**Namespace is a flat tag** on the single `user_id=primary-user` bank: `public` (default)
 or `sensitive`. Reads default to `namespace=public`; sensitive reads require an explicit
 filter.
 
-**Qualify entities inline** in fact text (`Krishna, interview-prep contact` vs
-`Krishna, Chandra's elder son`) — vector retrieval cannot disambiguate bare tokens.
+**Qualify entities inline** in fact text (`Jordan, project contact` vs
+`Jordan, project contact` vs `Jordan, team lead's sibling`) — vector retrieval cannot disambiguate bare tokens.
 Read paths may rerank by qualifier overlap (`src/memory/retrieval.py`).
 
 **Acceptance before bulk load:** run `scripts/acceptance_probe.py` — 5 throwaway facts,

@@ -46,7 +46,7 @@ def ingest_memory_record(graph: GraphStore, record: dict[str, Any]) -> str | Non
     event_date = str(meta.get("event_date") or meta.get("occurred_at") or "")[:10]
     return ingest_decision_from_memory(
         graph,
-        person_key="person:chandra",
+        person_key="person:alex",
         decision_name=text[:120],
         event_date=event_date or "2026-01-01",
     )

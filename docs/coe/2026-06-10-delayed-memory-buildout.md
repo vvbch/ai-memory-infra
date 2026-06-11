@@ -1,7 +1,7 @@
 # COE: Delayed execution of memory buildout
 
 - **Date:** 2026-06-10
-- **Author(s):** Chandra + Cursor agent (joint — shared systemic ownership, blameless per tenet 14)
+- **Author(s):** the operator + Cursor agent (joint — shared systemic ownership, blameless per tenet 14)
 - **Severity:** medium *(no production/data/customer impact; opportunity-cost + credibility blast radius — half the build plan is unbuilt scaffolding and the core premise is still untested ~5 weeks in)*
 - **Status:** actions-in-progress
 - **Related:** tenets 7, 13, 16; AGENTS.md "Build phases" (0-9); `docs/planning/STATUS.md`;
@@ -91,11 +91,11 @@ drift is itself a detection gap → see Detect actions.
 
 | Action | Type | Owner | Due | Status |
 |---|---|---|---|---|
-| **Run the Phase 3 premise test before any phase 5-8 build** — real todos + recruiter reachouts, "plan my day" for several days, write a verdict on genuine utility | Mitigate (unblock value) | Chandra (+agent) | next 1-2 sessions | ⏳ |
+| **Run the Phase 3 premise test before any phase 5-8 build** — real todos + recruiter reachouts, "plan my day" for several days, write a verdict on genuine utility | Mitigate (unblock value) | the operator (+agent) | next 1-2 sessions | ⏳ |
 | Add a **plan-vs-reality gate**: a check (or STATUS section) that lists each build phase as `stub` / `partial` / `implemented` from `src/`, so a stub-only phase can't read as progress | Detect | agent | next session | ⏳ |
-| **Freeze new governance/portfolio scope** (weekly-scan agent, extra interview packets, more editor adapters) until the premise test returns a verdict — WIP limit of one build track | Prevent | Chandra | now | ⏳ |
+| **Freeze new governance/portfolio scope** (weekly-scan agent, extra interview packets, more editor adapters) until the premise test returns a verdict — WIP limit of one build track | Prevent | the operator | now | ⏳ |
 | Fix the drift that polish outran: correct Neo4j "dual-namespace" claim, delete the 4 red stub workflows, add a boot-time assert on `MEM0_DEFAULT_LLM_MODEL` | Mitigate | agent | next session | ◑ Neo4j claim corrected 2026-06-10 (ADR 032); stub workflows handled in the maturity-honesty pass same date; `MEM0_DEFAULT_LLM_MODEL` boot-assert still ⏳ |
-| Resolve the **graph-source decision** (LifeGraph-only vs. a mem0 build that ships graph) in an ADR before Phase 6 — it gates ADR 005's cross-namespace promise | Prevent | Chandra (one-way-door call) | before Phase 6 | ⏳ |
+| Resolve the **graph-source decision** (LifeGraph-only vs. a mem0 build that ships graph) in an ADR before Phase 6 — it gates ADR 005's cross-namespace promise | Prevent | the operator (one-way-door call) | before Phase 6 | ⏳ |
 | Verify facts at source **before** baking them into docs (mem0 graph, model defaults were not) — reaffirm tenet 8 as a pre-doc gate | Prevent | agent | ongoing | ⏳ |
 
 ## Lessons learned

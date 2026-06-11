@@ -3,7 +3,7 @@
 Phase 3's Chrome/Chromium extension is **not vendored in this infra repo**.
 
 Decision: fork `mem0ai/mem0-chrome-extension` (MIT) into a separate **private** GitHub repo,
-then rewire it to our self-hosted server (`https://memory.chandrav.dev`) using `X-API-Key`.
+then rewire it to our self-hosted server (`https://memory.example.com`) using `X-API-Key`.
 
 Why separate:
 

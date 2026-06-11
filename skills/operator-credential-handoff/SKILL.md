@@ -1,6 +1,6 @@
 ---
 name: operator-credential-handoff
-description: Use when Chandra copies a secret to the clipboard (SSH passphrase, token) and says "copied" / "in clipboard" / "key is copied" — run scripts/ssh_unlock.py (or future handoff scripts); never ask him to run unlock commands himself.
+description: Use when the operator copies a secret to the clipboard (SSH passphrase, token) and says "copied" / "in clipboard" / "key is copied" — run scripts/ssh_unlock.py (or future handoff scripts); never ask him to run unlock commands himself.
 ---
 
 # Operator Credential Handoff (clipboard → agent)
@@ -17,9 +17,9 @@ Canonical spec: `ai-memory-infra/docs/skills/operator-assistant-credential-hando
 
 ## Agent routine (SSH)
 
-1. **Do not** delegate `ssh-add`, PowerShell, or terminal paste commands to Chandra.
+1. **Do not** delegate `ssh-add`, PowerShell, or terminal paste commands to the operator.
 2. If clipboard may be empty, ask for **one** operator step only: copy the SSH key
-   passphrase from Bitwarden → clipboard → say "copied".
+   passphrase from the password manager → clipboard → say "copied".
 3. Run from `ai-memory-infra`:
 
    `python scripts/ssh_unlock.py`

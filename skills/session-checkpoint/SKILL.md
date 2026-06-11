@@ -24,7 +24,7 @@ From the `ai-memory-infra` repo root:
 Rules:
 
 - A copy-paste **Resume prompt** is valid only after `--check` passes AND the response
-  is a true handoff — never while waiting on Chandra mid-flow.
+  is a true handoff — never while waiting on the operator mid-flow.
 - `STATUS.md` is **overwrite means replace** (no "prior update" blocks); shape is
   machine-enforced by `scripts/check_status_snapshot.py`.
 - Before the final response also run `python scripts/handoff_verify.py` (final
