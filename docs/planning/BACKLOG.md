@@ -131,8 +131,8 @@
   (2026-06-10).** Pulled forward from the ~2026-06-15 burn-in trigger because it was
   swept in the same SSH session as the basic-auth rotation. The droplet
   `/opt/ai-memory-infra/infra/.env` comment block (now-rotated admin password +
-  copy-to-Bitwarden reminder) was deleted; the live `KEY=VALUE` secrets and the
-  `ai-memory .env (prod)` Bitwarden note were confirmed intact; on-disk backups were
+  copy-to-vault reminder) was deleted; the live `KEY=VALUE` secrets and the
+  password-manager index note were confirmed intact; on-disk backups were
   removed. Ties: AGENTS.md secrets rule, ADR 017, tenets 14 & 18; private
   secrets-catalog hygiene items.
 - ✅ **`[security]` Secret-scan pre-commit (gitleaks) — DONE (2026-06-08).** "No secrets
@@ -258,10 +258,10 @@
   precision@5) — do not MCP-retry. Blocked: conflict-question answers + sensitive-cluster
   namespace ruling before compaction merge writes.
 
-## P3 — valuable, non-blocking / personal
+## P3 — valuable, non-blocking
 
-- **Bitwarden full family rollout.** Families plan already paid (2026-06-07).
-  Remaining: invite the (up to 6) members, migrate passwords off Gmail/WhatsApp
-  into shared collections, set per-member access (ADR 017 / `financial-decisions.md`).
+- **Password-manager family rollout** (operator task, private `OPERATOR.md`).
+  Remaining: invite members, migrate passwords into shared collections, set
+  per-member access (ADR 017).
 - **KeePassXC offline vault backup** (`.kdbx` in a safe / will) as a
   vendor-independent fallback (ADR 017 "secondary backup").
