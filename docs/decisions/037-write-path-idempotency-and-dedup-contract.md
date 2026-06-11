@@ -86,16 +86,53 @@ Parity in `scripts/memory.py`: `delete-memory`, `update-memory` subcommands.
 
 This ADR governs **every memory write consumer**:
 
-| Consumer | `external_id` on bulk writes | timeout semantics | delete/update exposed |
-|---|---|---|---|
-| `scripts/bulk_seed_importer.py` | ✅ required | ✅ verify-then-skip | N/A (uses REST client) |
-| `scripts/memory.py` | recommended on `add-fact --infer` | ✅ via shared client timeout env | ✅ CLI |
-| MCP proxy (`src/mcp_proxy/server.py`) | caller metadata (future: document in tool) | inherits client timeout | ✅ tools |
-| Chrome extension | future bulk path | extension HTTP client | via REST (no UI yet) |
-| OpenClaw adapter | pending gate (ADR 028) | must adopt | must adopt |
+| Consumer | `external_id` on bulk writes | timeout semantics | delete/update exposed | fact metadata contract |
+|---|---|---|---|---|
+| `scripts/bulk_seed_importer.py` | ✅ required | ✅ verify-then-skip | N/A (uses REST client) | ✅ required |
+| `scripts/memory.py` | ✅ `--external-id` on `add-fact` | ✅ shared `idempotent_write` + env | ✅ CLI | ✅ `--event-date` etc. |
+| MCP proxy (`src/mcp_proxy/server.py`) | ✅ optional param / metadata | ✅ shared client timeout | ✅ tools | ✅ optional fields |
+| Chrome extension | future bulk path | extension HTTP client | via REST (no UI yet) | `namespace` default `public` |
+| OpenClaw adapter | pending gate (ADR 028) | must adopt | must adopt | must adopt |
 
-Conformance is tracked in this ADR's table; extend `scripts/check_memory_contract.py`
-when a consumer ships bulk-write logic.
+Shared implementation: `src/mcp_proxy/idempotent_write.py`, `src/memory/contract.py`,
+`src/memory/retrieval.py`. Conformance extended in `scripts/check_memory_contract.py`.
+
+### 6. Fact metadata contract (pre-bulk-load gate)
+
+Every fact written through scripted/bulk/probe paths carries controlled metadata
+(not buried in prose):
+
+| Field | Rule |
+|---|---|
+| `event_date` | ISO `YYYY-MM-DD` — when the event actually happened (canonical; dual-write `occurred_at` for ADR 029 compat) |
+| `source` | `cursor-repo` \| `chatgpt` \| `perplexity` \| `claude` \| `manual` \| `mcp` \| `extension` |
+| `source_doc_id` | optional traceable origin (ADR path, chat id, URL slug) |
+| `namespace` | flat tag on `user_id=chandrav`: `public` (default) \| `sensitive` |
+| `external_id` | required on bulk/probe; recommended on `add-fact` |
+| entity text | qualify colliding names inline (e.g. `Krishna, interview-prep contact`) |
+
+Implemented: `src/memory/contract.py`, `scripts/bulk_seed_importer.py`,
+`scripts/memory.py`, MCP `add_memory` optional fields.
+
+### 7. Retrieval temporal contract
+
+`/search` ranks by **embedding similarity**, not time. Read paths must:
+
+1. Resolve "latest status of X" by **`max(event_date)`** among candidates — never
+   `created_at` (write/capture time only).
+2. Use metadata filters for structured queries (`type=open_item`, `status=open`,
+   `namespace=public`) — pure vector search alone is insufficient for follow-ups.
+3. For entity-collision queries, rerank scoped hits by inline-qualifier overlap
+   (`src/memory/retrieval.py`: `best_entity_match`).
+
+Acceptance gate: `scripts/acceptance_probe.py` (5-fact probe, 3 queries, cleanup).
+
+### 8. Direct SQL access (deferred)
+
+Mem0 stores JSON `metadata` in Postgres. **Writes and contract reads stay on the
+Mem0 API** (option A). Optional read-only SQL views on
+`metadata->>'event_date'`, `namespace`, `external_id` (option B) are deferred until
+after bulk load; periodic export (option C) remains a fallback.
 
 ## Consequences
 
@@ -107,11 +144,16 @@ when a consumer ships bulk-write logic.
   drill, CI/CD, precision@5) were **not** found — use `bulk_seed_importer.py`
   with fresh `external_id`s, not manual MCP retries.
 - Scheduled compaction: run `memory_compaction.py` weekly; review clusters before
-  any merge.
+  any merge. Operator runbook: `python scripts/memory_compaction.py --report …`;
+  merge only with `--merge-from <report> --i-reviewed-clusters`.
+- **2026-06-11:** 5-fact acceptance probe **PASS** (all three queries) —
+  `docs/reports/acceptance-probe-2026-06-11.md`. Bulk fact load unblocked for a
+  separate seed session.
 
 ## Related
 
 - COE `docs/coe/2026-06-10-mcp-timeout-semantic-duplicates.md`
 - ADR 028 (write metadata contract), ADR 031 (cross-cutting conformance), ADR 029
   (`infer=False` for authored items)
-- Tenet 19 (vector store ≠ dedup; timeout ≠ failure)
+- Tenet 19 (vector store ≠ dedup; timeout ≠ failure), tenet 20 (event_date + namespace + inline entities)
+- ADR 029 (`occurred_at` compat; `event_date` canonical per §6)

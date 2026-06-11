@@ -75,11 +75,24 @@ from typing import Any
 
 # Path bootstrap: import the shared REST client whether or not the package is
 # installed editable (keeps the script runnable straight from a fresh clone).
-_SRC = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "src")
+_SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+_SRC = os.path.join(os.path.dirname(_SCRIPT_DIR), "src")
 if _SRC not in sys.path:
     sys.path.insert(0, _SRC)
+# This file is named memory.py — drop scripts/ from sys.path so src/memory/ package wins.
+if _SCRIPT_DIR in sys.path:
+    sys.path.remove(_SCRIPT_DIR)
 
+import httpx
+
+from memory.contract import (  # noqa: E402
+    MemoryContractError as ContractMemoryError,
+    build_fact_metadata,
+    normalize_source,
+    validate_fact_text,
+)
 from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
+from mcp_proxy.idempotent_write import write_timeout_seconds  # noqa: E402
 
 # --------------------------------------------------------------------------- #
 # ADR 029 / ADR 028 / ADR 003 vocabulary (the contract this helper enforces).
@@ -114,7 +127,11 @@ _META_KEYS = (
     "source",
     "due_at",
     "revisit_at",
+    "event_date",
     "occurred_at",
+    "namespace",
+    "source_doc_id",
+    "external_id",
     "resolution",
     "closed_at",
     "ventures",
@@ -180,7 +197,7 @@ def capture_open_item(
         {
             "type": TYPE_OPEN_ITEM,
             "status": STATUS_OPEN,
-            "source": source,
+            "source": normalize_source(source),
             "due_at": due_at,
             "revisit_at": revisit_at,
             "occurred_at": occurred_at,
@@ -209,7 +226,7 @@ def capture_decision(
     metadata = _clean(
         {
             "type": TYPE_DECISION,
-            "source": source,
+            "source": normalize_source(source),
             "occurred_at": occurred_at,
             "ventures": ventures,
         }
@@ -223,25 +240,55 @@ def capture_fact(
     *,
     ventures: list[str] | None = None,
     occurred_at: str | None = None,
+    event_date: str | None = None,
     source: str = DEFAULT_SOURCE,
+    source_doc_id: str | None = None,
+    namespace: str | None = None,
+    external_id: str | None = None,
     infer: bool = False,
     user_id: str | None = None,
 ) -> dict[str, Any]:
     """Capture a ``fact``. Verbatim by default; pass infer=True for extraction."""
-    if not text.strip():
-        raise MemoryContractError("fact text must not be empty")
     ventures = list(ventures or [])
     _validate_ventures(ventures)
-    if occurred_at:
-        _validate_date("occurred_at", occurred_at)
-    metadata = _clean(
-        {
-            "type": TYPE_FACT,
-            "source": source,
-            "occurred_at": occurred_at,
-            "ventures": ventures,
-        }
-    )
+    resolved_event = event_date or occurred_at
+    if not infer:
+        try:
+            validate_fact_text(text)
+        except ContractMemoryError as exc:
+            raise MemoryContractError(str(exc)) from exc
+    try:
+        if resolved_event:
+            metadata = build_fact_metadata(
+                event_date=resolved_event,
+                source=normalize_source(source),
+                source_doc_id=source_doc_id,
+                namespace=namespace,
+                external_id=external_id,
+                ventures=ventures,
+            )
+        else:
+            metadata = _clean(
+                {
+                    "type": TYPE_FACT,
+                    "source": normalize_source(source),
+                    "source_doc_id": source_doc_id,
+                    "namespace": namespace or "public",
+                    "ventures": ventures,
+                    "external_id": external_id,
+                }
+            )
+    except ContractMemoryError as exc:
+        raise MemoryContractError(str(exc)) from exc
+
+    if external_id:
+        return client.add_memory_idempotent(
+            text,
+            external_id=external_id,
+            metadata=metadata,
+            infer=infer,
+            user_id=user_id,
+        )
     return client.add_memory(text, metadata=metadata, infer=infer, user_id=user_id)
 
 
@@ -513,7 +560,8 @@ def _client(user_id: str | None) -> MemoryApiClient:
         config = MemoryApiConfig(
             base_url=config.base_url, api_key=config.api_key, user_id=user_id
         )
-    return MemoryApiClient(config)
+    timeout = httpx.Timeout(write_timeout_seconds(), connect=10.0)
+    return MemoryApiClient(config, http_client=httpx.Client(timeout=timeout))
 
 
 def _parse(argv: list[str]) -> argparse.Namespace:
@@ -543,9 +591,13 @@ def _parse(argv: list[str]) -> argparse.Namespace:
 
     fa = sub.add_parser("add-fact", help="capture a durable fact")
     fa.add_argument("text")
-    fa.add_argument("--occurred", default=None, help="when true-as-of YYYY-MM-DD")
+    fa.add_argument("--event-date", default=None, help="when the fact/event occurred YYYY-MM-DD")
+    fa.add_argument("--occurred", default=None, help="alias for --event-date (compat)")
     fa.add_argument("--venture", action="append", default=[], help="venture tag (repeatable)")
     fa.add_argument("--source", default=DEFAULT_SOURCE)
+    fa.add_argument("--source-doc-id", default=None, help="traceable origin reference")
+    fa.add_argument("--namespace", default=None, choices=["public", "sensitive"])
+    fa.add_argument("--external-id", default=None, help="deterministic id for idempotent writes")
     fa.add_argument("--infer", action="store_true", help="run Mem0 extraction instead of verbatim")
 
     sub.add_parser("agenda", help="plan the day: overdue / due / revisit / upcoming")
@@ -608,9 +660,12 @@ def main(argv: list[str] | None = None) -> int:
             result = capture_fact(
                 client,
                 args.text,
-                occurred_at=args.occurred,
+                event_date=args.event_date or args.occurred,
                 ventures=args.venture,
                 source=args.source,
+                source_doc_id=args.source_doc_id,
+                namespace=args.namespace,
+                external_id=args.external_id,
                 infer=args.infer,
             )
             payload = result

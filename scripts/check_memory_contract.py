@@ -169,10 +169,13 @@ def check_mcp_proxy_server(repo: Path) -> tuple[list[str], list[str]]:
         )
         return violations, notes
 
-    if not re.search(r'["\']source["\']\s*:\s*["\']mcp["\']', text):
+    tags_mcp = re.search(r'["\']source["\']\s*:\s*["\']mcp["\']', text) or re.search(
+        r'get\("source"\)\s+or\s+["\']mcp["\']', text
+    )
+    if not tags_mcp:
         violations.append(
             "ai-memory-infra/src/mcp_proxy/server.py: "
-            'add_memory must set metadata.source = "mcp" (ADR 028)'
+            'add_memory must default metadata.source to "mcp" (ADR 028)'
         )
     if "metadata=metadata" not in text and "metadata={" not in text:
         violations.append(
@@ -182,10 +185,42 @@ def check_mcp_proxy_server(repo: Path) -> tuple[list[str], list[str]]:
     return violations, notes
 
 
+def check_memory_helper(repo: Path) -> tuple[list[str], list[str]]:
+    """ADR 037: memory.py must expose contract metadata on capture_fact."""
+    violations: list[str] = []
+    notes: list[str] = []
+    helper = repo / "scripts" / "memory.py"
+    text = _read(helper)
+    if text is None:
+        notes.append(f"{repo.name}: scripts/memory.py not found — skipped")
+        return violations, notes
+
+    required_params = (
+        "event_date",
+        "source_doc_id",
+        "namespace",
+        "external_id",
+    )
+    for param in required_params:
+        if param not in text:
+            violations.append(
+                f"ai-memory-infra/scripts/memory.py: "
+                f"capture_fact must accept {param} (ADR 037 metadata contract)"
+            )
+
+    if "from memory.contract import" not in text:
+        violations.append(
+            "ai-memory-infra/scripts/memory.py: "
+            "must import shared memory.contract helpers (ADR 037)"
+        )
+    return violations, notes
+
+
 def check_mcp_proxy(repo: Path) -> tuple[list[str], list[str]]:
     client_v, client_n = check_mcp_proxy_client(repo)
     server_v, server_n = check_mcp_proxy_server(repo)
-    return client_v + server_v, client_n + server_n
+    helper_v, helper_n = check_memory_helper(repo)
+    return client_v + server_v + helper_v, client_n + server_n + helper_n
 
 
 def main(argv: list[str]) -> int:

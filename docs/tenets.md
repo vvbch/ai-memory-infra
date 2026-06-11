@@ -407,4 +407,21 @@ write failed — Mem0 may commit extraction seconds later. On timeout: poll for 
 `external_id` (or original verbatim text), then skip if found; if not found after the
 verify window, surface `timeout_unverified` and stop — do not retry with new wording
 (ADR 037; COE 2026-06-10-mcp-timeout-semantic-duplicates).
+
+## 20. Event time, namespace, and inline entity qualifiers
+**Store event time in metadata.** `created_at` is capture/write time only. When the
+fact or decision actually happened, carry `event_date` (ISO date) in metadata — dual-write
+`occurred_at` for ADR 029 compatibility. "What is the current status of X?" resolves by
+**`max(event_date)`** among candidates, never by most recently written row.
+
+**Namespace is a flat tag** on the single `user_id=chandrav` bank: `public` (default)
+or `sensitive`. Reads default to `namespace=public`; sensitive reads require an explicit
+filter.
+
+**Qualify entities inline** in fact text (`Krishna, interview-prep contact` vs
+`Krishna, Chandra's elder son`) — vector retrieval cannot disambiguate bare tokens.
+Read paths may rerank by qualifier overlap (`src/memory/retrieval.py`).
+
+**Acceptance before bulk load:** run `scripts/acceptance_probe.py` — 5 throwaway facts,
+3 contract queries, cleanup — and fix the contract if any query fails (ADR 037).
 <!-- generated:tenets-full end -->

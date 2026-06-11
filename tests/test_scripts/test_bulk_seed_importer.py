@@ -12,8 +12,9 @@ _spec = importlib.util.spec_from_file_location("bulk_seed_importer", _IMPORTER)
 assert _spec and _spec.loader
 bulk_seed_importer = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(bulk_seed_importer)
-find_by_external_id = bulk_seed_importer.find_by_external_id
 import_facts = bulk_seed_importer.import_facts
+
+from mcp_proxy.idempotent_write import find_by_external_id  # noqa: E402
 
 
 class FakeClient:
@@ -57,13 +58,29 @@ class FakeClient:
         return {"results": [{"event": "ADD", "id": mid}]}
 
 
+def _fact(**overrides: Any) -> dict[str, Any]:
+    base = {
+        "external_id": "seed:test",
+        "text": "Qualified Krishna, interview-prep contact, is a contact.",
+        "metadata": {
+            "type": "fact",
+            "source": "cursor-repo",
+            "event_date": "2026-06-01",
+            "namespace": "public",
+        },
+        "infer": False,
+    }
+    base.update(overrides)
+    return base
+
+
 def test_skips_existing_external_id() -> None:
     client = FakeClient(
         [{"id": "m1", "memory": "hello", "metadata": {"external_id": "seed:a"}}]
     )
     outcomes = import_facts(
         client,
-        [{"external_id": "seed:a", "text": "hello again"}],
+        [_fact(external_id="seed:a", text="hello again")],
     )
     assert outcomes == [
         {"external_id": "seed:a", "status": "skipped_exists", "memory_id": "m1"}
@@ -74,12 +91,11 @@ def test_skips_existing_external_id() -> None:
 def test_timeout_verifies_then_skips(monkeypatch: pytest.MonkeyPatch) -> None:
     client = FakeClient()
     calls = {"n": 0}
-    real_find = bulk_seed_importer.find_by_external_id
 
     def delayed_find(*args: Any, **kwargs: Any) -> dict[str, Any] | None:
         calls["n"] += 1
         if calls["n"] == 1:
-            return real_find(*args, **kwargs)
+            return find_by_external_id(*args, **kwargs)
         client.memories.append(
             {
                 "id": "late",
@@ -89,12 +105,14 @@ def test_timeout_verifies_then_skips(monkeypatch: pytest.MonkeyPatch) -> None:
         )
         return client.memories[-1]
 
-    monkeypatch.setattr(bulk_seed_importer.time, "sleep", lambda _: None)
-    monkeypatch.setattr(bulk_seed_importer, "find_by_external_id", delayed_find)
+    import mcp_proxy.idempotent_write as idem
+
+    monkeypatch.setattr(idem.time, "sleep", lambda _: None)
+    monkeypatch.setattr(idem, "find_by_external_id", delayed_find)
 
     outcomes = import_facts(
         client,
-        [{"external_id": "timeout-case", "text": "payload"}],
+        [_fact(external_id="timeout-case", text="payload")],
         verify_window_s=1.0,
         verify_interval_s=0.01,
     )
@@ -109,3 +127,18 @@ def test_find_by_external_id_scans_cache() -> None:
     found = find_by_external_id(client, "seed:b", cache=client.memories)
     assert found is not None
     assert found["id"] == "m1"
+
+
+def test_rejects_missing_event_date() -> None:
+    client = FakeClient()
+    outcomes = import_facts(
+        client,
+        [
+            {
+                "external_id": "seed:bad",
+                "text": "no date",
+                "metadata": {"source": "manual"},
+            }
+        ],
+    )
+    assert outcomes[0]["status"] == "invalid"

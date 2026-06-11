@@ -6,62 +6,67 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model + teaching prefs in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (MCP droplet redeploy ✅; ADR 037 tools live).
+**Last updated:** 2026-06-11 (memory contract + acceptance probe PASS).
 Repo-health green; committing+pushing.
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.chandrav.dev/docs`, backed
 up nightly + restore-drilled monthly. **Remote MCP** at `https://mcp.chandrav.dev`
-now ships **five tools** incl. `delete_memory` / `update_memory` (ADR 037).
-Production add → update → delete verified on droplet.
+ships five tools incl. delete/update (ADR 037).
 
 **Curated bank (`user_id=chandrav`):** extension auto-capture off by policy; MCP
-primary write surface.
++ `scripts/memory.py` primary write surfaces.
 
-**Active build track:** Phase 5 migration pipeline (phases 5–8 stubs).
+**Contract locked (2026-06-11):** fact metadata (`event_date`, `source`,
+`source_doc_id`, `namespace`, `external_id`), idempotent shared write path, read
+convention (event_date recency, metadata filters, entity qualifier rerank). **5-fact
+acceptance probe PASS** — see `docs/reports/acceptance-probe-2026-06-11.md`.
 
 ## Current phase
 
-**Infra phases 0–4 live.** Phase 5 migration — **start design + TDD**.
+**Infra phases 0–4 live.** Phase 5 migration — parked behind reconciled fact seed.
 
 ## Done this session (2026-06-11)
 
-- **MCP droplet redeploy** — `git pull` to `7ea9d6e`, rebuilt `mcp-proxy` image,
-  container recreated; `https://mcp.chandrav.dev/health` OK.
-- **ADR 037 production verify** — throwaway add → update → delete round-trip on
-  droplet Mem0 API (`scripts/deploy_probe_roundtrip.sh`).
-- **Market world model** — architecture debate prompt written; **parked** (see
-  BACKLOG); resume after operator runs frontier-model review.
+- **`src/memory/contract.py` + `retrieval.py`** — event_date, namespace, read helpers.
+- **`src/mcp_proxy/idempotent_write.py`** — shared verify-then-skip; wired to client,
+  MCP, `memory.py`, bulk importer.
+- **`scripts/acceptance_probe.py`** — live 6-fact probe, 3/3 queries PASS, cleanup OK.
+- **ADR 037 amended** (SS6–8), interfaces §1b, tenet 20, extension `namespace` default.
 
 ## Last decisions
 
-- MCP redeploy closes the ADR 037 production gap; no connector re-consent needed
-  (`mcp_oauth_state` volume preserved).
-- Market-analysis world-build stays **out of scope** until explicitly unparked —
-  parallel private repo, not a blocker for Phase 5.
+- `event_date` canonical; `occurred_at` dual-written for ADR 029 compat.
+- `namespace` = flat tags (`public` \| `sensitive`) on one `user_id` (operator choice).
+- Direct SQL on pgvector metadata deferred (ADR 037 §8 option B post-seed).
+- Bulk load **not** started this session — reconciled fact set is next.
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. Top active: **Phase 5 migration TDD**.
-Parked: market world model debate; OpenClaw adapter gate.
+See **`docs/planning/BACKLOG.md`**. Top active: **reconciled fact seed** (separate
+session). Parked: Phase 5 migration TDD; market world model; weekly compaction timer.
 
 ## Open blockers / risks
 
 - **OpenClaw adapter** — not in workspace; conformance audit blocked on checkout.
+- **MCP droplet** — redeploy needed for extended `add_memory` params (optional; bulk
+  importer path used for probe).
 
 ## Environment notes
 
 - Windows PowerShell 5.1 (no `&&`); use `working_directory` param for paths with
   spaces/parens.
+- `scripts/memory.py` shadows `src/memory/` if `scripts/` stays on `sys.path` — fixed
+  via path bootstrap in scripts.
 
 ## Next action
 
-> **RESUME HERE — Phase 5 migration (TDD start):**
-> Write `docs/design/migration-pipeline.md` (short), then add the first failing
-> test `tests/test_migration/test_import_md.py` for `.md` heading-split parsing;
-> implement `src/migration/import_md.py` to pass. Follow setup-prompt Phase 5
-> order: tests first, then code.
+> **RESUME HERE — reconciled fact seed:**
+> Load the reconciled portfolio fact set via `scripts/bulk_seed_importer.py` with
+> full metadata contract (`event_date`, `source`, `external_id`, `namespace`). Do not
+> bulk-load until operator supplies the reconciled JSON. Re-run
+> `scripts/acceptance_probe.py` if contract code changes.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 

@@ -25,11 +25,17 @@ class FakeClient:
         self,
         text: str,
         *,
-        user_id: str | None,
-        metadata: dict[str, Any],
+        user_id: str | None = None,
+        metadata: dict[str, Any] | None = None,
+        infer: bool = True,
     ) -> dict[str, Any]:
-        self.calls.append(("add", {"text": text, "user_id": user_id, "metadata": metadata}))
+        self.calls.append(
+            ("add", {"text": text, "user_id": user_id, "metadata": metadata, "infer": infer})
+        )
         return {"message": "ok"}
+
+    def add_memory_idempotent(self, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        return self.add_memory(*args, **kwargs)
 
     def list_memories(self, *, user_id: str | None) -> list[dict[str, str]]:
         self.calls.append(("list", {"user_id": user_id}))
@@ -65,9 +71,11 @@ def test_add_memory_tool_adds_source_metadata(monkeypatch: pytest.MonkeyPatch) -
     monkeypatch.setattr(server, "_client", lambda: fake)
 
     assert server.add_memory("remember me", user_id="u1") == {"message": "ok"}
-    assert fake.calls == [
-        ("add", {"text": "remember me", "user_id": "u1", "metadata": {"source": "mcp"}})
-    ]
+    meta = fake.calls[0][1]["metadata"]
+    assert meta["source"] == "mcp"
+    assert meta["namespace"] == "public"
+    assert meta["type"] == "fact"
+    assert meta["event_date"] == meta["occurred_at"]
 
 
 def test_list_memories_tool_delegates(monkeypatch: pytest.MonkeyPatch) -> None:

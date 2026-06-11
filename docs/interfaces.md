@@ -26,16 +26,20 @@
 - **What:** one `user_id` per person (`"chandrav"`); `metadata.source` is the
   mandatory discriminator (pgvector live — probed 2026-06-11; graph when LifeGraph
   writes Neo4j); `type` ∈
-  `fact | decision | open_item`; `created_at` always, `occurred_at` when event time
-  ≠ capture time; authored writes use `infer=False`.
+  `fact | decision | open_item`; `created_at` always (capture time); **`event_date`**
+  when event time ≠ capture time (dual-write `occurred_at` for ADR 029 compat);
+  optional `source_doc_id`, `namespace` (`public` \| `sensitive`, default `public`),
+  `external_id` on bulk/probe paths; entity names qualified inline in fact text;
+  authored writes use `infer=False`.
 - **Schema lives in:** `ai-memory-extension/src/types/api.ts`
-  (`DEFAULT_USER_ID='chandrav'`, `LEGACY_DEFAULT_USER_ID`, `source` in metadata),
-  `src/mcp_proxy/client.py`, `scripts/memory.py` (normalizing write path).
+  (`DEFAULT_USER_ID='chandrav'`, `LEGACY_DEFAULT_USER_ID`, `source` + `namespace`
+  in metadata), `src/memory/contract.py`, `src/mcp_proxy/client.py`,
+  `scripts/memory.py` (normalizing write path).
 - **Producers:** Chrome extension, MCP proxy `add_memory`, `scripts/memory.py`,
   OpenClaw adapter (future, ADR 026/028 — must pass `source`/`agent_id` through).
 - **Consumers:** Mem0 REST `/memories`, pgvector; future Neo4j/LifeGraph.
 - **ADRs:** 028 (single user_id; source discriminator), 029 (type + lifecycle),
-  003 (soft separation), 031 (contracts).
+  037 §6 (fact metadata), 003 (soft separation), 031 (contracts).
 - **Enforcement:** `scripts/check_memory_contract.py` (CI + can run pre-commit) —
   checks extension constants, a single normalizing write path, no direct
   `/memories` bypass, MCP proxy `DEFAULT_USER_ID`, and MCP `add_memory`
@@ -64,12 +68,27 @@
 - **Enforcement:** `tests/test_mcp_proxy/`; no cross-repo gate (proxy is the only
   consumer today).
 
+### 1b. Memory read contract — TESTED
+
+- **What:** `/search` is similarity-ranked; recency uses **`max(event_date)`**, never
+  `created_at`. Structured follow-ups use metadata filters (`type=open_item`,
+  `status=open`). Entity-collision queries rerank by inline-qualifier overlap.
+  Default reads filter `namespace=public`.
+- **Schema lives in:** `src/memory/retrieval.py`, `scripts/acceptance_probe.py`.
+- **ADR:** 037 §7.
+- **Enforcement:** `tests/test_memory/test_retrieval.py`,
+  `tests/test_scripts/test_acceptance_probe.py`; live gate
+  `scripts/acceptance_probe.py` (probed 2026-06-11 PASS).
+
 ### 3b. Bulk write idempotency — TESTED
 
-- **What:** scripted bulk seeds carry `metadata.external_id`; existence check before
-  write; timeout → verify-then-skip (never reword-retry). Offline near-dupe clustering
-  is review-first (`memory_compaction.py`).
-- **Schema lives in:** `scripts/bulk_seed_importer.py`, `scripts/memory_compaction.py`.
+- **What:** scripted bulk seeds carry `metadata.external_id`, `event_date`, `source`,
+  optional `source_doc_id` / `namespace`; existence check before write; timeout →
+  verify-then-skip (never reword-retry). Shared helper:
+  `src/mcp_proxy/idempotent_write.py`. Offline near-dupe clustering is review-first
+  (`memory_compaction.py`).
+- **Schema lives in:** `scripts/bulk_seed_importer.py`, `src/mcp_proxy/idempotent_write.py`,
+  `scripts/memory_compaction.py`.
 - **ADR:** 037.
 - **Enforcement:** `tests/test_scripts/test_bulk_seed_importer.py`; compaction is
   operator-scheduled (PROSE).
@@ -228,6 +247,7 @@
 | Contract | Enforcement | Cross-repo? |
 |---|---|---|
 | 1. Memory write | ENFORCED | yes |
+| 1b. Memory read | TESTED | no |
 | 2. Extension identity | ENFORCED | yes |
 | 3. MCP tool surface | TESTED | no |
 | 4. Mem0 REST shape | EXTERNAL | n/a (upstream) |

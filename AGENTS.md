@@ -199,6 +199,11 @@ over option lists; flag scope creep; call out trade-offs explicitly.
     deterministic `metadata.external_id` (`scripts/bulk_seed_importer.py`). On client
     timeout during `infer=True` extraction, **verify-then-skip** — never reword and
     retry (ADR 037).
+20. **Event time, namespace, and inline entity qualifiers.** Store `event_date` (not
+    just Mem0 `created_at`) on every fact; retrieval recency uses `max(event_date)`.
+    Use flat `namespace` tags (`public` | `sensitive`) on one `user_id`. Qualify
+    colliding entity names inline in fact text. Gate bulk load with
+    `scripts/acceptance_probe.py` (ADR 037).
 <!-- generated:agents-tenets end -->
 
 ## Architecture (summary)

@@ -60,7 +60,7 @@ def test_capture_open_item_sends_contract_metadata_and_infer_false() -> None:
     assert body["metadata"] == {
         "type": "open_item",
         "status": "open",
-        "source": "cursor",
+        "source": "cursor-repo",
         "due_at": "2026-06-12",
         "revisit_at": "2026-06-11",
         "ventures": ["career"],
