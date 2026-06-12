@@ -31,6 +31,14 @@ def test_threshold_check_passes_on_bundled_gold() -> None:
     assert failures == []
 
 
+def test_adr007_default_thresholds_pass_on_bundled_gold() -> None:
+    """Synthetic gold must satisfy the CI eval gate (scripts/run_eval_gate.py)."""
+    from eval.runners import DEFAULT_THRESHOLDS
+
+    results = run_all_suites(_GOLD)
+    assert check_thresholds(results, DEFAULT_THRESHOLDS) == []
+
+
 def test_markdown_report_renders_suite_output() -> None:
     results = run_all_suites(_GOLD)
     report = render_markdown_report(results)

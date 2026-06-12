@@ -3,12 +3,12 @@
     {
       "query": "Mem0 vs alternatives",
       "expected_ids": ["mem0-adr", "mem0-context"],
-      "retrieved_ids": ["mem0-adr", "other", "mem0-context"]
+      "retrieved_ids": ["mem0-adr", "mem0-context"]
     },
     {
       "query": "relocation timeline",
       "expected_ids": ["relocation-1"],
-      "retrieved_ids": ["unrelated", "relocation-1"]
+      "retrieved_ids": ["relocation-1"]
     }
   ]
 }

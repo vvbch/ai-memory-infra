@@ -45,3 +45,6 @@ jobs:
 
       - name: Editor pointer-file purity (ADR 018)
         run: python scripts/check_pointer_purity.py
+
+      - name: Eval regression gate (ADR 007, synthetic gold)
+        run: python scripts/run_eval_gate.py

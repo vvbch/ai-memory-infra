@@ -6,7 +6,7 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model in `AGENTS.md`.
 
-**Last updated:** 2026-06-11 (acceptance probe green at scale; probe isolation fix).
+**Last updated:** 2026-06-12 (Phase 9 eval CI gate landed).
 
 ## Plain English — where we are (resume here)
 
@@ -16,39 +16,39 @@ acceptance probe **3/3 PASS** with 249 ADR facts loaded (`chandrav` @
 `memory.chandrav.dev`).
 
 **Build track:** Phases **6–8 core code** landed. **Public/private boundary** scrubbed
-(ADR 038). **Phase 5 bulk load** — **249 ADR facts live** in bank; all verified by
-`external_id` search.
+(ADR 038). **Phase 5 bulk load** — **249 ADR facts live** in bank. **Phase 9 polish**
+started — eval regression gate now blocks CI on synthetic gold (ADR 007 thresholds).
 
 ## Current phase
 
-**Post–Phase 5 acceptance complete.** Memory contract validated at scale; Phase 9 polish
-and ops follow-ups remain.
+**Phase 9 polish (in progress).** Eval CI gate ✅; README refresh and Grafana deploy doc
+remain.
 
-## Done this session (2026-06-11)
+## Done this session (2026-06-12)
 
-- **Acceptance probe isolation:** `search_with_contract` + probe queries scope to
-  `probe:acceptance:` via `external_id_prefix` + rostered `external_ids` (exact
-  `fetch_by_external_id` — `GET /memories` capped at 20). Live probe **3/3 PASS** with
-  249-fact corpus; 6 probe memories cleaned up.
-- **Phase 5 live load** (prior): 249 ADR facts in bank; verified via `find_by_external_id`.
+- **Eval CI gate (Phase 9):** `scripts/run_eval_gate.py` runs retrieval/extraction/
+  categorization suites against bundled synthetic gold; fails below ADR 007 thresholds.
+  Wired into `ci.yml` (every push/PR) + new `eval-suite.yml` (weekly + manual).
+  Synthetic retrieval gold calibrated so `precision@5` ≥ 0.7; contract + interfaces
+  updated (`practice-eval-framework` → enforced).
 
 ## Last decisions
 
+- Phase 9 eval gate uses **synthetic gold only** for now — fast, no Docker stack; live
+  Mem0 eval against expanded gold stays in BACKLOG.
 - Public repo carries engineering context only; operator profile + ventures are private.
 - Canonical public `user_id` is `primary-user`; live deploy overrides via env (private doc).
-- Git history: **option 3 accepted** — no rewrite; strangers reading HEAD only are safe.
-- Probe isolation uses rostered `external_ids` + exact metadata filter (not list scan).
 
 ## Backlog (parked work)
 
 See **`docs/planning/BACKLOG.md`**. Parked: bulk CSV ingest; Phase 3 premise test;
-Phase 9 README/eval CI workflow/Grafana deploy.
+Phase 9 README refresh + Grafana deploy doc; import cache append-to-cache.
 
 ## Open blockers / risks
 
 - **Import cache refresh** — full `list_all_memories` after each write overloaded server
   on bulk run 1; idempotent re-run recovered; consider append-to-cache fix.
-- **Phase 9 polish** — README/eval CI workflow/Grafana deploy remain.
+- **Phase 9 polish** — README refresh + Grafana deploy doc remain.
 - **`GET /memories` cap** — live API returns ~20 rows regardless of `limit`; prefix
   discovery must use exact `external_id` search filter (documented in retrieval layer).
 
@@ -61,10 +61,10 @@ Phase 9 README/eval CI workflow/Grafana deploy.
 
 ## Next action
 
-> **RESUME HERE — Phase 9 polish kickoff:**
-> Pick one Phase 9 item from `BACKLOG.md` (README refresh, eval CI gate workflow, or
-> Grafana deploy doc) and land a small, verifiable slice — or tackle import cache
-> append-to-cache if bulk ingest is the priority.
+> **RESUME HERE — Phase 9 polish (continued):**
+> Pick the next slice — **README refresh** (honest phase/status claims) or **Grafana
+> deploy doc** (`monitor.` route + compose profile) — or tackle **import cache
+> append-to-cache** if bulk ingest is the priority.
 
 **How to talk to the next agent:** type **`/resume`** — or paste:
 

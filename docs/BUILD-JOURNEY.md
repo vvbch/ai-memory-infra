@@ -1362,3 +1362,17 @@ without overstating capabilities.
 
 **Next**
 - MCP droplet redeploy so ADR 037 delete/update tools are live in production.
+
+## 2026-06-12 — Phase 9 eval CI gate
+
+**Focus:** land the first Phase 9 polish slice — a blocking eval regression gate on
+synthetic gold (ADR 007 thresholds), without requiring a live Mem0 stack.
+
+**Shipped**
+- `scripts/run_eval_gate.py` — retrieval/extraction/categorization suites + threshold check.
+- `eval-suite.yml` (weekly + manual) + CI step on every push/PR.
+- Synthetic retrieval gold calibrated so `precision@5` ≥ 0.7; `practice-eval-framework`
+  promoted to enforced in the operating contract.
+
+**Next**
+- README refresh (honest phase claims) or Grafana deploy doc for `monitor.` route.

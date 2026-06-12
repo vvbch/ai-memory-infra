@@ -47,14 +47,15 @@ rules:
   title: Eval framework
   severity: normal
   enforcement:
-    status: prose
-    mechanism: target (Phase 7); src/eval/ is a stub
-    gate_id: null
+    status: enforced
+    mechanism: scripts/run_eval_gate.py (CI + weekly eval-suite.yml); synthetic gold only
+    gate_id: eval-regression-gate
   agents_md: |-
     - **Eval framework** — **partly [in place], partly [target — Phase 7/9]**. In
       place: retrieval/extraction/categorization metrics, guardrails, starter synthetic
-      gold data in `src/eval/`. Target: blocking CI regression gate, expanded gold
-      datasets, full cross-LLM extraction matrix (ADR 007/014).
+      gold data in `src/eval/`, **blocking CI regression gate** on synthetic gold
+      (`scripts/run_eval_gate.py`, ADR 007 thresholds). Target: live-stack eval,
+      expanded gold datasets, full cross-LLM extraction matrix (ADR 007/014).
 - id: practice-security
   title: Security
   severity: high

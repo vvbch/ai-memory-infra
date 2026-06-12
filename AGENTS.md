@@ -200,8 +200,9 @@ not yet built). Keep these tags honest — a claim outrunning reality is itself 
   rollback. **Today deploys are manual SSH** (`make deploy`); no `cd.yml` yet.
 - **Eval framework** — **partly [in place], partly [target — Phase 7/9]**. In
   place: retrieval/extraction/categorization metrics, guardrails, starter synthetic
-  gold data in `src/eval/`. Target: blocking CI regression gate, expanded gold
-  datasets, full cross-LLM extraction matrix (ADR 007/014).
+  gold data in `src/eval/`, **blocking CI regression gate** on synthetic gold
+  (`scripts/run_eval_gate.py`, ADR 007 thresholds). Target: live-stack eval,
+  expanded gold datasets, full cross-LLM extraction matrix (ADR 007/014).
 - **Security** — **partly [in place], partly [target — Phase 9/security]**. In
   place: HTTPS (Caddy), an admin `X-API-Key` + JWT support on the API, basic auth on
   admin UIs, least-privilege backup key, gitleaks. Target (not yet built): PII filter
@@ -223,7 +224,7 @@ Status as of 2026-06-11 — keep honest (COE 2026-06-10-delayed-memory-buildout)
 - **4 Claude + Cursor/VS Code MCP** — ✅ done (local stdio proxy + remote HTTP MCP)
 - **5 migration (TDD)** — ✅ core pipeline (`src/migration/`); live bulk load pending
 - **6 LifeGraph (TDD)** — ✅ in-memory POC (`src/life_graph/`); live Neo4j seed **[target]**
-- **7 eval framework (TDD)** — ✅ starter metrics + synthetic gold; CI gate **[target]**
+- **7 eval framework (TDD)** — ✅ starter metrics + synthetic gold; CI gate on synthetic gold ✅; live-stack eval **[target]**
 - **8 observability** — ✅ metrics, drift, alerts, health checker
 - **9 docs/polish** — ⬜ ongoing
 

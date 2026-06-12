@@ -7,7 +7,7 @@
 > **prose** (relies on the agent reading and honoring it — the model-dependent
 > surface ADR 033 exists to shrink).
 
-**Summary:** 40 rules — 12 enforced · 1 tested · 27 prose.
+**Summary:** 40 rules — 13 enforced · 1 tested · 26 prose.
 
 ## Tenets
 | id | rule | severity | enforcement | mechanism |
@@ -40,7 +40,7 @@
 | `practice-tdd` | TDD | critical | **enforced** | pytest --cov-fail-under=80 on src/ (CI) |
 | `practice-ci` | CI | critical | **enforced** | .github/workflows/ci.yml (ruff + mypy + pytest + contract/STATUS gates) |
 | `practice-cd` | CD | normal | **prose** | target (Phase 1/ops); deploys are manual SSH today |
-| `practice-eval-framework` | Eval framework | normal | **prose** | target (Phase 7); src/eval/ is a stub |
+| `practice-eval-framework` | Eval framework | normal | **enforced** | scripts/run_eval_gate.py (CI + weekly eval-suite.yml); synthetic gold only |
 | `practice-security` | Security | high | **prose** | partial: HTTPS + gitleaks in place; PII filter / CORS / rate-limit are target |
 | `practice-adrs` | ADRs | normal | **prose** | convention: docs/decisions/ per major choice |
 | `practice-supply-chain` | Supply chain | normal | **prose** | target: lockfile / pinning / Dependabot not yet in place |

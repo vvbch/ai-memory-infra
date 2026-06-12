@@ -211,7 +211,20 @@
 - **Enforcement:** installer-generated (re-run after re-clone); skill bodies are
   pointers, so drift surface is minimal.
 
-### 13. Remote MCP HTTP surface (`mcp.` subdomain) — TESTED / live
+### 13. Eval regression gate — ENFORCED (synthetic gold)
+
+- **What:** retrieval, extraction, and categorization suites run against bundled
+  synthetic gold in `src/eval/gold_standard/`; fails when metrics drop below ADR 007
+  thresholds (`precision@5` ≥ 0.7, extraction recall ≥ 0.8, categorization accuracy ≥
+  0.8). Fast path — no live Mem0 stack. Live-stack eval against expanded gold is a
+  follow-up (BACKLOG).
+- **Schema lives in:** `src/eval/runners.py` (`DEFAULT_THRESHOLDS`),
+  `scripts/run_eval_gate.py`, `.github/workflows/eval-suite.yml`.
+- **ADR:** 007 (eval framework design).
+- **Enforcement:** `python scripts/run_eval_gate.py` (CI on every push/PR +
+  weekly `eval-suite.yml` + `workflow_dispatch`); posts Markdown summary artifact.
+
+### 14. Remote MCP HTTP surface (`mcp.` subdomain) — TESTED / live
 
 - **What:** Streamable HTTP MCP at `https://mcp.example.com/` for remote
   OAuth connector clients: claude.ai (incl. iPhone), Perplexity custom
@@ -259,7 +272,8 @@
 | 10. Pointer-file purity | ENFORCED | no |
 | 11. Final handoff | TESTED | yes (all repos) |
 | 12. Agent skills | installer-generated | no |
-| 13. Remote MCP HTTP | TESTED / live | no |
+| 13. Eval regression gate | ENFORCED | no |
+| 14. Remote MCP HTTP | TESTED / live | no |
 
 > The gap this registry makes visible: contracts 1, 2, 8, 9, and 10 are
 > deterministically enforced; 5 (auth/guardrails) is the weakest and is tracked
