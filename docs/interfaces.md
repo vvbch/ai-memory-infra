@@ -23,7 +23,7 @@
 
 ### 1. Memory write contract — ENFORCED (cross-repo)
 
-- **What:** one `user_id` per person (`"the operatorv"`); `metadata.source` is the
+- **What:** one `user_id` per person (`"primary-user"`); `metadata.source` is the
   mandatory discriminator (pgvector live — probed 2026-06-11; graph when LifeGraph
   writes Neo4j); `type` ∈
   `fact | decision | open_item`; `created_at` always (capture time); **`event_date`**
@@ -50,7 +50,7 @@
 ### 2. Extension ↔ API identity contract — ENFORCED (cross-repo)
 
 - **What:** the extension tags every write `metadata.source = "extension"` and uses
-  `user_id = "the operatorv"`; legacy `"chrome-extension-user"` ids are auto-healed.
+  `user_id = "primary-user"`; legacy `"chrome-extension-user"` ids are auto-healed.
 - **Schema lives in:** `ai-memory-extension/src/types/api.ts`.
 - **ADRs:** 028. **Ties:** COE 2026-06-09-extension-memory-identity-drift.
 - **Enforcement:** `scripts/check_memory_contract.py` (extension-constants check).

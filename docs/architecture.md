@@ -86,7 +86,7 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | OpenAI `gpt-5-mini` — extraction LLM | Pulls discrete facts out of conversations; chosen for structured-output reliability (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹90/mo)** |
 | OpenAI `text-embedding-3-small` — embeddings | Vectorizes facts + queries for pgvector similarity search (Mem0's default embedder) | **(~₹15/mo)** |
 | DO Spaces — backup object storage | Off-box destination for daily `pg_dump` + Neo4j dumps (Phase 2) | **(~₹400/mo)** |
-| GitHub — repo + Actions (CI/CD) | Source of truth, CI on PRs, CD to the VPS, weekly backup/eval jobs | **(₹0)** (free for public repo) |
+| GitHub — repo + Actions (CI) | Source of truth, CI on PRs, weekly eval job; CD manual SSH today | **(₹0)** (free for public repo) |
 | | **Approx. total** | **~₹2,590/mo** |
 
 > **List price vs. landed cost (TCO).** The figures above are **vendor list price**

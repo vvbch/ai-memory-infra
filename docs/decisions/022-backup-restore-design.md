@@ -12,7 +12,7 @@ Mem0 + LifeGraph knowledge graph), and a **mem0 SQLite "history" DB** (the
 edit log, in the `mem0_history` volume at `/app/history`). A disk loss, a bad
 `compose up`, or a fat-fingered delete would be unrecoverable. Phase 2's job:
 snapshot all three to the already-provisioned Spaces bucket
-(`ai-memory-infra-backups-the operatorv`, sgp1) and prove a restore round-trips.
+(`ai-memory-infra-backups-example`, sgp1) and prove a restore round-trips.
 
 `scripts/backup.sh` / `scripts/restore.sh` existed only as empty scaffolding.
 

@@ -121,7 +121,7 @@ flowchart LR
 - **Mem0 down:** OAuth still answers; tool calls return the API error — same
   as today (tenet 4: other surfaces unaffected).
 - **Blast radius of a leaked access token:** 1 h of the three MCP tools as
-  `the operatorv`; refresh leak: 60 d, revocable by deleting the state file entry or
+  `primary-user`; refresh leak: 60 d, revocable by deleting the state file entry or
   rotating the consent secret.
 
 ## 6. Security & privacy

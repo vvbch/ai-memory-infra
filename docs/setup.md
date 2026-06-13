@@ -233,7 +233,7 @@ The scripts read the bucket + Spaces keys from `infra/.env`. Add these (the same
 Spaces pair as `terraform.tfvars`; see `.env.example`) — **never** commit them:
 
 ```bash
-BACKUP_BUCKET=ai-memory-infra-backups-the operatorv
+BACKUP_BUCKET=ai-memory-infra-backups-example
 SPACES_REGION=sgp1
 SPACES_ACCESS_KEY=...      # DO console → API → Spaces Keys
 SPACES_SECRET_KEY=...
@@ -311,7 +311,7 @@ Set these on the machine that starts the MCP client:
 
 ```powershell
 $env:AI_MEMORY_BASE_URL = "https://memory.example.com"
-$env:AI_MEMORY_USER_ID = "the operatorv"
+$env:AI_MEMORY_USER_ID = "primary-user"
 $env:AI_MEMORY_API_KEY = "<from the password manager: ai-memory-infra ADMIN_API_KEY>"
 ```
 
@@ -330,7 +330,7 @@ Use a stdio server that runs the installed entrypoint:
       "command": "ai-memory-mcp",
       "env": {
         "AI_MEMORY_BASE_URL": "https://memory.example.com",
-        "AI_MEMORY_USER_ID": "the operatorv",
+        "AI_MEMORY_USER_ID": "primary-user",
         "AI_MEMORY_API_KEY": "${env:AI_MEMORY_API_KEY}"
       }
     }
