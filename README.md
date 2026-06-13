@@ -32,7 +32,7 @@ cp infra/.env.example infra/.env   # fill in secrets
 
 ## Engineering
 
-Terraform IaC, GitHub Actions CI/CD, TDD (80%+ coverage), eval suite with
+Terraform IaC, GitHub Actions CI (CD target), TDD (80%+ coverage), eval suite with
 guardrail tests, Prometheus + Grafana, ADRs in `docs/decisions/`. Tenets in
 `docs/tenets.md`. Canonical agent context in `AGENTS.md`.
 

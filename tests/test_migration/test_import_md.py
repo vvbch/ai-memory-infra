@@ -7,7 +7,6 @@ from pathlib import Path
 
 from migration import import_md
 
-
 SAMPLE = """\
 Preamble paragraph before any heading.
 

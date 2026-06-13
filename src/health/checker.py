@@ -46,4 +46,6 @@ def check_all(probes: dict[str, HealthProbe]) -> HealthReport:
 def check_http_status(response: dict[str, Any], *, expected: int = 200) -> bool:
     """Helper for API health endpoints."""
     status = response.get("status_code", response.get("status"))
+    if status is None:
+        return False
     return int(status) == expected
