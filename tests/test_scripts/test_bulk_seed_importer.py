@@ -142,3 +142,28 @@ def test_rejects_missing_event_date() -> None:
         ],
     )
     assert outcomes[0]["status"] == "invalid"
+
+
+def test_writes_append_cache_without_relisting() -> None:
+    client = FakeClient()
+    list_calls = 0
+    orig_list = client.list_memories
+
+    def counting_list(*args: Any, **kwargs: Any) -> Any:
+        nonlocal list_calls
+        list_calls += 1
+        return orig_list(*args, **kwargs)
+
+    client.list_memories = counting_list  # type: ignore[method-assign]
+
+    facts = [
+        _fact(external_id="seed:1", text="first"),
+        _fact(external_id="seed:2", text="second"),
+        _fact(external_id="seed:3", text="third"),
+    ]
+    outcomes = import_facts(client, facts)
+
+    assert list_calls == 1
+    assert len(client.writes) == 3
+    assert all(o["status"] == "written" for o in outcomes)
+    assert find_by_external_id(client, "seed:3", cache=client.memories) is not None

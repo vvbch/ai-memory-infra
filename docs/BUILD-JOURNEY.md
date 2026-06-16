@@ -1402,3 +1402,14 @@ operator walkthrough (ADR 008).
 
 **Next**
 - Operator VPS enable (`make deploy-obs`) or import-cache append-to-cache.
+
+## 2026-06-16 — Import cache append-to-cache
+
+**Focus:** stop full `list_all_memories` refresh after each bulk write (STATUS blocker).
+
+**Shipped**
+- `idempotent_write.py` — `append_cache_record` / `update_cache_after_write`; bulk
+  importer uses append-only cache updates; tests for no re-list on multi-write.
+
+**Next**
+- Operator VPS `make deploy-obs` or next backlog slice.

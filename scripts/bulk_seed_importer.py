@@ -177,8 +177,6 @@ def import_facts(
             cache=cache,
         )
         outcomes.append(outcome)
-        if outcome["status"] == "written":
-            cache[:] = list_all_memories(client, user_id=user_id)
 
     return outcomes
 
