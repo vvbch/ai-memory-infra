@@ -1376,3 +1376,16 @@ synthetic gold (ADR 007 thresholds), without requiring a live Mem0 stack.
 
 **Next**
 - README refresh (honest phase claims) or Grafana deploy doc for `monitor.` route.
+
+## 2026-06-16 — Phase 9 README refresh
+
+**Focus:** first Phase 9 polish slice after the eval gate — make the public README
+match reality (tenet 10; no inflated phase claims).
+
+**Shipped**
+- `README.md` — remote MCP live, LifeGraph in-memory POC, manual SSH deploy, eval CI
+  gate, observability code vs Grafana `monitor.` deploy target; build-status table +
+  `docs/setup.md` pointer.
+
+**Next**
+- Grafana deploy doc (`monitor.` route + compose profile) or import-cache append-to-cache.
