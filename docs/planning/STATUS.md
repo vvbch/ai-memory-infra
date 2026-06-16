@@ -6,62 +6,64 @@
 > resume.** History lives in the private `BUILD-LOG.md`; reasoning in
 > `docs/decisions/`; working model in `AGENTS.md`.
 
-**Last updated:** 2026-06-16 (import cache append-to-cache).
+**Last updated:** 2026-06-16 (LifeGraph redesign handoff).
 
 ## Plain English — where we are (resume here)
 
 **The product:** self-hosted memory at `https://memory.example.com/docs` (operators
 override via env — see private `OPERATOR.md`). Memory write/read contract **green** —
-acceptance probe **3/3 PASS** with 249 ADR facts loaded (`chandrav` @
+acceptance probe **3/3 PASS** with 249 ADR facts in Mem0/pgvector (`chandrav` @
 `memory.chandrav.dev`).
 
-**Build track:** Phases **6–8 core code** landed. **Phase 9 polish** — eval CI gate ✅;
-README refresh ✅; Grafana deploy doc + compose profile ✅; bulk import cache fix ✅.
+**Graph reality:** Neo4j is **up but empty** (0 nodes). Memories are **not**
+visualized as a graph today — only list/search via API/dashboard. **LifeGraph** (the
+planned professional-life knowledge graph) was a **small in-memory POC** in code;
+operator wants a **redesign from scratch** — see `docs/design/lifegraph.md`.
+
+**Build track:** Phase 9 polish largely done (eval gate, README, Grafana doc, import
+cache fix). **New thread:** LifeGraph redesign.
 
 ## Current phase
 
-**Phase 9 polish (wrap-up).** Code/doc slices done. Remaining: operator enables
-`monitor.` on VPS (`make deploy-obs`).
+**LifeGraph redesign (draft).** Park Phase 9 operator chores (VPS `make deploy-obs`)
+unless blocking.
 
 ## Done this session (2026-06-16)
 
-- **Import cache append-to-cache:** bulk seed importer no longer calls
-  `list_all_memories` after every write — cache extends from the write response or a
-  targeted `external_id` search (`idempotent_write.py`).
+- **Handoff:** documented what LifeGraph was vs what exists live; added redesign
+  kickoff `docs/design/lifegraph.md` with open questions — POC in `src/life_graph/`
+  frozen until new design approved.
 
 ## Last decisions
 
-- Bulk import cache: append on write / verify-after-timeout; full list only at start.
-- Observability stays **profile-gated** — `make deploy-obs` on VPS is operator SSH.
-- Mem0 `/metrics` scrape target may stay DOWN until ADR 014 app instrumentation ships.
+- **LifeGraph:** redesign from scratch — do not extend in-memory POC without approved
+  `docs/design/lifegraph.md` HLD.
+- Neo4j stays provisioned; backfill waits on new design + ADR if model changes.
+- Mem0 remains vector source of truth for facts; graph is a projection (default
+  assumption — confirm in redesign workshop).
 
 ## Backlog (parked work)
 
-See **`docs/planning/BACKLOG.md`**. Parked: bulk CSV ingest; Phase 3 premise test;
-live VPS `monitor.` enable (operator SSH).
+See **`docs/planning/BACKLOG.md`**. Parked: VPS `monitor.` enable; bulk CSV ingest;
+Phase 3 premise test.
 
 ## Open blockers / risks
 
-- **`GET /memories` cap** — live API returns ~20 rows regardless of `limit`; prefix
-  discovery must use exact `external_id` search filter (documented in retrieval layer).
-- **Mem0 `/metrics`** — Prometheus job configured; endpoint not yet on Mem0 server.
+- **No graph visualization** until LifeGraph redesign lands + Neo4j seed.
+- **`GET /memories` cap** — ~20 rows per list; use `external_id` search filter.
+- **Mem0 `/metrics`** — not on server yet.
 
 ## Environment notes
 
 - Windows PowerShell 5.1 (no `&&`); use `working_directory` for paths with spaces.
-- Live env: `chandrav` @ `https://memory.chandrav.dev` (setx persisted 2026-06-11).
-- Cursor shells may need env reload:
-  `$env:AI_MEMORY_BASE_URL = [Environment]::GetEnvironmentVariable('AI_MEMORY_BASE_URL','User')`
+- Live env: `chandrav` @ `https://memory.chandrav.dev`.
+- Neo4j Browser: `https://graph.chandrav.dev` (empty).
 
 ## Next action
 
-> **RESUME HERE — operator one-way door or new thread:**
-> **Operator:** SSH to VPS, set `GRAFANA_ADMIN_PASSWORD` in `infra/.env`, run
-> `make deploy-obs`, verify `https://monitor.<domain>/` (`docs/observability-deploy.md`).
-> Or pick next backlog slice (bulk CSV ingest, Phase 3 premise test).
+> **RESUME HERE — LifeGraph redesign:**
+> Read `docs/design/lifegraph.md` (legacy POC summary + open questions). Workshop
+> HLD with operator: problem, scope, visualization, Mem0↔Neo4j sync, public
+> boundary. Output: approved design doc §2–4, then ADR if needed, then TDD.
 
-**How to talk to the next agent:** type **`/resume`** — or paste:
-
-```
-Resume ai-memory-infra — read docs/planning/STATUS.md (Plain English + Next action) and AGENTS.md, run repo-health, then do the Next action.
-```
+**How to talk to the next agent:** type **`/resume`** — or paste the handoff below.

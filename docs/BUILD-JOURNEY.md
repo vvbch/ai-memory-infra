@@ -1413,3 +1413,14 @@ operator walkthrough (ADR 008).
 
 **Next**
 - Operator VPS `make deploy-obs` or next backlog slice.
+
+## 2026-06-16 — LifeGraph redesign handoff
+
+**Focus:** operator asked what LifeGraph is and to redesign from scratch.
+
+**Shipped**
+- `docs/design/lifegraph.md` — legacy POC summary, live-vs-planned gap, open questions.
+- STATUS repointed to LifeGraph redesign thread; in-memory POC frozen.
+
+**Next**
+- Workshop LifeGraph HLD with operator; then ADR + TDD.
