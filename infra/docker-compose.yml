@@ -8,9 +8,9 @@
 #                   NOT written by the deployed Mem0 (it ships no graph store; ADR 032)
 #   mem0-dashboard  Next.js admin UI (ships in the OSS server compose)
 #
-# Prometheus + Grafana are intentionally NOT here yet — they're Phase 8
-# (tenet 7: add a moving part only when its value beats its upkeep). The
-# `monitor.` subdomain/DNS is reserved now; its Caddy route lights up in Phase 8.
+# Prometheus + Grafana are gated behind the `observability` compose profile
+# (infra/docker-compose.observability.yml; tenet 7). The `monitor.` Caddy route
+# and Terraform DNS record are ready — enable the profile when you want Grafana live.
 #
 # All ports bind to 127.0.0.1 — nothing is directly reachable except through
 # Caddy. Secrets and model/provider settings come from .env (see .env.example).

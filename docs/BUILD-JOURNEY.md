@@ -1389,3 +1389,16 @@ match reality (tenet 10; no inflated phase claims).
 
 **Next**
 - Grafana deploy doc (`monitor.` route + compose profile) or import-cache append-to-cache.
+
+## 2026-06-16 — Phase 9 Grafana deploy doc
+
+**Focus:** wire `monitor.` Caddy route + Prometheus/Grafana compose profile with
+operator walkthrough (ADR 008).
+
+**Shipped**
+- `docs/observability-deploy.md`; `infra/docker-compose.observability.yml` (`observability`
+  profile); Prometheus/Grafana provisioning; starter dashboards; `make deploy-obs`;
+  Caddy `monitor.` route enabled.
+
+**Next**
+- Operator VPS enable (`make deploy-obs`) or import-cache append-to-cache.

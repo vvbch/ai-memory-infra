@@ -1,0 +1,79 @@
+# Observability overlay (Phase 8) — Prometheus + Grafana + node-exporter.
+#
+# Gated behind the `observability` compose profile (tenet 7): the default stack
+# stays lean; enable when you want `monitor.{DOMAIN}` live.
+#
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#     -f docker-compose.observability.yml --profile observability up -d
+#
+# Walkthrough: docs/observability-deploy.md
+
+services:
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    profiles: ["observability"]
+    restart: unless-stopped
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--storage.tsdb.retention.time=15d"
+      - "--web.enable-lifecycle"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    expose:
+      - "9090"
+    networks:
+      - mem0_network
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    profiles: ["observability"]
+    restart: unless-stopped
+    environment:
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?set GRAFANA_ADMIN_PASSWORD in infra/.env}
+      - GF_SERVER_ROOT_URL=https://monitor.${DOMAIN}
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ../src/observability/dashboards:/etc/grafana/dashboards:ro
+    depends_on:
+      prometheus:
+        condition: service_started
+    expose:
+      - "3000"
+    networks:
+      - mem0_network
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+
+  node-exporter:
+    image: prom/node-exporter:v1.8.2
+    profiles: ["observability"]
+    restart: unless-stopped
+    command:
+      - "--path.rootfs=/host"
+    pid: host
+    volumes:
+      - "/:/host:ro,rslave"
+    expose:
+      - "9100"
+    networks:
+      - mem0_network
+    deploy:
+      resources:
+        limits:
+          memory: 64M
+
+volumes:
+  prometheus_data:
+  grafana_data:

@@ -197,8 +197,9 @@ curl -fsS https://memory.<domain>/docs >/dev/null && echo OK
 ```
 
 Then in a browser: `https://dash.<domain>` (dashboard, basic-auth),
-`https://graph.<domain>` (Neo4j Browser, basic-auth). `monitor.` activates in
-Phase 8.
+`https://graph.<domain>` (Neo4j Browser, basic-auth). To enable Grafana on
+`https://monitor.<domain>`, follow **`docs/observability-deploy.md`** (observability
+compose profile).
 
 > **Deeper:** First TLS handshake may take a few seconds while Caddy fetches
 > Let's Encrypt certs. If you get cert errors, confirm DNS resolves to the droplet

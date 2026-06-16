@@ -132,10 +132,13 @@
 
 - **What:** `memory.` → Mem0 API (JWT + CORS); `dash.` → Mem0 dashboard (basic
   auth); `graph.` → Neo4j Browser (basic auth); `monitor.` → Grafana (basic auth,
-  Phase 8 — DNS reserved, route lights up later). Only Caddy faces the internet.
-- **Schema lives in:** `infra/Caddyfile`, Terraform `subdomains` (`variables.tf`).
-- **ADRs:** 009 (network isolation), 016 (DNS/registrar).
-- **Enforcement:** live deployment; `monitor.` is reserved, not yet serving.
+  `observability` compose profile — see `docs/observability-deploy.md`). Only Caddy
+  faces the internet.
+- **Schema lives in:** `infra/Caddyfile`, Terraform `subdomains` (`variables.tf`),
+  `infra/docker-compose.observability.yml`.
+- **ADRs:** 009 (network isolation), 016 (DNS/registrar), 008 (observability stack).
+- **Enforcement:** live deployment; `monitor.` serves Grafana when the observability
+  profile is enabled (502 when profile off).
 
 ### 8. Harness hook / gate I/O contract — ENFORCED (model-independent)
 

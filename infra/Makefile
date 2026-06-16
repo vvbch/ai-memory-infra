@@ -44,6 +44,15 @@ deploy: ## Pull + restart prod stack (used by CD)
 	$(COMPOSE) $(PROD) pull
 	$(COMPOSE) $(PROD) up -d
 
+.PHONY: deploy-obs
+deploy-obs: ## Pull + restart prod stack with observability profile
+	$(COMPOSE) $(PROD) -f docker-compose.observability.yml --profile observability pull
+	$(COMPOSE) $(PROD) -f docker-compose.observability.yml --profile observability up -d
+
+.PHONY: prod-up-obs
+prod-up-obs: ## Start prod stack + observability profile
+	$(COMPOSE) $(PROD) -f docker-compose.observability.yml --profile observability up -d
+
 .PHONY: health
 health: ## Hit the local API health/docs endpoint
 	curl -fsS http://127.0.0.1:8888/docs >/dev/null && echo "OK" || (echo "DOWN"; exit 1)

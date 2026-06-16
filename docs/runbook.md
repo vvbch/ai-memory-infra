@@ -100,5 +100,23 @@ for a dry run), a confirmed wrapper around `terraform destroy`.
 
 ---
 
-> _Remaining runbook sections (deploy recovery, backup/restore, model swap)
-> land with Phases 2+._
+## Observability (Prometheus + Grafana)
+
+Enable the **`observability` compose profile** on the VPS so `monitor.{DOMAIN}`
+serves Grafana behind Caddy basic auth. Full walkthrough:
+**`docs/observability-deploy.md`**.
+
+Quick reference (on the VPS, from `infra/`):
+
+```bash
+make deploy-obs
+# or: docker compose -f docker-compose.yml -f docker-compose.prod.yml \
+#       -f docker-compose.observability.yml --profile observability up -d
+```
+
+Rollback: same compose files with `down` (memory stack keeps running).
+
+---
+
+> _Remaining runbook sections (deploy recovery beyond observability, model swap)
+> land with later ops passes._

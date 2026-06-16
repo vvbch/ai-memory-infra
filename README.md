@@ -47,7 +47,7 @@ Session state and next action: `docs/planning/STATUS.md`. Full phase map:
 | Migration pipeline + bulk load | ✅ `src/migration/`; ADR facts loaded |
 | LifeGraph POC | ✅ in-memory (`src/life_graph/`); live Neo4j seed **[target]** |
 | Eval regression gate | ✅ synthetic gold blocks CI (`scripts/run_eval_gate.py`) |
-| Observability | ✅ metrics, drift, alerts, health checker in code; Grafana `monitor.` route deploy **[target]** |
+| Observability | ✅ metrics, drift, alerts, health checker in code; Grafana via **`observability` compose profile** — see `docs/observability-deploy.md` |
 
 ## Engineering
 
