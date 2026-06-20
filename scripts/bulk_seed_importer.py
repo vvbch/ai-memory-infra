@@ -47,13 +47,6 @@ if _SRC not in sys.path:
 if _SCRIPT_DIR in sys.path:
     sys.path.remove(_SCRIPT_DIR)
 
-from memory.contract import (  # noqa: E402
-    EXTERNAL_ID_KEY,
-    MemoryContractError,
-    build_fact_metadata,
-    validate_fact_metadata,
-    validate_fact_text,
-)
 from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
 from mcp_proxy.idempotent_write import (  # noqa: E402
     DEFAULT_VERIFY_INTERVAL_S,
@@ -64,6 +57,12 @@ from mcp_proxy.idempotent_write import (  # noqa: E402
     verify_interval_seconds,
     verify_window_seconds,
     write_timeout_seconds,
+)
+from memory.contract import (  # noqa: E402
+    MemoryContractError,
+    build_fact_metadata,
+    validate_fact_metadata,
+    validate_fact_text,
 )
 
 
@@ -199,7 +198,8 @@ def _parse_args(argv: list[str]) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(sys.argv[1:] if argv is None else argv)
-    payload = json.loads(open(args.input, encoding="utf-8").read())
+    with open(args.input, encoding="utf-8") as fh:
+        payload = json.loads(fh.read())
     facts = payload.get("facts") if isinstance(payload, dict) else payload
     if not isinstance(facts, list):
         print("ERROR: input must be a JSON object with a 'facts' array", file=sys.stderr)

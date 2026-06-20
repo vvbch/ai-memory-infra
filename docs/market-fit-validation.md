@@ -11,7 +11,7 @@ The project was validated against the 2026 AI Engineer hiring checklist (10 skil
 | Prompt engineering | ⚠️ Implicit (extraction prompts) — documented in ADR |
 | Vector DB / RAG | ✅ pgvector, semantic search, retrieval pipeline |
 | Cost optimization | ✅ Native UIs avoid chat API costs; single OpenAI provider kept cheap and swappable (ADR 013) |
-| Safety / guardrails | ✅ ADR 009 — PII filter, injection defense, verified by eval |
+| Safety / guardrails | ⚠️ ADR 009 — HTTPS + auth in place; PII filter / rate limiting / CORS hardening are target (see `AGENTS.md`) |
 | Computer-use deployment | ✅ Terraform IaC, Docker, CI/CD, production VPS |
 | Production observability | ✅ ADR 008 — Prometheus, Grafana, drift detection |
 | Frontier-model fluency | ✅ Multi-LLM (Claude, GPT, Gemini, DeepSeek), model comparison in eval |
