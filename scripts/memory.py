@@ -83,16 +83,18 @@ if _SRC not in sys.path:
 if _SCRIPT_DIR in sys.path:
     sys.path.remove(_SCRIPT_DIR)
 
-import httpx
+import httpx  # noqa: E402
 
+from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
+from mcp_proxy.idempotent_write import write_timeout_seconds  # noqa: E402
 from memory.contract import (  # noqa: E402
     MemoryContractError as ContractMemoryError,
+)
+from memory.contract import (  # noqa: E402
     build_fact_metadata,
     normalize_source,
     validate_fact_text,
 )
-from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
-from mcp_proxy.idempotent_write import write_timeout_seconds  # noqa: E402
 
 # --------------------------------------------------------------------------- #
 # ADR 029 / ADR 028 / ADR 003 vocabulary (the contract this helper enforces).
