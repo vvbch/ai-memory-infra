@@ -110,7 +110,7 @@
 
 - **What:** Mem0 API uses JWT (`JWT_SECRET`) + a privileged `ADMIN_API_KEY`;
   `AUTH_DISABLED=false` in prod. Caddy basic auth (`BASIC_AUTH_*`) fronts `dash.`,
-  `graph.`, `monitor.`. CORS allowlist on `memory.`.
+  `graph.`, `monitor.`. CORS allowlist on `memory.` is **[target]** (not deployed).
 - **Schema lives in:** `infra/docker-compose.yml` (mem0 env), `infra/Caddyfile`,
   `infra/.env(.example)`; secrets indexed in the private `docs/security/secrets-catalog.md`.
 - **ADRs:** 009 (security guardrails), 020 (admin key, not `make bootstrap`).
@@ -130,7 +130,7 @@
 
 ### 7. Caddy route / subdomain contract — live
 
-- **What:** `memory.` → Mem0 API (JWT + CORS); `dash.` → Mem0 dashboard (basic
+- **What:** `memory.` → Mem0 API (JWT + admin key; CORS **[target]**); `dash.` → Mem0 dashboard (basic
   auth); `graph.` → Neo4j Browser (basic auth); `monitor.` → Grafana (basic auth,
   `observability` compose profile — see `docs/observability-deploy.md`). Only Caddy
   faces the internet.
