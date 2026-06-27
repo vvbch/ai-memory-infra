@@ -53,7 +53,9 @@ def _normalize_list(raw: Any) -> list[dict[str, Any]]:
     return []
 
 
-def list_all_memories(client: MemoryApiClient, *, user_id: str | None = None) -> list[dict[str, Any]]:
+def list_all_memories(
+    client: MemoryApiClient, *, user_id: str | None = None
+) -> list[dict[str, Any]]:
     raw = client.list_memories(user_id=user_id, limit=1000)
     return _normalize_list(raw)
 
@@ -250,9 +252,11 @@ def main(argv: list[str] | None = None) -> int:
         if not args.i_reviewed_clusters:
             raise CompactionError(
                 "refusing auto-merge without --i-reviewed-clusters "
-                "(first pass is review-only; see ADR 037 / COE 2026-06-10-mcp-timeout-semantic-duplicates)"
+                "(first pass is review-only; see ADR 037 / "
+                "COE 2026-06-10-mcp-timeout-semantic-duplicates)"
             )
-        report = json.loads(open(args.merge_from, encoding="utf-8").read())
+        with open(args.merge_from, encoding="utf-8") as fh:
+            report = json.loads(fh.read())
         outcomes = auto_merge_clusters(client, report)
         print(json.dumps({"merged": outcomes}, indent=2))
         return 0
@@ -267,7 +271,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.report:
         with open(args.report, "w", encoding="utf-8") as fh:
             json.dump(report, fh, indent=2)
-        print(f"Wrote {report['cluster_count']} clusters ({report['edge_count']} edges) to {args.report}")
+        clusters = report["cluster_count"]
+        edges = report["edge_count"]
+        print(f"Wrote {clusters} clusters ({edges} edges) to {args.report}")
     else:
         print(json.dumps(report, indent=2))
 
