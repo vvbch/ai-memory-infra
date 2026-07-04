@@ -37,7 +37,8 @@ def ingest_decision_from_memory(
 
 def ingest_memory_record(graph: GraphStore, record: dict[str, Any]) -> str | None:
     """Best-effort ingest when metadata.type is decision."""
-    meta = record.get("metadata") if isinstance(record.get("metadata"), dict) else {}
+    raw_meta = record.get("metadata")
+    meta: dict[str, Any] = raw_meta if isinstance(raw_meta, dict) else {}
     if meta.get("type") != "decision":
         return None
     text = str(record.get("memory") or record.get("text") or "").strip()

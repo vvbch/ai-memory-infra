@@ -32,7 +32,7 @@ firm graphs (trading, RIA, etc.).
 
 - In-memory `GraphStore` only — **no Neo4j driver**, no live seed on VPS.
 - Synthetic seed (`seed.py`) with fake people/ventures for tests.
-- Ingest/queries/cli stubs — not wired to Mem0 bank or `graph.` UI.
+- In-memory POC with tests (`src/life_graph/`) — not wired to Neo4j, Mem0 bank, or `graph.` UI.
 
 **What exists in infra today:**
 
