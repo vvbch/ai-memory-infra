@@ -6,13 +6,13 @@ The project was validated against the 2026 AI Engineer hiring checklist (10 skil
 | Checklist item | Coverage |
 |---|---|
 | Agent orchestration | ✅ MCP integration, Chrome extension, REST API orchestration |
-| MCP integration | ✅ Local MCP proxy for Claude Code/Cursor/VS Code; remote HTTP MCP endpoint planned for Claude mobile |
-| Eval design | ✅ ADR 007 — three suites + guardrail tests |
+| MCP integration | ✅ Local MCP proxy + live remote HTTP MCP (ADR 034/035) |
+| Eval design | ✅ ADR 007 — three suites + guardrail tests; CI + weekly eval gate |
 | Prompt engineering | ⚠️ Implicit (extraction prompts) — documented in ADR |
 | Vector DB / RAG | ✅ pgvector, semantic search, retrieval pipeline |
 | Cost optimization | ✅ Native UIs avoid chat API costs; single OpenAI provider kept cheap and swappable (ADR 013) |
-| Safety / guardrails | ✅ ADR 009 — PII filter, injection defense, verified by eval |
-| Computer-use deployment | ✅ Terraform IaC, Docker, CI/CD, production VPS |
+| Safety / guardrails | ⚠️ Partial — HTTPS + auth in place; PII filter / rate limit / CORS are target (ADR 009) |
+| Computer-use deployment | ✅ Terraform IaC, Docker, CI on PR; deploy manual SSH (CD target) |
 | Production observability | ✅ ADR 008 — Prometheus, Grafana, drift detection |
 | Frontier-model fluency | ✅ Multi-LLM (Claude, GPT, Gemini, DeepSeek), model comparison in eval |
 

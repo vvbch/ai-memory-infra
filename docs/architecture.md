@@ -116,7 +116,7 @@ Neo4j moves local — projected ~₹1,000/mo. See `docs/planning/setup-prompt.md
 
 | Subdomain | Service | Notes |
 |---|---|---|
-| `memory.{domain}` | Mem0 REST API | JWT auth; CORS allowlist |
+| `memory.{domain}` | Mem0 REST API | X-API-Key + JWT support; CORS allowlist target (ADR 009) |
 | `dash.{domain}`   | Mem0 dashboard | basic auth |
 | `graph.{domain}`  | Neo4j Browser | basic auth |
 | `monitor.{domain}`| Grafana | basic auth |

@@ -4,31 +4,17 @@
 
 from __future__ import annotations
 
-
-
 import os
-
 from dataclasses import dataclass
-
 from typing import Any
-
-
 
 import httpx
 
-
-
 from mcp_proxy.idempotent_write import (
-
     add_memory_idempotent,
-
     find_by_external_id,
-
     write_timeout_seconds,
-
 )
-
-
 
 DEFAULT_BASE_URL = "https://memory.example.com"
 

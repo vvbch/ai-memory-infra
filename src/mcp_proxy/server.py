@@ -8,8 +8,8 @@ from typing import Any
 
 from mcp.server.fastmcp import FastMCP
 
-from memory.contract import DEFAULT_NAMESPACE, build_fact_metadata, validate_fact_text
 from mcp_proxy.client import MemoryApiClient, MemoryApiConfig
+from memory.contract import DEFAULT_NAMESPACE, build_fact_metadata, validate_fact_text
 
 mcp = FastMCP("ai-memory")
 
