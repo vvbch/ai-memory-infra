@@ -215,7 +215,7 @@ not yet built). Keep these tags honest — a claim outrunning reality is itself 
 
 ## Build phases (with reality status)
 
-Status as of 2026-06-11 — keep honest (COE 2026-06-10-delayed-memory-buildout):
+Status as of 2026-07-11 — keep honest (COE 2026-06-10-delayed-memory-buildout):
 
 - **0 scaffold + accounts** — ✅ done
 - **1 IaC (Terraform/Compose/Caddy)** — ✅ done (deploy is manual SSH; no CD yet)
@@ -223,10 +223,11 @@ Status as of 2026-06-11 — keep honest (COE 2026-06-10-delayed-memory-buildout)
 - **3 Chrome extension fork** — ✅ live
 - **4 Claude + Cursor/VS Code MCP** — ✅ done (local stdio proxy + remote HTTP MCP)
 - **5 migration (TDD)** — ✅ core pipeline (`src/migration/`); live bulk load pending
-- **6 LifeGraph (TDD)** — ✅ in-memory POC (`src/life_graph/`); live Neo4j seed **[target]**
+- **6 LifeGraph (TDD)** — ✅ in-memory POC (`src/life_graph/`); **frozen pending redesign**
+  (`docs/design/lifegraph.md`); live Neo4j seed **[target]**
 - **7 eval framework (TDD)** — ✅ starter metrics + synthetic gold; CI gate on synthetic gold ✅; live-stack eval **[target]**
 - **8 observability** — ✅ metrics, drift, alerts, health checker
-- **9 docs/polish** — ⬜ ongoing
+- **9 docs/polish** — ⬜ ongoing; current STATUS track is LifeGraph redesign workshop
 
 ## Conventions
 

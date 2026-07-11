@@ -191,18 +191,13 @@
 
 ## P2 — governance & quality hardening (fold into CI / eval phases)
 
-- **`[backup]` ⬆ PROMOTED into active Phase 2 (2026-06-08) — no longer parked.** Automating
-  backups + adding a restore drill was re-scoped *into* Phase 2 (it isn't done until backups
-  are scheduled, self-monitoring, and drilled). Design is locked in **ADR 023**; it is the
-  current `STATUS.md` "Next action" for the next session. Scope: daily **systemd timer**
-  (`Persistent=true`), **dead-man's-switch** failure alerting (vendor = an open operator
-  decision, tenet 12), **data-loss hardening** (server-side lifecycle/versioning instead of a
-  client-side delete-prune; a least-privilege backup key; a pre-restore safety snapshot), and a
-  recurring **restore drill**. Tie: tenets 4 (graceful degradation), 17 (effect-vs-code),
-  ADR 022 + ADR 023. **Progress (2026-06-08):** ✅ §1 daily timer + ✅ §2 dead-man's-switch
-  (healthchecks.io, green) + ✅ §3 data-loss hardening — (a) server-side versioning + 30 d/14 d
-  lifecycle, (b) least-privilege bucket-scoped backup key (verified), (c) pre-restore snapshot.
-  ⬜ **Only §4 restore drill remains** before Phase 2 is done.
+- **`[backup]` Phase 2 complete (2026-06-08).** Automating backups + restore drill was
+  re-scoped into Phase 2 and finished per **ADR 023**: ✅ §1 daily systemd timer +
+  ✅ §2 dead-man's-switch (healthchecks.io) + ✅ §3 data-loss hardening (versioning /
+  lifecycle, least-privilege backup key, pre-restore snapshot) + ✅ §4 restore drill
+  (IMPLEMENTED & VERIFIED 2026-06-08; monthly timer via `ai-memory-restore-drill.timer`).
+  Parked follow-up only: measure RTO once on a watched full restore (benchmark gap,
+  not a Phase-2 blocker).
 - **`[deploy]` Build & re-enable the Mem0 dashboard.** No published `mem0/mem0-dashboard`
   image exists; it's gated behind the compose `dashboard` profile and deferred. Build it
   from the mem0 repo's `server/dashboard` context (Next.js, needs a node build), then
