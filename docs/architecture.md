@@ -21,11 +21,12 @@ flowchart TB
         CADDY["Caddy<br/>auto-HTTPS reverse proxy"]
         subgraph Compose["Docker Compose"]
             API["mem0-api<br/>FastAPI REST"]
+            MCPREMOTE["mcp-proxy<br/>remote Streamable HTTP MCP"]
             PG[("PostgreSQL 16<br/>+ pgvector")]
-            NEO[("Neo4j<br/>reserved for LifeGraph (Phase 6)<br/>running + backed up; not written today")]
-            DASH["mem0-dash"]
-            PROM["prometheus"]
-            GRAF["grafana"]
+            NEO[("Neo4j<br/>reserved for LifeGraph<br/>running + backed up; not written today")]
+            DASH["mem0-dash<br/>(profile: dashboard)"]
+            PROM["prometheus<br/>(profile: observability)"]
+            GRAF["grafana<br/>(profile: observability)"]
         end
         BACKUP["Daily backup:<br/>pg_dump + neo4j dump → object storage"]
     end
@@ -38,10 +39,12 @@ flowchart TB
     D1 & D2 & D5 --> CADDY
     D4 --> MCPPROXY["local ai-memory MCP proxy"]
     MCPPROXY --> CADDY
-    D3 -.future remote MCP.-> CADDY
+    D3 --> CADDY
     CADDY --> API
+    CADDY --> MCPREMOTE
+    MCPREMOTE --> API
     API --> PG
-    API -.future LifeGraph, Phase 6.-> NEO
+    API -.LifeGraph redesign; Neo4j seed target.-> NEO
     API --> DASH
     API -.extraction.-> LLM
     API -.embeddings.-> EMB
@@ -67,11 +70,13 @@ flowchart TB
 > server never reads `NEO4J_*` and configures no graph store, and mem0ai 2.0.4
 > ships no graph-memory code (so the `mem0ai[graph]` extra and the compose
 > `NEO4J_*` env vars are currently inert). Neo4j is **reserved for LifeGraph**
-> (people / ventures / skills / decisions / milestones), which is **Phase 6 and
-> not yet built**. Earlier docs called this a "dual namespace (Mem0 auto-managed
-> graph + LifeGraph)"; that overstated reality and was corrected 2026-06-10. Until
-> Phase 6, decision-supersession history lives in Mem0's SQLite history table + the
-> Daily Driver supersession convention, not in Neo4j.
+> (people / ventures / skills / decisions / milestones). Phase 6 shipped an
+> **in-memory POC** in `src/life_graph/` (frozen pending redesign —
+> `docs/design/lifegraph.md`); live Neo4j seed remains **[target]**. Earlier docs
+> called this a "dual namespace (Mem0 auto-managed graph + LifeGraph)"; that
+> overstated reality and was corrected 2026-06-10. Decision-supersession history
+> lives in Mem0's SQLite history table + the Daily Driver supersession convention,
+> not in Neo4j.
 
 ## Components & cost
 
@@ -86,7 +91,7 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | OpenAI `gpt-5-mini` — extraction LLM | Pulls discrete facts out of conversations; chosen for structured-output reliability (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹90/mo)** |
 | OpenAI `text-embedding-3-small` — embeddings | Vectorizes facts + queries for pgvector similarity search (Mem0's default embedder) | **(~₹15/mo)** |
 | DO Spaces — backup object storage | Off-box destination for daily `pg_dump` + Neo4j dumps (Phase 2) | **(~₹400/mo)** |
-| GitHub — repo + Actions (CI/CD) | Source of truth, CI on PRs, CD to the VPS, weekly backup/eval jobs | **(₹0)** (free for public repo) |
+| GitHub — repo + Actions (CI) | Source of truth; CI on every push/PR; weekly eval-suite; CD to VPS is **[target]** (deploys are manual SSH today) | **(₹0)** (free for public repo) |
 | | **Approx. total** | **~₹2,590/mo** |
 
 > **List price vs. landed cost (TCO).** The figures above are **vendor list price**
@@ -105,7 +110,7 @@ AWS/GCP/Azure/Hetzner).
 |---|---|---|
 | Cloudflare Registrar | Where `example.com` is bought and renewed at-cost | (in domain fee) |
 | DNS zone @ Cloudflare | Authoritative DNS; zone created at registration, A records managed by Terraform | **(₹0)** |
-| DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.` (+ apex) → the droplet IP; `proxied=false` for ACME | **(₹0)** |
+| DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.`, `mcp.` (+ apex) → the droplet IP; `proxied=false` for ACME | **(₹0)** |
 | Caddy + Let's Encrypt TLS | Auto-provisions and renews HTTPS certificates for every subdomain; only component facing the internet | **(₹0)** |
 
 Steady state (Dec 2026+, post-Alienware): embeddings and extraction move to
@@ -116,10 +121,11 @@ Neo4j moves local — projected ~₹1,000/mo. See `docs/planning/setup-prompt.md
 
 | Subdomain | Service | Notes |
 |---|---|---|
-| `memory.{domain}` | Mem0 REST API | JWT auth; CORS allowlist |
-| `dash.{domain}`   | Mem0 dashboard | basic auth |
+| `memory.{domain}` | Mem0 REST API | JWT + admin `X-API-Key`; CORS allowlist **[target]** |
+| `mcp.{domain}`    | Remote MCP proxy | Streamable HTTP + OAuth (ADR 034/035); live |
+| `dash.{domain}`   | Mem0 dashboard | basic auth; compose profile `dashboard` |
 | `graph.{domain}`  | Neo4j Browser | basic auth |
-| `monitor.{domain}`| Grafana | basic auth |
+| `monitor.{domain}`| Grafana | basic auth; compose profile `observability` |
 
 Only Caddy faces the internet; Postgres, Neo4j, and Prometheus stay on the
 Docker internal network (ADR 009).

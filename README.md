@@ -13,7 +13,8 @@ context across every LLM, on any device.
 - **Knowledge graph**: Neo4j is provisioned and backed up on the VPS but **not
   written to yet** (ADR 032). LifeGraph — people, ventures, skills, decisions,
   milestones — is an **in-memory POC** in `src/life_graph/` (Phase 6 code ✅;
-  live Neo4j seed is a follow-up ops step).
+  **frozen pending redesign** — `docs/design/lifegraph.md`; live Neo4j seed is a
+  follow-up ops step).
 - **Reach**: Chrome extension (desktop / ChromeOS), local MCP proxy for IDEs,
   remote MCP for OAuth-capable native apps. Android extension coverage is
   best-effort only (ADR 004). Native LLM UIs unchanged. Coverage matrix:
@@ -45,7 +46,7 @@ Session state and next action: `docs/planning/STATUS.md`. Full phase map:
 | IaC + deploy | ✅ Terraform + Compose; **manual SSH** deploy today (`make deploy`) — no push-to-main CD yet |
 | Memory read/write contract | ✅ acceptance probe green on live stack |
 | Migration pipeline + bulk load | ✅ `src/migration/`; ADR facts loaded |
-| LifeGraph POC | ✅ in-memory (`src/life_graph/`); live Neo4j seed **[target]** |
+| LifeGraph POC | ✅ in-memory (`src/life_graph/`); frozen pending redesign; live Neo4j seed **[target]** |
 | Eval regression gate | ✅ synthetic gold blocks CI (`scripts/run_eval_gate.py`) |
 | Observability | ✅ metrics, drift, alerts, health checker in code; Grafana via **`observability` compose profile** — see `docs/observability-deploy.md` |
 

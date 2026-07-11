@@ -69,3 +69,11 @@ only historical/ADR-title references after this change):
 - **Live droplet confirm (2026-06-11):** `MATCH (n) RETURN count(n)` → **0** via
   `scripts/verify_source_propagation.py` (before and after a tagged Mem0 write).
   No Mem0-written nodes; belt-and-suspenders item closed.
+
+### Correction (2026-07-11)
+
+Phase 6 later shipped an **in-memory LifeGraph POC** in `src/life_graph/` (GraphStore,
+not Neo4j). That POC is **frozen pending redesign** (`docs/design/lifegraph.md`;
+STATUS 2026-06-16). Live Neo4j seed remains **[target]**. The 2026-06-10 claim
+"Phase 6 and not yet built" is superseded for the in-memory POC only — Neo4j is
+still unused.

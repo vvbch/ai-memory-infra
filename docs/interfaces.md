@@ -23,7 +23,8 @@
 
 ### 1. Memory write contract — ENFORCED (cross-repo)
 
-- **What:** one `user_id` per person (`"the operatorv"`); `metadata.source` is the
+- **What:** one `user_id` per person (`"primary-user"` in code/examples; operators
+  override via env); `metadata.source` is the
   mandatory discriminator (pgvector live — probed 2026-06-11; graph when LifeGraph
   writes Neo4j); `type` ∈
   `fact | decision | open_item`; `created_at` always (capture time); **`event_date`**
@@ -50,7 +51,8 @@
 ### 2. Extension ↔ API identity contract — ENFORCED (cross-repo)
 
 - **What:** the extension tags every write `metadata.source = "extension"` and uses
-  `user_id = "the operatorv"`; legacy `"chrome-extension-user"` ids are auto-healed.
+  `user_id = "primary-user"` (or the operator override); legacy
+  `"chrome-extension-user"` ids are auto-healed.
 - **Schema lives in:** `ai-memory-extension/src/types/api.ts`.
 - **ADRs:** 028. **Ties:** COE 2026-06-09-extension-memory-identity-drift.
 - **Enforcement:** `scripts/check_memory_contract.py` (extension-constants check).
@@ -110,12 +112,13 @@
 
 - **What:** Mem0 API uses JWT (`JWT_SECRET`) + a privileged `ADMIN_API_KEY`;
   `AUTH_DISABLED=false` in prod. Caddy basic auth (`BASIC_AUTH_*`) fronts `dash.`,
-  `graph.`, `monitor.`. CORS allowlist on `memory.`.
+  `graph.`, `monitor.`. CORS allowlist on `memory.` is **[target]** (commented
+  in `infra/Caddyfile` today).
 - **Schema lives in:** `infra/docker-compose.yml` (mem0 env), `infra/Caddyfile`,
   `infra/.env(.example)`; secrets indexed in the private `docs/security/secrets-catalog.md`.
 - **ADRs:** 009 (security guardrails), 020 (admin key, not `make bootstrap`).
-- **Enforcement:** deployed config; the broader guardrail set (PII filter, rate
-  limiting) is **partly aspirational** — see `AGENTS.md` security note + BACKLOG.
+- **Enforcement:** deployed config; the broader guardrail set (PII filter, CORS,
+  rate limiting) is **partly aspirational** — see `AGENTS.md` security note + BACKLOG.
 
 ### 6. Backup artifact contract — TESTED / drilled
 
@@ -130,8 +133,9 @@
 
 ### 7. Caddy route / subdomain contract — live
 
-- **What:** `memory.` → Mem0 API (JWT + CORS); `dash.` → Mem0 dashboard (basic
-  auth); `graph.` → Neo4j Browser (basic auth); `monitor.` → Grafana (basic auth,
+- **What:** `memory.` → Mem0 API (JWT + admin key; CORS **[target]**);
+  `mcp.` → remote MCP proxy (OAuth); `dash.` → Mem0 dashboard (basic auth);
+  `graph.` → Neo4j Browser (basic auth); `monitor.` → Grafana (basic auth,
   `observability` compose profile — see `docs/observability-deploy.md`). Only Caddy
   faces the internet.
 - **Schema lives in:** `infra/Caddyfile`, Terraform `subdomains` (`variables.tf`),

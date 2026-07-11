@@ -5,8 +5,6 @@ from __future__ import annotations
 import importlib.util
 import pathlib
 
-import pytest
-
 _SCRIPT = pathlib.Path(__file__).resolve().parents[2] / "scripts" / "check_memory_contract.py"
 _spec = importlib.util.spec_from_file_location("check_memory_contract", _SCRIPT)
 assert _spec and _spec.loader
