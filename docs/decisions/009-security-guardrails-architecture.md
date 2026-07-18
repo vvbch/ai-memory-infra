@@ -1,6 +1,6 @@
 # ADR 009: Security guardrails architecture
 
-**Status:** Accepted
+**Status:** Accepted — **partially implemented** (see Implementation status below)
 **Date:** 2026-06-04
 
 ### Context
@@ -17,6 +17,16 @@ Defense-in-depth across five layers:
 4. **Data safety**: Input validation rejects memory writes containing API keys, passwords, credit card number patterns (regex filter). PII detection flags Aadhaar, PAN numbers during extraction — flagged for review, not stored.
 5. **Access control**: CORS policy allows only the self-hosted domain + Chrome extension ID. Rate limiting on API endpoints via Caddy.
 
+### Implementation status (honest — weekly scan 2026-07-18)
+
+| Layer | Status |
+|---|---|
+| 1 Network, 2 Transport, 3 Auth | **In place** on the live stack |
+| 4 PII / secret regex on write path | **[target]** — helpers exist in `src/eval/guardrails.py` (eval-only today); not wired into Mem0/proxy writes |
+| 5 CORS allowlist + Caddy rate limit | **[target]** — Caddy CORS rules commented; rate limit needs custom Caddy build (see `infra/Caddyfile`) |
+
+Canonical tags: `AGENTS.md` / `contract/practices.yaml` security practice.
+
 ### What this does NOT cover
 
 - End-to-end encryption of memories at rest (Postgres standard encryption is sufficient for personal use)
@@ -26,6 +36,4 @@ Defense-in-depth across five layers:
 ### Consequences
 
 - **Positive:** Prevents accidental secret leakage into knowledge graph. Prevents unauthorized access. PII filtering is particularly important given Indian financial data (Aadhaar, PAN). Demonstrates security awareness in portfolio.
-- **Negative:** Regex-based PII detection has false positives/negatives. Not a substitute for proper data classification. Mitigated by the guardrail eval tests that verify filter accuracy.
-
----
+- **Negative:** Regex-based PII detection has false positives/negatives. Not a substitute for proper data classification. Mitigated by the guardrail eval tests that verify filter accuracy *once the filter is on the write path*.

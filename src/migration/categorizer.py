@@ -34,7 +34,10 @@ _PATH_RULES: tuple[tuple[str, str], ...] = (
 
 # Keyword groups → venture (checked on lowercased text).
 _KEYWORD_RULES: tuple[tuple[tuple[str, ...], str], ...] = (
-    (("equity desk", "derivatives strategy", "portfolio rebalance", "algo trading"), "trading_firm"),
+    (
+        ("equity desk", "derivatives strategy", "portfolio rebalance", "algo trading"),
+        "trading_firm",
+    ),
     (("content calendar", "video production", "social media"), "social_media"),
     (("registered investment adviser", "registered investment advisor", "fiduciary"), "ria"),
     (("hiring pipeline", "role transition", "interview prep", "interview-prep"), "career"),
