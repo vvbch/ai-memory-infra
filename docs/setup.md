@@ -214,7 +214,8 @@ compose profile).
 ### Done when
 API answers over HTTPS, dashboard + Neo4j Browser load behind basic auth, and a
 test `POST /memories` round-trips. Then update `STATUS.md`, commit, open the PR
-(CI runs), merge → CD deploys. That closes Phase 1.
+(CI runs). Deploys are **manual SSH** (`make deploy`) — CD is **[target]**, not
+built yet. That closes Phase 1 infra; Phase 1 CD remains open.
 
 > **Turning it off again.** Everything you stand up here can be cleanly torn down:
 > `docs/decommission.md` covers rollback, pause (stop the bill), and full

@@ -38,10 +38,10 @@ flowchart TB
     D1 & D2 & D5 --> CADDY
     D4 --> MCPPROXY["local ai-memory MCP proxy"]
     MCPPROXY --> CADDY
-    D3 -.future remote MCP.-> CADDY
+    D3 --> CADDY
     CADDY --> API
     API --> PG
-    API -.future LifeGraph, Phase 6.-> NEO
+    API -.LifeGraph POC in-memory; Neo4j seed target.-> NEO
     API --> DASH
     API -.extraction.-> LLM
     API -.embeddings.-> EMB
@@ -62,16 +62,16 @@ flowchart TB
 > swappable alternatives; steady state moves both stages to local Ollama on the
 > Alienware. See ADR 011 (embeddings) and ADR 013 (single-provider, supersedes ADR 002).
 
-> **Neo4j status (ADR 032) — provisioned, not yet in use.** Neo4j is deployed,
-> healthy, and backed up, but **nothing writes to it today.** The deployed Mem0
-> server never reads `NEO4J_*` and configures no graph store, and mem0ai 2.0.4
-> ships no graph-memory code (so the `mem0ai[graph]` extra and the compose
-> `NEO4J_*` env vars are currently inert). Neo4j is **reserved for LifeGraph**
-> (people / ventures / skills / decisions / milestones), which is **Phase 6 and
-> not yet built**. Earlier docs called this a "dual namespace (Mem0 auto-managed
-> graph + LifeGraph)"; that overstated reality and was corrected 2026-06-10. Until
-> Phase 6, decision-supersession history lives in Mem0's SQLite history table + the
-> Daily Driver supersession convention, not in Neo4j.
+> **Neo4j status (ADR 032) — provisioned, not yet written by Mem0.** Neo4j is
+> deployed, healthy, and backed up, but **Mem0 never writes to it** (mem0ai 2.0.4
+> ships no graph-memory code; compose `NEO4J_*` env vars into mem0 are inert).
+> An **in-memory LifeGraph POC** exists in `src/life_graph/` (Phase 6 code ✅);
+> live Neo4j seed is **[target]** and currently blocked on a redesign
+> (`docs/design/lifegraph.md`, STATUS 2026-06-16). Earlier docs called this a
+> "dual namespace (Mem0 auto-managed graph + LifeGraph)"; that overstated reality
+> and was corrected 2026-06-10. Until Neo4j is seeded, decision-supersession
+> history lives in Mem0's SQLite history table + the Daily Driver supersession
+> convention, not in Neo4j.
 
 ## Components & cost
 
@@ -86,7 +86,7 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | OpenAI `gpt-5-mini` — extraction LLM | Pulls discrete facts out of conversations; chosen for structured-output reliability (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹90/mo)** |
 | OpenAI `text-embedding-3-small` — embeddings | Vectorizes facts + queries for pgvector similarity search (Mem0's default embedder) | **(~₹15/mo)** |
 | DO Spaces — backup object storage | Off-box destination for daily `pg_dump` + Neo4j dumps (Phase 2) | **(~₹400/mo)** |
-| GitHub — repo + Actions (CI/CD) | Source of truth, CI on PRs, CD to the VPS, weekly backup/eval jobs | **(₹0)** (free for public repo) |
+| GitHub — repo + Actions (CI) | Source of truth; CI on every push/PR; scheduled eval + weekly scan. CD is **[target]** — deploys are manual SSH (`make deploy`) | **(₹0)** (free for public repo) |
 | | **Approx. total** | **~₹2,590/mo** |
 
 > **List price vs. landed cost (TCO).** The figures above are **vendor list price**
@@ -105,7 +105,7 @@ AWS/GCP/Azure/Hetzner).
 |---|---|---|
 | Cloudflare Registrar | Where `example.com` is bought and renewed at-cost | (in domain fee) |
 | DNS zone @ Cloudflare | Authoritative DNS; zone created at registration, A records managed by Terraform | **(₹0)** |
-| DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.` (+ apex) → the droplet IP; `proxied=false` for ACME | **(₹0)** |
+| DNS records | Terraform-created A records: `memory.`, `dash.`, `graph.`, `monitor.`, `mcp.` (+ apex) → the droplet IP; `proxied=false` for ACME | **(₹0)** |
 | Caddy + Let's Encrypt TLS | Auto-provisions and renews HTTPS certificates for every subdomain; only component facing the internet | **(₹0)** |
 
 Steady state (Dec 2026+, post-Alienware): embeddings and extraction move to
@@ -116,10 +116,11 @@ Neo4j moves local — projected ~₹1,000/mo. See `docs/planning/setup-prompt.md
 
 | Subdomain | Service | Notes |
 |---|---|---|
-| `memory.{domain}` | Mem0 REST API | JWT auth; CORS allowlist |
+| `memory.{domain}` | Mem0 REST API | JWT + admin `X-API-Key`; CORS allowlist is **[target]** (not enforced in Caddy today) |
 | `dash.{domain}`   | Mem0 dashboard | basic auth |
 | `graph.{domain}`  | Neo4j Browser | basic auth |
-| `monitor.{domain}`| Grafana | basic auth |
+| `monitor.{domain}`| Grafana | basic auth (observability compose profile) |
+| `mcp.{domain}`    | Remote HTTP MCP proxy | OAuth 2.1 (ADR 034/035); live |
 
 Only Caddy faces the internet; Postgres, Neo4j, and Prometheus stay on the
 Docker internal network (ADR 009).

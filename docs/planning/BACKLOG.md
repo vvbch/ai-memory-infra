@@ -66,25 +66,12 @@
 - ◑ **`[docs-drift]` Architecture docs claimed a "Mem0 auto-managed graph" in Neo4j —
   source says the deployed stack has none (found 2026-06-10, tenet 8/10). DOC FIX
   DONE 2026-06-10 (ADR 032):** corrected `architecture.md`, `AGENTS.md`, `README.md`,
-  `scaffold.py`, compose + Dockerfile comments, ADR 005 note, setup-prompt banner.
-  **Remaining:** (1) ✅ live droplet confirm DONE 2026-06-10 — `MATCH (n) RETURN
-  count(n)` = **0** (no Mem0-written nodes, as ADR 032 predicted); (2) the
-  graph-source one-way-door decision (LifeGraph-only vs graph-capable Mem0) before
-  Phase 6 — see ADR 032 §4 (the only open part of this item now).
-  Verified from upstream source at our pinned ref (`MEM0_REF=3669459…`) and the
-  mem0ai 2.0.4 PyPI wheel: the `server/` REST app never reads `NEO4J_*` and never
-  configures a `graph_store`, and the 2.0.4 library ships **zero** graph-memory
-  code (no `graph` extra exists — `pip install "mem0ai[graph]"` in
-  `infra/mem0-server.Dockerfile` installs plain mem0ai with a warning). So the
-  compose `NEO4J_URI/USERNAME/PASSWORD` env vars into the mem0 container are dead
-  config, and Neo4j currently serves only the **future LifeGraph** (Phase 6) —
-  it is running, backed up, but not written to by Mem0. Actions: (1) confirm on
-  the droplet that the live Neo4j has no Mem0-written nodes; (2) fix the drift in
-  `docs/architecture.md` + `AGENTS.md` ("dual namespace" claim) + the Dockerfile
-  comment; (3) decide in an ADR whether graph memory comes from LifeGraph only
-  (current plan) or a Mem0 version/extra that actually ships it. Until then,
-  decision-supersession history lives in the Mem0 SQLite history table + the
-  Daily Driver supersession convention, not in Neo4j.
+  `scaffold.py`, compose + Dockerfile comments, ADR 005 note, setup-prompt banner;
+  live droplet confirm 2026-06-10 — `MATCH (n) RETURN count(n)` = **0**.
+  **Remaining (one-way door):** graph-source decision (LifeGraph-only vs
+  graph-capable Mem0) before Neo4j seed — see ADR 032 §4. In-memory POC exists;
+  redesign in `docs/design/lifegraph.md`. Until then, decision-supersession history
+  lives in the Mem0 SQLite history table + Daily Driver convention, not in Neo4j.
 
 ## P1 — model-agnostic operating contract (ADR 033, Workstream C)
 

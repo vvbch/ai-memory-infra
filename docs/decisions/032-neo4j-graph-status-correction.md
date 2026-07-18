@@ -27,7 +27,9 @@ reality.
 
 So Neo4j is running, healthy, and backed up, but it is **reserved future capacity
 for LifeGraph** (ADR 005 namespace #2 — people/ventures/skills/decisions/
-milestones), which is **Phase 6 and not yet built**. ADR 005's namespace #1 (a
+milestones). **Update 2026-07-18:** an in-memory LifeGraph POC landed in
+`src/life_graph/` (AGENTS Phase 6 ✅); live Neo4j seed remains **[target]** and is
+blocked on redesign (`docs/design/lifegraph.md`). ADR 005's namespace #1 (a
 Mem0 auto-managed graph in the same instance) does not hold for the deployed stack.
 
 ### Decision

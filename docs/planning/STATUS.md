@@ -20,8 +20,9 @@ visualized as a graph today — only list/search via API/dashboard. **LifeGraph*
 planned professional-life knowledge graph) was a **small in-memory POC** in code;
 operator wants a **redesign from scratch** — see `docs/design/lifegraph.md`.
 
-**Build track:** Phase 9 polish largely done (eval gate, README, Grafana doc, import
-cache fix). **New thread:** LifeGraph redesign.
+**Build track:** Phase 9 polish **ongoing** (eval gate, README, Grafana doc, import
+cache fix largely done; remaining polish + LifeGraph redesign). **Current thread:**
+LifeGraph redesign.
 
 ## Current phase
 
