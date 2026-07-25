@@ -41,3 +41,4 @@ def test_check_all_report() -> None:
 def test_check_http_status() -> None:
     assert check_http_status({"status_code": 200}) is True
     assert check_http_status({"status": 503}) is False
+    assert check_http_status({}) is False

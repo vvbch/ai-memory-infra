@@ -15,9 +15,11 @@ from __future__ import annotations
 
 import argparse
 import datetime as _dt
+import importlib.util
 import json
 import os
 import sys
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -29,6 +31,8 @@ if _SRC not in sys.path:
 if _SCRIPT_DIR in sys.path:
     sys.path.remove(_SCRIPT_DIR)
 
+from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
+from mcp_proxy.idempotent_write import write_timeout_seconds  # noqa: E402
 from memory.retrieval import (  # noqa: E402
     best_entity_match,
     fetch_by_external_id,
@@ -38,12 +42,6 @@ from memory.retrieval import (  # noqa: E402
     record_text,
     search_with_contract,
 )
-from mcp_proxy.client import MemoryApiClient, MemoryApiConfig  # noqa: E402
-from mcp_proxy.idempotent_write import write_timeout_seconds  # noqa: E402
-
-# Import bulk importer after path bootstrap.
-import importlib.util
-from pathlib import Path
 
 _IMPORTER = Path(__file__).resolve().parent / "bulk_seed_importer.py"
 _spec = importlib.util.spec_from_file_location("bulk_seed_importer", _IMPORTER)
