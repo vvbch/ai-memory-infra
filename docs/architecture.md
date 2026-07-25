@@ -12,9 +12,9 @@ flowchart TB
     subgraph Devices["Devices — native LLM UIs, unchanged"]
         D1["Desktop / ChromeOS Chromium<br/>OpenMemory extension — FULL coverage"]
         D2["Android<br/>best-effort (Kiwi archived Jan-2025;<br/>Edge Canary / Quetta) — see ADR 004"]
-        D3["iOS<br/>Claude app remote MCP<br/>mcp.example.com (ADR 034/035)"]
-        D4["Claude Code / Cursor / VS Code<br/>local MCP proxy"]
-        D5["Future tools<br/>via REST API"]
+    D3["iOS<br/>Claude app remote MCP<br/>mcp.example.com (ADR 034/035)"]
+    D4["Claude Code / Cursor / VS Code<br/>local MCP proxy"]
+    D5["Future tools<br/>via REST API"]
     end
 
     subgraph VPS["VPS — Bangalore (DO BLR1)"]
@@ -22,7 +22,7 @@ flowchart TB
         subgraph Compose["Docker Compose"]
             API["mem0-api<br/>FastAPI REST"]
             PG[("PostgreSQL 16<br/>+ pgvector")]
-            NEO[("Neo4j<br/>reserved for LifeGraph (Phase 6)<br/>running + backed up; not written today")]
+            NEO[("Neo4j<br/>reserved for LifeGraph<br/>running + backed up; not written today")]
             DASH["mem0-dash"]
             PROM["prometheus"]
             GRAF["grafana"]
@@ -38,10 +38,10 @@ flowchart TB
     D1 & D2 & D5 --> CADDY
     D4 --> MCPPROXY["local ai-memory MCP proxy"]
     MCPPROXY --> CADDY
-    D3 -.future remote MCP.-> CADDY
+    D3 --> CADDY
     CADDY --> API
     API --> PG
-    API -.future LifeGraph, Phase 6.-> NEO
+    API -.future LifeGraph seed.-> NEO
     API --> DASH
     API -.extraction.-> LLM
     API -.embeddings.-> EMB
@@ -67,11 +67,13 @@ flowchart TB
 > server never reads `NEO4J_*` and configures no graph store, and mem0ai 2.0.4
 > ships no graph-memory code (so the `mem0ai[graph]` extra and the compose
 > `NEO4J_*` env vars are currently inert). Neo4j is **reserved for LifeGraph**
-> (people / ventures / skills / decisions / milestones), which is **Phase 6 and
-> not yet built**. Earlier docs called this a "dual namespace (Mem0 auto-managed
-> graph + LifeGraph)"; that overstated reality and was corrected 2026-06-10. Until
-> Phase 6, decision-supersession history lives in Mem0's SQLite history table + the
-> Daily Driver supersession convention, not in Neo4j.
+> (people / ventures / skills / decisions / milestones). An **in-memory POC**
+> lives in `src/life_graph/` (Phase 6 code); live Neo4j seed is a follow-up, and
+> a redesign workshop is open (`docs/design/lifegraph.md`). Earlier docs called
+> this a "dual namespace (Mem0 auto-managed graph + LifeGraph)"; that overstated
+> reality and was corrected 2026-06-10. Until a live graph lands, decision-
+> supersession history lives in Mem0's SQLite history table + the Daily Driver
+> supersession convention, not in Neo4j.
 
 ## Components & cost
 
@@ -86,7 +88,7 @@ interactions/day; see ADR 002 for the extraction-cost model.
 | OpenAI `gpt-5-mini` — extraction LLM | Pulls discrete facts out of conversations; chosen for structured-output reliability (ADR 013, supersedes DeepSeek/ADR 002) | **(~₹90/mo)** |
 | OpenAI `text-embedding-3-small` — embeddings | Vectorizes facts + queries for pgvector similarity search (Mem0's default embedder) | **(~₹15/mo)** |
 | DO Spaces — backup object storage | Off-box destination for daily `pg_dump` + Neo4j dumps (Phase 2) | **(~₹400/mo)** |
-| GitHub — repo + Actions (CI/CD) | Source of truth, CI on PRs, CD to the VPS, weekly backup/eval jobs | **(₹0)** (free for public repo) |
+| GitHub — repo + Actions (CI) | Source of truth; CI on every push/PR; weekly eval gate; CD is **target** (deploys are manual SSH today) | **(₹0)** (free for public repo) |
 | | **Approx. total** | **~₹2,590/mo** |
 
 > **List price vs. landed cost (TCO).** The figures above are **vendor list price**
@@ -116,7 +118,7 @@ Neo4j moves local — projected ~₹1,000/mo. See `docs/planning/setup-prompt.md
 
 | Subdomain | Service | Notes |
 |---|---|---|
-| `memory.{domain}` | Mem0 REST API | JWT auth; CORS allowlist |
+| `memory.{domain}` | Mem0 REST API | JWT + `ADMIN_API_KEY`; CORS allowlist **[target]** (DASHBOARD_URL only today) |
 | `dash.{domain}`   | Mem0 dashboard | basic auth |
 | `graph.{domain}`  | Neo4j Browser | basic auth |
 | `monitor.{domain}`| Grafana | basic auth |

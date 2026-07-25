@@ -179,8 +179,10 @@ sudo bash ../scripts/bootstrap.sh
 > and reproducible: it clones the pinned mem0 source (`MEM0_REF` in the script)
 > and runs `docker build -f infra/mem0-server.Dockerfile -t mem0-api-server:local
 > <src>/server`. We build because the published `mem0/mem0-api-server` image is
-> arm64-only (no amd64) and omits the Neo4j graph deps; the Dockerfile adds those
-> plus the gpt-5-mini extraction patch (ADR 021) and carries a build-time `assert`
+> arm64-only (no amd64) and omits the Neo4j graph deps; the Dockerfile installs
+> `mem0ai[graph]` and related packages as **forward-leaning scaffolding** (ADR 032:
+> inert on mem0ai 2.0.4 — the server never reads `NEO4J_*`), plus the gpt-5-mini
+> extraction patch (ADR 021) and carries a build-time `assert`
 > that fails loudly if a future mem0 ref breaks the patch. The `compose pull` step
 > pulls only the external images (caddy/postgres/neo4j) — the local Mem0 image
 > isn't pulled, and the dashboard is profiled-off (P2). In prod `.env`, set
